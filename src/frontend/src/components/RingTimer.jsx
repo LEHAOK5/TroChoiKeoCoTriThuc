@@ -1,0 +1,88 @@
+import React, { useEffect } from 'react';
+
+export default function RingTimer({
+  seconds = 10,
+  totalSeconds = 15,
+  size = 46,
+  strokeWidth = 4,
+  label = ''
+}) {
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const progress = Math.max(0, Math.min(1, seconds / (totalSeconds || 15)));
+  const strokeDashoffset = circumference * (1 - progress);
+
+  const isCritical = seconds <= 3 && seconds > 0;
+  const strokeColor = isCritical ? '#FF1744' : progress > 0.45 ? '#00F0FF' : '#FFD600';
+
+  useEffect(() => {
+    if (isCritical && typeof navigator !== 'undefined' && navigator.vibrate) {
+      try {
+        navigator.vibrate(45);
+      } catch {
+        // ignore
+      }
+    }
+  }, [seconds, isCritical]);
+
+  return (
+    <div
+      style={{
+        position: 'relative',
+        width: size,
+        height: size,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0
+      }}
+      className={isCritical ? 'ring-timer-critical' : ''}
+    >
+      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+        {/* Background Track */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="rgba(11, 19, 43, 0.6)"
+          stroke="rgba(255, 255, 255, 0.12)"
+          strokeWidth={strokeWidth}
+        />
+        {/* Dynamic Sweep Ring */}
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          fill="transparent"
+          stroke={strokeColor}
+          strokeWidth={strokeWidth}
+          strokeDasharray={circumference}
+          strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round"
+          style={{
+            transition: 'stroke-dashoffset 0.25s linear, stroke 0.3s ease',
+            filter: `drop-shadow(0 0 6px ${strokeColor})`
+          }}
+        />
+      </svg>
+      {/* Central Seconds Display */}
+      <div
+        style={{
+          position: 'absolute',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: 'var(--font-title)',
+          fontWeight: 900,
+          fontSize: size >= 48 ? '1.05rem' : '0.88rem',
+          color: strokeColor,
+          lineHeight: 1
+        }}
+      >
+        <span>{Math.max(0, seconds)}</span>
+        {label && <span style={{ fontSize: '0.55rem', opacity: 0.7 }}>{label}</span>}
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,25 @@
+{
+  "name": "keo-co-tri-thuc-backend",
+  "version": "2.0.0",
+  "description": "Backend Node.js, Express, Socket.io & Supabase cho Game Kéo Co Tri Thức (Phiên bản 2.0)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test:e2e": "node tests/e2e/test_gameplay.js",
+    "seed": "python database/seed_questions.py"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.13.1",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.8.1"
+  }
+}
