@@ -436,7 +436,7 @@ export default function AdminPage({ onBackToGame }) {
           )}
 
           {/* 3 TAB NAVIGATION BAR (2D COMIC BUTTONS) */}
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', borderBottom: '2.5px solid var(--comic-black)', paddingBottom: 14 }}>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'nowrap', overflowX: 'auto', WebkitOverflowScrolling: 'touch', borderBottom: '2.5px solid var(--comic-black)', paddingBottom: 12 }}>
             <button
               onClick={() => setActiveTab('ROOMS')}
               style={{
@@ -543,7 +543,7 @@ export default function AdminPage({ onBackToGame }) {
           {activeTab === 'ROOMS' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               {/* Quick Stats Grid (2D Neo-brutalism Cards) */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: 14 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
                 <div style={{ background: '#FFFFFF', border: '2.5px solid var(--comic-black)', borderRadius: 16, padding: '16px 18px', boxShadow: '0 4px 0 var(--comic-black)' }}>
                   <div style={{ fontSize: '0.8rem', color: '#475569', fontWeight: 800 }}>👥 TỔNG ĐĂNG KÝ</div>
                   <div style={{ fontFamily: 'var(--font-title)', fontSize: '2.2rem', fontWeight: 900, color: '#0284C7', lineHeight: 1.2 }}>
@@ -1193,7 +1193,7 @@ export default function AdminPage({ onBackToGame }) {
           {activeTab === 'MATCHES' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {/* Summary Win/Loss Ratio */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
                 <div style={{ background: '#F0F9FF', border: '2.5px solid var(--comic-black)', borderRadius: 16, padding: '16px 20px', boxShadow: '0 4px 0 var(--comic-black)' }}>
                   <div style={{ fontSize: '0.85rem', color: '#0369A1', fontWeight: 900 }}>⚡ ĐỘI A THẮNG (TIA CHỚP)</div>
                   <div style={{ fontFamily: 'var(--font-title)', fontSize: '2.4rem', fontWeight: 900, color: '#0284C7' }}>

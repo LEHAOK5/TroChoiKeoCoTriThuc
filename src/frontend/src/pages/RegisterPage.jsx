@@ -221,7 +221,7 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
           </div>
 
           <div style={{ marginBottom: 12 }}>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>
+            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#334155', marginBottom: 4 }}>
               Họ và tên sinh viên *
             </label>
             <input
@@ -233,18 +233,19 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
               style={{
                 width: '100%',
                 padding: '11px 13px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
+                background: '#F8FAFC',
+                border: '2px solid #CBD5E1',
                 borderRadius: 12,
-                color: '#FFF',
-                fontSize: '0.95rem',
+                color: '#0F172A',
+                fontSize: '1rem',
+                fontWeight: 600,
                 outline: 'none'
               }}
             />
           </div>
 
           <div style={{ marginBottom: 12 }}>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>
+            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#334155', marginBottom: 4 }}>
               Mã số sinh viên (MSSV) *
             </label>
             <input
@@ -256,11 +257,12 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
               style={{
                 width: '100%',
                 padding: '11px 13px',
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
+                background: '#F8FAFC',
+                border: '2px solid #CBD5E1',
                 borderRadius: 12,
-                color: '#FFF',
-                fontSize: '0.95rem',
+                color: '#0F172A',
+                fontSize: '1rem',
+                fontWeight: 600,
                 outline: 'none'
               }}
             />
@@ -268,7 +270,7 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
             <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: 4 }}>
                 Khoa / Viện
               </label>
               <input
@@ -279,18 +281,19 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
                 style={{
                   width: '100%',
                   padding: '10px 12px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  background: '#F8FAFC',
+                  border: '2px solid #CBD5E1',
                   borderRadius: 12,
-                  color: '#FFF',
-                  fontSize: '0.9rem',
+                  color: '#0F172A',
+                  fontSize: '1rem',
+                  fontWeight: 600,
                   outline: 'none'
                 }}
               />
             </div>
 
             <div>
-              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: 4 }}>
+              <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: 4 }}>
                 Số điện thoại
               </label>
               <input
@@ -301,11 +304,12 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
                 style={{
                   width: '100%',
                   padding: '10px 12px',
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  background: '#F8FAFC',
+                  border: '2px solid #CBD5E1',
                   borderRadius: 12,
-                  color: '#FFF',
-                  fontSize: '0.9rem',
+                  color: '#0F172A',
+                  fontSize: '1rem',
+                  fontWeight: 600,
                   outline: 'none'
                 }}
               />
@@ -314,7 +318,7 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
 
           {/* Chọn Đội A hoặc B */}
           <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: '#FFF', marginBottom: 8 }}>
+            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, color: '#0F172A', marginBottom: 8 }}>
               Chọn Đội Thi Đấu *
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>

@@ -437,12 +437,15 @@ export default function App() {
         <div className="brand-box">
           <span style={{ fontSize: '1.4rem' }}>⚔️</span>
           <div>
-            <div className="brand-title">KÉO CO TRI THỨC</div>
+            <div className="brand-title">
+              <span className="full-title">KÉO CO TRI THỨC</span>
+              <span className="short-title">⚡ KÉO CO VHU</span>
+            </div>
             <div className="booth-tag">{BOOTH_LABEL}</div>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div className="header-actions">
           {player && (
             <>
               <span
@@ -450,12 +453,13 @@ export default function App() {
                   fontSize: '0.78rem',
                   fontWeight: 900,
                   fontFamily: 'var(--font-title)',
-                  padding: '3px 10px',
+                  padding: '3px 8px',
                   borderRadius: 999,
                   background: player.team === 'A' ? '#E0F2FE' : '#FFEDD5',
                   color: player.team === 'A' ? '#0284C7' : '#EA580C',
                   border: '2px solid var(--comic-black)',
-                  boxShadow: '0 2px 0 var(--comic-black)'
+                  boxShadow: '0 2px 0 var(--comic-black)',
+                  whiteSpace: 'nowrap'
                 }}
               >
                 {player.team === 'A' ? '⚡ ĐỘI A' : '🔥 ĐỘI B'}
@@ -473,7 +477,7 @@ export default function App() {
                   border: '2px solid var(--comic-black)',
                   boxShadow: '0 2px 0 var(--comic-black)',
                   color: '#DC2626',
-                  padding: '4px 10px',
+                  padding: '4px 8px',
                   borderRadius: 999,
                   cursor: 'pointer',
                   fontSize: '0.76rem',
@@ -483,7 +487,8 @@ export default function App() {
                   gap: 3
                 }}
               >
-                🚪 Thoát
+                <span>🚪</span>
+                <span className="header-btn-text">Thoát</span>
               </button>
             </>
           )}
@@ -497,7 +502,7 @@ export default function App() {
                 border: '2px solid var(--comic-black)',
                 boxShadow: '0 2px 0 var(--comic-black)',
                 color: currentPage === 'ADMIN' ? '#1011B8' : '#713F12',
-                padding: '4px 10px',
+                padding: '4px 8px',
                 borderRadius: 999,
                 cursor: 'pointer',
                 fontSize: '0.78rem',
@@ -505,7 +510,7 @@ export default function App() {
                 fontFamily: 'var(--font-title)'
               }}
             >
-              {currentPage === 'ADMIN' ? '🎮 Quay lại Game' : '🏛️ Quản trị BTC'}
+              {currentPage === 'ADMIN' ? '🎮 Game' : '🏛️ BTC'}
             </button>
           )}
           {/* Nút Bật/Tắt Âm Thanh & Nhạc Game (Dynamic BGM Mute Toggle) */}
@@ -522,7 +527,7 @@ export default function App() {
               border: '2px solid var(--comic-black)',
               boxShadow: '0 2px 0 var(--comic-black)',
               color: audioMuted ? '#DC2626' : '#15803D',
-              padding: '4px 10px',
+              padding: '4px 8px',
               borderRadius: 999,
               cursor: 'pointer',
               fontSize: '0.78rem',
@@ -530,11 +535,11 @@ export default function App() {
               fontFamily: 'var(--font-title)',
               display: 'flex',
               alignItems: 'center',
-              gap: 5
+              gap: 4
             }}
           >
             <span>{audioMuted ? '🔇' : '🔊'}</span>
-            <span>{audioMuted ? 'TẮT ÂM' : 'BẬT NHẠC'}</span>
+            <span className="header-btn-text">{audioMuted ? 'TẮT ÂM' : 'BẬT NHẠC'}</span>
           </button>
 
           {/* Nút Bật/Tắt Giọng MC Gameshow (Voice Announcer Toggle) */}
@@ -550,7 +555,7 @@ export default function App() {
               border: '2px solid var(--comic-black)',
               boxShadow: '0 2px 0 var(--comic-black)',
               color: voiceMuted ? '#DC2626' : '#1D4ED8',
-              padding: '4px 10px',
+              padding: '4px 8px',
               borderRadius: 999,
               cursor: 'pointer',
               fontSize: '0.78rem',
@@ -558,11 +563,11 @@ export default function App() {
               fontFamily: 'var(--font-title)',
               display: 'flex',
               alignItems: 'center',
-              gap: 5
+              gap: 4
             }}
           >
             <span>{voiceMuted ? '🔇' : '🎙️'}</span>
-            <span>{voiceMuted ? 'TẮT MC' : 'MC BẬT'}</span>
+            <span className="header-btn-text">{voiceMuted ? 'TẮT MC' : 'MC BẬT'}</span>
           </button>
 
           <ConnectionBadge isConnected={isConnected} pingMs={pingMs} />

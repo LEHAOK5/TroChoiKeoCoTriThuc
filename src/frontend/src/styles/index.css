@@ -161,6 +161,7 @@ html, body {
   position: sticky;
   top: 0;
   z-index: 50;
+  transition: all 0.2s ease;
 }
 
 .brand-box {
@@ -179,6 +180,13 @@ html, body {
   text-transform: uppercase;
 }
 
+.brand-title .short-title {
+  display: none;
+}
+.brand-title .full-title {
+  display: inline;
+}
+
 .booth-tag {
   font-size: 0.72rem;
   font-weight: 800;
@@ -187,6 +195,18 @@ html, body {
   border: 1.5px solid var(--blue-light);
   padding: 2px 8px;
   border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* Header Action Buttons Responsive Text */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-btn-text {
+  display: inline;
 }
 
 /* Connection Badge */
@@ -201,6 +221,7 @@ html, body {
   background: #F1F5F9;
   border: 2px solid var(--comic-black);
   box-shadow: 0 2px 0 var(--comic-black);
+  white-space: nowrap;
 }
 
 .status-dot {
@@ -224,7 +245,7 @@ html, body {
 }
 
 /* ========================================================
-   LAYOUT: MOBILE 100dvh (3-Tier) & DESKTOP (max-w-5xl)
+   LAYOUT: MOBILE (Fit in 100dvh) & DESKTOP (max-w-5xl)
    ======================================================== */
 .game-layout {
   flex: 1;
@@ -237,17 +258,41 @@ html, body {
   padding: 8px 14px 12px;
   position: relative;
   z-index: 1;
+  justify-content: space-between;
 }
 
 @media (max-width: 640px) {
+  .app-header {
+    height: 48px;
+    padding: 0 10px;
+  }
+  .brand-title {
+    font-size: 1.05rem;
+  }
+  .brand-title .full-title {
+    display: none;
+  }
+  .brand-title .short-title {
+    display: inline;
+  }
+  .booth-tag {
+    display: none;
+  }
+  .header-actions {
+    gap: 5px;
+  }
+  .header-btn-text {
+    display: none;
+  }
+  .connection-badge {
+    padding: 3px 8px;
+    font-size: 0.7rem;
+  }
   .game-layout {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    height: auto;
-    min-height: calc(100dvh - 56px);
-    padding: 6px 10px 12px;
-    overflow-y: auto;
+    height: calc(100dvh - 48px);
+    padding: 4px 8px 8px;
+    gap: 6px;
+    overflow: hidden;
   }
 }
 
@@ -693,10 +738,33 @@ html, body {
   gap: 10px;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
+  .buzzer-tactile {
+    width: 125px;
+    height: 125px;
+  }
+  .buzzer-icon {
+    font-size: 2.2rem;
+  }
+  .buzzer-label {
+    font-size: 0.95rem;
+  }
   .answer-grid {
-    grid-template-columns: 1fr;
-    gap: 8px;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .answer-btn {
+    min-height: 46px;
+    padding: 6px 10px;
+    font-size: 0.88rem;
+    gap: 6px;
+    border-radius: 12px;
+  }
+  .glyph-badge {
+    width: 26px;
+    height: 26px;
+    font-size: 0.85rem;
+    border-radius: 8px;
   }
 }
 

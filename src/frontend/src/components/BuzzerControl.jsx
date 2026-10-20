@@ -16,6 +16,13 @@ export default function BuzzerControl({
 }) {
   const [selectedIdx, setSelectedIdx] = useState(null);
   const [secondsLeft, setSecondsLeft] = useState(10);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     setSelectedIdx(null);
@@ -55,12 +62,12 @@ export default function BuzzerControl({
     <div className="interaction-tier" style={{ width: '100%', maxWidth: 740, margin: '0 auto' }}>
       {/* Top Banner Status Bar based on UI State */}
       {isWaiting && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: 8, padding: '0 4px' }}>
-          <span style={{ color: 'var(--text-muted)', fontWeight: 800, fontSize: '0.85rem' }}>
-            🔒 Đọc kỹ 4 đáp án & Bấm chuông vàng để giành quyền trả lời:
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: isMobile ? 4 : 8, padding: '0 4px' }}>
+          <span style={{ color: 'var(--text-muted)', fontWeight: 800, fontSize: isMobile ? '0.78rem' : '0.85rem' }}>
+            {isMobile ? '🔔 Bấm chuông vàng để giành quyền trả lời:' : '🔒 Đọc kỹ 4 đáp án & Bấm chuông vàng để giành quyền trả lời:'}
           </span>
           {deadline && (
-            <span className="timer-pill">
+            <span className="timer-pill" style={{ fontSize: isMobile ? '0.75rem' : '0.85rem', padding: isMobile ? '2px 8px' : '4px 10px' }}>
               ⏱️ {secondsLeft}s
             </span>
           )}

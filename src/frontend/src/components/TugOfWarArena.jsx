@@ -66,6 +66,17 @@ export default function TugOfWarArena({
   // Đội hình Team B: Thứ tự từ đầu (Tiên phong #1) đến đuôi (Khóa đuôi #5)
   const teamBIndices = [0, 1, 2, 3, 4];
 
+  // Mobile detection for dynamic compact responsive scaling
+  const [isMobile, setIsMobile] = React.useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
+  React.useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const pullerShift = (ropeOffset / 10) * (isMobile ? 18 : 35);
+  const pullerOverlap = isMobile ? -22 : -16;
+
   return (
     <div className="arena-tier">
       <div className={`arena-card ${isMatchPoint ? 'rebound-active-border' : ''}`}>
@@ -80,61 +91,63 @@ export default function TugOfWarArena({
         <div className="score-row">
           {/* Team A Badge */}
           <div className="team-badge" style={{ flexDirection: 'column', alignItems: 'flex-start', flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div className="team-avatar team-a">
+            <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 10 }}>
+              <div className="team-avatar team-a" style={{ width: isMobile ? 34 : 44, height: isMobile ? 34 : 44, fontSize: isMobile ? '1.1rem' : '1.4rem' }}>
                 <span>⚡</span>
               </div>
               <div>
-                <div className="team-title" style={{ color: '#0284C7' }}>
-                  ĐỘI A - VHU TIA CHỚP
+                <div className="team-title" style={{ color: '#0284C7', fontSize: isMobile ? '0.78rem' : '0.95rem' }}>
+                  {isMobile ? 'ĐỘI A' : 'ĐỘI A - VHU TIA CHỚP'}
                 </div>
               </div>
-              <div className="score-display team-a" style={{ marginLeft: 6 }}>
+              <div className="score-display team-a" style={{ marginLeft: isMobile ? 4 : 6, fontSize: isMobile ? '1.6rem' : '2.2rem' }}>
                 {scoreA}
               </div>
             </div>
             {/* 10-Notch Energy Bar for Team A */}
-            <div className="notch-bar">
+            <div className="notch-bar" style={{ gap: isMobile ? 2 : 3 }}>
               {Array.from({ length: 10 }).map((_, idx) => (
                 <div
                   key={idx}
                   className={`notch-seg ${idx < scoreA ? 'active-a' : ''}`}
+                  style={{ height: isMobile ? 5 : 7 }}
                 />
               ))}
             </div>
           </div>
 
           {/* Center Boundary VS Badge */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '0 8px' }}>
-            <div className="vs-pill">
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: isMobile ? '0 4px' : '0 8px' }}>
+            <div className="vs-pill" style={{ fontSize: isMobile ? '0.7rem' : '0.78rem', padding: isMobile ? '2px 8px' : '4px 10px' }}>
               RANH GIỚI
             </div>
-            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: 'var(--text-muted)', marginTop: 2 }}>
-              MỤC TIÊU 10đ
+            <span style={{ fontSize: isMobile ? '0.62rem' : '0.68rem', fontWeight: 800, color: 'var(--text-muted)', marginTop: 2 }}>
+              10đ
             </span>
           </div>
 
           {/* Team B Badge */}
           <div className="team-badge" style={{ flexDirection: 'column', alignItems: 'flex-end', textAlign: 'right', flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexDirection: 'row-reverse' }}>
-              <div className="team-avatar team-b">
+            <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 10, flexDirection: 'row-reverse' }}>
+              <div className="team-avatar team-b" style={{ width: isMobile ? 34 : 44, height: isMobile ? 34 : 44, fontSize: isMobile ? '1.1rem' : '1.4rem' }}>
                 <span>🔥</span>
               </div>
               <div>
-                <div className="team-title" style={{ color: '#EA580C' }}>
-                  ĐỘI B - VHU NGỌN LỬA
+                <div className="team-title" style={{ color: '#EA580C', fontSize: isMobile ? '0.78rem' : '0.95rem' }}>
+                  {isMobile ? 'ĐỘI B' : 'ĐỘI B - VHU NGỌN LỬA'}
                 </div>
               </div>
-              <div className="score-display team-b" style={{ marginRight: 6 }}>
+              <div className="score-display team-b" style={{ marginRight: isMobile ? 4 : 6, fontSize: isMobile ? '1.6rem' : '2.2rem' }}>
                 {scoreB}
               </div>
             </div>
             {/* 10-Notch Energy Bar for Team B */}
-            <div className="notch-bar" style={{ flexDirection: 'row-reverse' }}>
+            <div className="notch-bar" style={{ flexDirection: 'row-reverse', gap: isMobile ? 2 : 3 }}>
               {Array.from({ length: 10 }).map((_, idx) => (
                 <div
                   key={idx}
                   className={`notch-seg ${idx < scoreB ? 'active-b' : ''}`}
+                  style={{ height: isMobile ? 5 : 7 }}
                 />
               ))}
             </div>
@@ -191,7 +204,7 @@ export default function TugOfWarArena({
                 alt="VHU Logo"
                 style={{ width: 16, height: 16, objectFit: 'contain' }}
               />
-              <span>HỘI THAO SINH VIÊN VĂN HIẾN</span>
+              <span>{isMobile ? 'HỘI THAO VHU' : 'HỘI THAO SINH VIÊN VĂN HIẾN'}</span>
             </div>
 
             {/* Team B Cheering Audience (Right Stand) */}
@@ -284,12 +297,13 @@ export default function TugOfWarArena({
             className="team-pullers-container team-a-pullers"
             style={{
               position: 'absolute',
-              left: '2%',
+              left: isMobile ? '1%' : '2%',
               bottom: 6,
               display: 'flex',
               alignItems: 'flex-end',
               zIndex: 8,
-              transform: `translateX(${(ropeOffset / 10) * 35}px)`,
+              transform: `translateX(${pullerShift}px) ${isMobile ? 'scale(0.68)' : 'scale(1)'}`,
+              transformOrigin: 'bottom left',
               transition: 'transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)'
             }}
           >
@@ -310,7 +324,7 @@ export default function TugOfWarArena({
               <div
                 key={`a-pos-${origIdx}`}
                 style={{
-                  marginRight: renderIdx === 4 ? 0 : -16,
+                  marginRight: renderIdx === 4 ? 0 : pullerOverlap,
                   zIndex: renderIdx + 1
                 }}
               >
@@ -329,12 +343,13 @@ export default function TugOfWarArena({
             className="team-pullers-container team-b-pullers"
             style={{
               position: 'absolute',
-              right: '2%',
+              right: isMobile ? '1%' : '2%',
               bottom: 6,
               display: 'flex',
               alignItems: 'flex-end',
               zIndex: 8,
-              transform: `translateX(${(ropeOffset / 10) * 35}px)`,
+              transform: `translateX(${pullerShift}px) ${isMobile ? 'scale(0.68)' : 'scale(1)'}`,
+              transformOrigin: 'bottom right',
               transition: 'transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)'
             }}
           >
@@ -342,7 +357,7 @@ export default function TugOfWarArena({
               <div
                 key={`b-pos-${origIdx}`}
                 style={{
-                  marginLeft: renderIdx === 0 ? 0 : -16,
+                  marginLeft: renderIdx === 0 ? 0 : pullerOverlap,
                   zIndex: 5 - renderIdx
                 }}
               >
