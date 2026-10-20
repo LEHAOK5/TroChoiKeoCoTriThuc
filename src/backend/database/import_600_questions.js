@@ -4,43 +4,35 @@ const { pool, query } = require('../src/db/pool');
 const { getRandomQuestions } = require('../src/repositories/question.repository');
 
 async function import600Questions() {
-  console.log('=== BẮT ĐẦU DỌN DẸP CSDL & NẠP 600 CÂU HỎI MỚI ===');
-
-  // 1. Đọc file JSON chứa 600 câu hỏi đã được trích xuất
-  let jsonPath = path.join(__dirname, 'questions_600.json');
+  console.log('--- STARTING 600 UNIQUE QUESTIONS IMPORT TO SUPABASE ---');
+  
+  // 1. Read questions_600.json
+  const jsonPath = path.join(__dirname, 'questions_600.json');
   if (!fs.existsSync(jsonPath)) {
-    jsonPath = path.join(__dirname, '../../../scratch/parsed_600_questions.json');
-  }
-  if (!fs.existsSync(jsonPath)) {
-    throw new Error(`Không tìm thấy file: ${jsonPath}`);
+    throw new Error(`File not found: ${jsonPath}`);
   }
   const questions = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
-  console.log(`Đã đọc ${questions.length} câu hỏi từ file JSON.`);
+  console.log(`Loaded ${questions.length} questions from JSON.`);
 
   if (questions.length !== 600) {
-    throw new Error(`Yêu cầu đúng 600 câu hỏi, hiện có ${questions.length}`);
+    throw new Error(`Expected exactly 600 questions, got ${questions.length}`);
   }
 
-  // 2. Thống kê trước khi xóa
-  const beforeStats = await query(`
-    SELECT 
-      (SELECT count(*) FROM questions) as total_questions,
-      (SELECT count(*) FROM booth_registrations) as total_registrations,
-      (SELECT count(*) FROM match_history) as total_matches,
-      (SELECT count(*) FROM admin_users) as total_admins
-  `);
-  console.log('Thống kê trước khi dọn dẹp:', beforeStats.rows[0]);
+  // 2. Check current questions in DB
+  const beforeCount = await query('SELECT count(*) as count, count(distinct question) as unique_count FROM questions');
+  console.log(`Current questions in DB before import: Total = ${beforeCount.rows[0].count}, Unique = ${beforeCount.rows[0].unique_count}`);
 
-  // 3. Thực hiện dọn dẹp các bảng dữ liệu cũ
-  console.log('Đang làm sạch các bảng questions, booth_registrations, match_history...');
-  await query('TRUNCATE TABLE questions, booth_registrations, match_history RESTART IDENTITY CASCADE');
-  console.log('Đã làm sạch và reset ID của 3 bảng thành công!');
+  // 3. Clear old questions in database
+  console.log('Truncating questions table...');
+  await query('TRUNCATE TABLE questions RESTART IDENTITY');
+  console.log('Table questions truncated successfully.');
 
-  // 4. Nạp 600 câu hỏi mới theo lô (chunk 50)
-  console.log('Bắt đầu nạp 600 câu hỏi vào bảng questions...');
+  // 4. Insert 600 questions in batches of 50
+  console.log('Inserting 600 unique questions in batches...');
   const chunkSize = 50;
   for (let i = 0; i < questions.length; i += chunkSize) {
     const chunk = questions.slice(i, i + chunkSize);
+    
     const valuePlaceholders = [];
     const values = [];
     let paramIdx = 1;
@@ -49,7 +41,7 @@ async function import600Questions() {
       valuePlaceholders.push(`($${paramIdx}, $${paramIdx+1}, $${paramIdx+2}, $${paramIdx+3}, $${paramIdx+4})`);
       values.push(
         q.category,
-        q.question,
+        q.question.trim(),
         JSON.stringify(q.options),
         q.answer_index,
         q.explanation || ''
@@ -63,43 +55,37 @@ async function import600Questions() {
     `;
 
     await query(insertSql, values);
-    process.stdout.write(`Đã nạp: ${Math.min(i + chunkSize, questions.length)} / ${questions.length} câu...\r`);
+    process.stdout.write(`Inserted ${Math.min(i + chunkSize, questions.length)} / ${questions.length} questions...\r`);
   }
-  console.log('\nĐã nạp thành công toàn bộ 600 câu hỏi!');
+  console.log('\nAll 600 questions inserted successfully!');
 
-  // 5. Kiểm tra & xác minh số lượng bản ghi sau khi nạp
+  // 5. Verify stats in Supabase DB
   const afterStats = await query(`
     SELECT 
-      (SELECT count(*) FROM questions) as total_questions,
-      (SELECT count(*) FILTER (WHERE category = 'IT') FROM questions) as it_questions,
-      (SELECT count(*) FILTER (WHERE category = 'LAW') FROM questions) as law_questions,
-      (SELECT count(*) FROM booth_registrations) as total_registrations,
-      (SELECT count(*) FROM match_history) as total_matches,
-      (SELECT count(*) FROM admin_users) as total_admins
+      count(*) as total,
+      count(distinct question) as total_unique,
+      count(*) FILTER (WHERE category = 'LAW') as total_law,
+      count(*) FILTER (WHERE category = 'IT') as total_it
+    FROM questions
   `);
-  console.log('Thống kê sau khi nạp mới:', afterStats.rows[0]);
+  console.log('Verification DB Stats:', afterStats.rows[0]);
 
-  // 6. Kiểm tra hàm lấy ngẫu nhiên câu hỏi của game (getRandomQuestions)
-  console.log('Kiểm tra hàm getRandomQuestions(35)...');
+  // 6. Test getRandomQuestions
+  console.log('Testing getRandomQuestions(35)...');
   const sample = await getRandomQuestions(35);
-  console.log(`Lấy thành công ${sample.length} câu hỏi ngẫu nhiên cho trận đấu.`);
-  if (sample.length > 0) {
-    console.log('Mẫu câu hỏi ngẫu nhiên số 1:', {
-      id: sample[0].id,
-      category: sample[0].category,
-      question: sample[0].question.slice(0, 70) + '...',
-      options: sample[0].options,
-      answer_index: sample[0].answer_index,
-      explanation: sample[0].explanation ? sample[0].explanation.slice(0, 60) + '...' : ''
-    });
-  }
+  console.log(`getRandomQuestions returned ${sample.length} questions.`);
+  const sampleCategories = sample.reduce((acc, q) => {
+    acc[q.category] = (acc[q.category] || 0) + 1;
+    return acc;
+  }, {});
+  console.log('Sample question categories distribution:', sampleCategories);
 
-  console.log('=== HOÀN TẤT THÀNH CÔNG ===');
+  console.log('--- 600 QUESTIONS IMPORT COMPLETED PERFECTLY ---');
   await pool.end();
   process.exit(0);
 }
 
 import600Questions().catch(err => {
-  console.error('Lỗi trong quá trình thực thi:', err);
+  console.error('Import failed with error:', err);
   process.exit(1);
 });

@@ -12,6 +12,7 @@ class GameRoom {
   constructor(roomCode, io, options = {}) {
     this.roomCode = roomCode;
     this.io = io;
+    this.roomManager = options.roomManager || null;
     this.mode = options.mode || '1vs1';
     this.maxPerTeam = options.maxPerTeam || parseInt(this.mode[0], 10) || 1;
     this.createdAt = new Date();
@@ -314,12 +315,26 @@ class GameRoom {
     this.roundCount = 0;
     this.startedAt = new Date();
 
-    // Preload 30-40 balanced questions from DB
-    this.questions = await getRandomQuestions(35, this.usedQuestionIds);
+    // Preload 35 balanced questions from DB, excluding questions already used across matches
+    const excludeIds = this.roomManager 
+      ? this.roomManager.getGlobalUsedQuestionIds() 
+      : this.usedQuestionIds;
+
+    this.questions = await getRandomQuestions(35, excludeIds);
     if (!this.questions || this.questions.length === 0) {
-      logger.info('GameRoom', `Exhausted usedQuestionIds (${this.usedQuestionIds.length}), recycling all questions.`);
+      logger.info('GameRoom', `Exhausted excludeIds (${excludeIds.length}), recycling all questions.`);
+      if (this.roomManager) this.roomManager.clearGlobalUsedQuestionIds();
       this.usedQuestionIds = [];
       this.questions = await getRandomQuestions(35, []);
+    }
+
+    // Record selected question IDs into used lists so subsequent matches don't repeat them
+    if (this.questions && this.questions.length > 0) {
+      const selectedIds = this.questions.map(q => q.id);
+      if (this.roomManager) {
+        this.roomManager.recordUsedQuestionIds(selectedIds);
+      }
+      this.usedQuestionIds.push(...selectedIds);
     }
     this.currentQuestionIndex = -1;
 
@@ -678,7 +693,7 @@ class GameRoom {
     this.currentQuestion = null;
     this.buzzerWinner = null;
     this.reboundData = null;
-    this.usedQuestionIds = [];
+    // Note: Do not clear this.usedQuestionIds here so rematches continue with fresh questions
 
     for (const player of this.players.values()) {
       player.isReady = false;

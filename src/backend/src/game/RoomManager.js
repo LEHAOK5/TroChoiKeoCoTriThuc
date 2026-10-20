@@ -8,8 +8,33 @@ class RoomManager {
   constructor(io) {
     this.io = io;
     this.rooms = new Map(); // roomCode -> GameRoom
+    // Global used question IDs across matches to prevent repetition
+    this.globalUsedQuestionIds = new Set();
     // Create initial room KCO1 in 1vs1 mode
     this.getOrCreateRoom('KCO1', '1vs1');
+  }
+
+  getGlobalUsedQuestionIds() {
+    return Array.from(this.globalUsedQuestionIds);
+  }
+
+  recordUsedQuestionIds(ids) {
+    if (!Array.isArray(ids)) return;
+    for (const id of ids) {
+      this.globalUsedQuestionIds.add(id);
+    }
+    logger.info('RoomManager', `Recorded ${ids.length} used questions. Total unique used questions: ${this.globalUsedQuestionIds.size}/600`);
+    // If pool is nearing exhaustion (> 550 used out of 600), retain only the most recent 35
+    if (this.globalUsedQuestionIds.size >= 550) {
+      logger.info('RoomManager', `Recycling globalUsedQuestionIds (reached ${this.globalUsedQuestionIds.size}/600). Retaining most recent 35.`);
+      const recent = ids.slice(-35);
+      this.globalUsedQuestionIds = new Set(recent);
+    }
+  }
+
+  clearGlobalUsedQuestionIds() {
+    this.globalUsedQuestionIds.clear();
+    logger.info('RoomManager', 'Cleared globalUsedQuestionIds.');
   }
 
   createRoom({ mode = '1vs1', customCode = null } = {}) {
@@ -22,7 +47,7 @@ class RoomManager {
     }
 
     const maxPerTeam = parseInt(mode[0], 10) || 1;
-    const room = new GameRoom(code, this.io, { mode, maxPerTeam });
+    const room = new GameRoom(code, this.io, { mode, maxPerTeam, roomManager: this });
     this.rooms.set(code, room);
     logger.info('RoomManager', `Created managed room: ${code} (${mode}, ${maxPerTeam} vs ${maxPerTeam})`);
     return room;
@@ -32,7 +57,7 @@ class RoomManager {
     const code = (roomCode || generateRoomCode()).toUpperCase().trim();
     if (!this.rooms.has(code)) {
       const maxPerTeam = parseInt(mode[0], 10) || 1;
-      const room = new GameRoom(code, this.io, { mode, maxPerTeam });
+      const room = new GameRoom(code, this.io, { mode, maxPerTeam, roomManager: this });
       this.rooms.set(code, room);
       logger.info('RoomManager', `Created room: ${code} (${mode})`);
     }

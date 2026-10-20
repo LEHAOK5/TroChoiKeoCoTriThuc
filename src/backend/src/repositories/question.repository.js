@@ -29,7 +29,7 @@ async function getRandomQuestions(limit = 30, excludeIds = []) {
 
     let combined = [...itRes.rows, ...lawRes.rows];
     
-    // If combined has fewer than limit (e.g. if one category has 0 questions or fewer than half), fill remainder
+    // If combined has fewer than limit (e.g. if one category has fewer than half), fill remainder from other category
     if (combined.length < limit) {
       const alreadyFetchedIds = [...excludeIds, ...combined.map(q => q.id)];
       const needed = limit - combined.length;
@@ -44,13 +44,24 @@ async function getRandomQuestions(limit = 30, excludeIds = []) {
       combined.push(...fillRes.rows);
     }
 
-    // Fallback: If excluded questions exhausted table, fetch without exclusion
-    if (combined.length === 0) {
-      const fallbackRes = await query(`SELECT id, category, question, options, answer_index, explanation FROM questions ORDER BY RANDOM() LIMIT $1;`, [limit]);
-      combined = fallbackRes.rows;
+    // Fallback: If excluded questions exhausted table, fill remainder from general pool (recycling)
+    if (combined.length < limit) {
+      const inCurrentMatchIds = combined.map(q => q.id);
+      const needed = limit - combined.length;
+      const recycleSql = `
+        SELECT id, category, question, options, answer_index, explanation
+        FROM questions
+        ${inCurrentMatchIds.length > 0 ? `WHERE id != ALL($2::int[])` : ''}
+        ORDER BY RANDOM()
+        LIMIT $1;
+      `;
+      const recycleRes = await query(recycleSql, inCurrentMatchIds.length > 0 ? [needed, inCurrentMatchIds] : [needed]);
+      combined.push(...recycleRes.rows);
     }
 
-    return combined.sort(() => Math.random() - 0.5);
+    // Shuffle and return exactly limit questions
+    const shuffled = combined.sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, limit);
   } catch (err) {
     console.error('[QuestionRepo] Error getting random questions:', err.message);
     return [];
