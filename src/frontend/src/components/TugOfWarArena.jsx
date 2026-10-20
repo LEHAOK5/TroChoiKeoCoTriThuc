@@ -54,6 +54,13 @@ export default function TugOfWarArena({
   const isAPulling = ropeOffset < -1;
   const isBPulling = ropeOffset > 1;
 
+  // Tính trạng thái tiếc nuối khi đội nhà sai hoặc đối thủ kéo mạnh
+  const isAWrong = Boolean(lastResult && !lastResult.isCorrect && (lastResult.answeringTeam === 'A' || lastResult.failedTeam === 'A' || lastResult.reason === 'BOTH_INCORRECT'));
+  const isBWrong = Boolean(lastResult && !lastResult.isCorrect && (lastResult.answeringTeam === 'B' || lastResult.failedTeam === 'B' || lastResult.reason === 'BOTH_INCORRECT'));
+
+  const isADismayed = isAWrong || isBCheering || ropeOffset > 2;
+  const isBDismayed = isBWrong || isACheering || ropeOffset < -2;
+
   // Đội hình Team A: Thứ tự từ đuôi (Khóa đuôi #5) đến đầu (Tiên phong #1)
   const teamAIndices = [4, 3, 2, 1, 0];
   // Đội hình Team B: Thứ tự từ đầu (Tiên phong #1) đến đuôi (Khóa đuôi #5)
@@ -152,7 +159,12 @@ export default function TugOfWarArena({
             }}
           >
             {/* Team A Cheering Audience (Left Stand) */}
-            <CrowdCheer team="A" isCheering={isACheering || isAPulling} />
+            <CrowdCheer
+              team="A"
+              isCheering={isACheering || isAPulling}
+              isDismayed={isADismayed}
+              isBuzzed={isBuzzed}
+            />
 
             {/* Center Campus Tournament Sign with Official VHU Logo */}
             <div
@@ -183,7 +195,12 @@ export default function TugOfWarArena({
             </div>
 
             {/* Team B Cheering Audience (Right Stand) */}
-            <CrowdCheer team="B" isCheering={isBCheering || isBPulling} />
+            <CrowdCheer
+              team="B"
+              isCheering={isBCheering || isBPulling}
+              isDismayed={isBDismayed}
+              isBuzzed={isBuzzed}
+            />
           </div>
 
           {/* 🦹‍♂️ Cute Chibi Referee Character right in the middle */}

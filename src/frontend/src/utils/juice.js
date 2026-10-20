@@ -1,5 +1,16 @@
 import { triggerHaptic } from './haptics';
-import { playCorrect, playWrong, playBuzzer, playRopePull, playMatchPoint, playRebound, playWhistle } from './audio';
+import {
+  playCorrect,
+  playWrong,
+  playBuzzer,
+  playRopePull,
+  playMatchPoint,
+  playRebound,
+  playWhistle,
+  playCrowdMurmur,
+  playCrowdCheer,
+  playCrowdGasp
+} from './audio';
 
 export function triggerScreenShake(duration = 160) {
   const el = document.querySelector('.game-layout') || document.body;
@@ -49,26 +60,31 @@ export const Juice = {
   onBuzzerSelf: () => {
     triggerHaptic([40, 30, 80]);
     playBuzzer();
+    playCrowdMurmur();
   },
   onBuzzerOpponent: () => {
     triggerHaptic(30);
+    playCrowdMurmur();
   },
   onCorrect: (team) => {
     triggerHaptic([50, 40, 90]);
     playWhistle();
     playCorrect();
     playRopePull();
+    playCrowdCheer();
     triggerScreenShake(180);
     triggerPullParticles(team);
   },
   onWrong: () => {
     triggerHaptic(120);
     playWrong();
+    playCrowdGasp();
     triggerScreenShake(120);
   },
   onStealOpen: () => {
     triggerHaptic([60, 40]);
     playRebound();
+    playCrowdMurmur();
   },
   onMatchPoint: () => {
     triggerHaptic([80, 50, 100]);

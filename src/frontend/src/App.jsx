@@ -14,6 +14,9 @@ import {
   playRopePull,
   playCountdown,
   playVictory,
+  playCrowdMurmur,
+  playCrowdCheer,
+  playCrowdGasp,
   setBGMMode,
   stopBGM,
   playRegistrationTheme,
@@ -216,6 +219,7 @@ export default function App() {
 
     socket.on('buzzerAwarded', (data) => {
       playBuzzer();
+      playCrowdMurmur();
       setBuzzerData(data);
       setDeadline(data.deadline);
 
@@ -234,16 +238,19 @@ export default function App() {
       if (result.isCorrect) {
         playCorrect();
         playRopePull();
+        playCrowdCheer();
         if (Math.abs(result.ropeOffset || 0) >= 2) {
           setBGMMode('TENSION');
         }
       } else {
         playWrong();
+        playCrowdGasp();
       }
     });
 
     socket.on('reboundOpen', (data) => {
       playWrong();
+      playCrowdGasp();
       setReboundData(data);
       setDeadline(data.deadline);
 
@@ -254,6 +261,7 @@ export default function App() {
 
     socket.on('bothTeamsWrong', (data) => {
       playWrong();
+      playCrowdGasp();
       setLastResult(data);
       setUiState('LOCKED');
     });

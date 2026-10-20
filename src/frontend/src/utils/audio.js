@@ -325,6 +325,155 @@ export function playWhistle() {
   });
 }
 
+// 10. Crowd Murmur / Suspense Gasp (Khi bấm chuông - khán đài nín thở xì xào)
+export function playCrowdMurmur() {
+  if (isAudioMuted) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const dur = 1.2;
+
+  // Noise buffer for crowd rustle
+  const bufferSize = Math.floor(ctx.sampleRate * dur);
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const output = buffer.getChannelData(0);
+  for (let i = 0; i < bufferSize; i++) {
+    output[i] = Math.random() * 2 - 1;
+  }
+
+  const whiteNoise = ctx.createBufferSource();
+  whiteNoise.buffer = buffer;
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.setValueAtTime(450, now);
+  filter.frequency.exponentialRampToValueAtTime(750, now + 0.4);
+  filter.frequency.exponentialRampToValueAtTime(380, now + dur);
+  filter.Q.setValueAtTime(2.2, now);
+
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.01, now);
+  gain.gain.linearRampToValueAtTime(0.18, now + 0.15);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
+  whiteNoise.connect(filter);
+  filter.connect(gain);
+  gain.connect(getMasterOutput());
+
+  // Low rumble
+  const rumble = ctx.createOscillator();
+  const rumbleGain = ctx.createGain();
+  rumble.type = 'sine';
+  rumble.frequency.setValueAtTime(75, now);
+  rumble.frequency.linearRampToValueAtTime(55, now + dur);
+  rumbleGain.gain.setValueAtTime(0.12, now);
+  rumbleGain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
+  rumble.connect(rumbleGain);
+  rumbleGain.connect(getMasterOutput());
+
+  whiteNoise.start(now);
+  whiteNoise.stop(now + dur);
+  rumble.start(now);
+  rumble.stop(now + dur);
+}
+
+// 11. Crowd Cheer & Applause (Khi trả lời đúng - tiếng hô Yeahhh! 🎉 và vỗ tay rộn rã 👏)
+export function playCrowdCheer() {
+  if (isAudioMuted) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const dur = 1.6;
+
+  // Layer 1: Formant crowd vocal sweep (Yeahhhh!)
+  const freqs = [380, 460, 580];
+  freqs.forEach((f, idx) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+
+    osc.type = idx % 2 === 0 ? 'sawtooth' : 'triangle';
+    osc.frequency.setValueAtTime(f, now);
+    osc.frequency.exponentialRampToValueAtTime(f * 1.8, now + 0.6);
+    osc.frequency.exponentialRampToValueAtTime(f * 1.3, now + dur);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(900, now);
+    filter.frequency.exponentialRampToValueAtTime(1800, now + 0.5);
+    filter.frequency.exponentialRampToValueAtTime(600, now + dur);
+
+    gain.gain.setValueAtTime(0.01, now);
+    gain.gain.linearRampToValueAtTime(0.16, now + 0.12);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(getMasterOutput());
+
+    osc.start(now);
+    osc.stop(now + dur);
+  });
+
+  // Layer 2: Rapid clapping burst
+  const claps = 12;
+  for (let i = 0; i < claps; i++) {
+    const clapTime = now + 0.15 + (i * 0.09) + (Math.random() * 0.03);
+    const clapOsc = ctx.createOscillator();
+    const clapGain = ctx.createGain();
+    clapOsc.type = 'triangle';
+    clapOsc.frequency.setValueAtTime(800 + Math.random() * 400, clapTime);
+
+    clapGain.gain.setValueAtTime(0.08, clapTime);
+    clapGain.gain.exponentialRampToValueAtTime(0.001, clapTime + 0.05);
+
+    clapOsc.connect(clapGain);
+    clapGain.connect(getMasterOutput());
+
+    clapOsc.start(clapTime);
+    clapOsc.stop(clapTime + 0.06);
+  }
+}
+
+// 12. Crowd Gasp & Sigh (Khi trả lời sai - tiếng thở dài tiếc nuối Oooooh! 😮)
+export function playCrowdGasp() {
+  if (isAudioMuted) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const dur = 0.9;
+
+  // Descending formant vocal resonance (Oooooh...)
+  [480, 520].forEach(f => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(f, now);
+    osc.frequency.exponentialRampToValueAtTime(f * 0.45, now + dur);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(750, now);
+    filter.frequency.exponentialRampToValueAtTime(260, now + dur);
+    filter.Q.setValueAtTime(3.0, now);
+
+    gain.gain.setValueAtTime(0.01, now);
+    gain.gain.linearRampToValueAtTime(0.2, now + 0.08);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(getMasterOutput());
+
+    osc.start(now);
+    osc.stop(now + dur);
+  });
+}
+
 // =====================================================================
 // PART 2: DYNAMIC SYNTHESIZED BGM ENGINE
 // Modes: 'OFF' | 'LOBBY' | 'COUNTDOWN' | 'BATTLE' | 'TENSION'
