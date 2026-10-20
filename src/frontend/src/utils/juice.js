@@ -1,5 +1,5 @@
 import { triggerHaptic } from './haptics';
-import { playCorrect, playWrong, playBuzzer, playRopePull, playMatchPoint, playRebound } from './audio';
+import { playCorrect, playWrong, playBuzzer, playRopePull, playMatchPoint, playRebound, playWhistle } from './audio';
 
 export function triggerScreenShake(duration = 160) {
   const el = document.querySelector('.game-layout') || document.body;
@@ -55,6 +55,7 @@ export const Juice = {
   },
   onCorrect: (team) => {
     triggerHaptic([50, 40, 90]);
+    playWhistle();
     playCorrect();
     playRopePull();
     triggerScreenShake(180);

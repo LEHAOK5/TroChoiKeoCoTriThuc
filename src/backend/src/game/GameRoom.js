@@ -381,7 +381,9 @@ class GameRoom {
     this.questionTimer = setTimeout(() => {
       if (this.state === ROOM_STATES.ROUND_BUZZ) {
         this.io.to(this.roomCode).emit(SOCKET_EVENTS.BOTH_TEAMS_WRONG, {
-          message: 'Hết thời gian bấm chuông! Chuyển sang câu hỏi tiếp theo.',
+          reason: 'BUZZER_TIMEOUT',
+          title: 'HẾT GIỜ BẤM CHUÔNG!',
+          message: 'Không có đội nào bấm chuông giành quyền trả lời!',
           correctIndex: q.answer_index,
           correctOption: q.options[q.answer_index],
           explanation: q.explanation,
@@ -389,7 +391,7 @@ class GameRoom {
           scoreB: this.scoreB,
           ropeOffset: this.ropeOffset
         });
-        setTimeout(() => this.nextQuestion(), 3000);
+        setTimeout(() => this.nextQuestion(), 3500);
       }
     }, config.BUZZ_TIMEOUT_SEC * 1000);
 
@@ -549,9 +551,11 @@ class GameRoom {
           }
         }, config.REBOUND_TIMEOUT_SEC * 1000);
       } else {
-        // Both teams failed
+        // Both teams failed (Both answered incorrectly)
         this.io.to(this.roomCode).emit(SOCKET_EVENTS.BOTH_TEAMS_WRONG, {
-          message: 'Cả hai đội đều không có câu trả lời chính xác! Chuyển câu tiếp theo.',
+          reason: 'BOTH_INCORRECT',
+          title: 'CẢ 2 ĐỘI ĐỀU TRẢ LỜI SAI!',
+          message: 'Cả hai đội đều không đưa ra câu trả lời chính xác. Không đội nào được điểm!',
           correctIndex: q.answer_index,
           correctOption: q.options[q.answer_index],
           explanation: q.explanation,
@@ -586,7 +590,9 @@ class GameRoom {
   handleReboundTimeout() {
     const q = this.currentQuestion;
     this.io.to(this.roomCode).emit(SOCKET_EVENTS.BOTH_TEAMS_WRONG, {
-      message: 'Hết thời gian cướp điểm! Chuyển sang câu hỏi tiếp theo.',
+      reason: 'REBOUND_TIMEOUT',
+      title: 'HẾT GIỜ CƯỚP ĐIỂM!',
+      message: 'Hết thời gian suy nghĩ cướp điểm. Vòng đấu kết thúc hòa!',
       correctIndex: q.answer_index,
       correctOption: q.options[q.answer_index],
       explanation: q.explanation,

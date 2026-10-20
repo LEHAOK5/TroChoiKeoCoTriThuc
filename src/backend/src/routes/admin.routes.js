@@ -6,7 +6,7 @@ const adminAuth = require('../middlewares/adminAuth');
 const { findAdminByUsername, updateLastLogin } = require('../repositories/admin.repository');
 const { countRegistrations, getAllRegistrations } = require('../repositories/registration.repository');
 const { countQuestions, getAllQuestions, createQuestion, updateQuestion, deleteQuestion } = require('../repositories/question.repository');
-const { getMatchStats } = require('../repositories/match.repository');
+const { getMatchStats, getRecentMatches } = require('../repositories/match.repository');
 const { ROOM_STATES } = require('../config/constants');
 
 function createAdminRouter(roomManager) {
@@ -203,6 +203,17 @@ function createAdminRouter(roomManager) {
       }
 
       res.json({ success: true, count: list.length, data: list });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // 4b. Match history list
+  router.get('/matches', async (req, res, next) => {
+    try {
+      const limit = parseInt(req.query.limit, 10) || 100;
+      const matches = await getRecentMatches(limit);
+      res.json({ success: true, count: matches.length, matches });
     } catch (err) {
       next(err);
     }

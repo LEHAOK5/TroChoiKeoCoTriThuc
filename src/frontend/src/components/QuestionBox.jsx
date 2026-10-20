@@ -23,33 +23,47 @@ export default function QuestionBox({ question, deadline }) {
 
   return (
     <div className="question-tier">
-      <div className="quiz-card" style={{ boxShadow: 'var(--elev-2)' }}>
+      <div className="quiz-card">
+        {/* Header Metadata with Comic Badges */}
         <div className="quiz-meta">
           <span className={`topic-badge ${isIT ? 'topic-it' : 'topic-law'}`}>
             {isIT ? '💻 CÔNG NGHỆ THÔNG TIN' : '⚖️ PHÁP LUẬT ĐỜI SỐNG'}
           </span>
+
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <span
               style={{
-                fontSize: '0.8rem',
-                color: 'var(--color-steal)',
+                fontSize: '0.78rem',
+                fontFamily: 'var(--font-title)',
+                color: '#713F12',
                 fontWeight: 900,
-                letterSpacing: 0.5,
-                background: 'rgba(255, 214, 0, 0.1)',
-                border: '1px solid rgba(255, 214, 0, 0.3)',
-                padding: '3px 9px',
-                borderRadius: 8
+                background: '#FEF08A',
+                border: '2px solid var(--comic-black)',
+                boxShadow: '0 2px 0 var(--comic-black)',
+                padding: '4px 10px',
+                borderRadius: 999
               }}
             >
-              🎯 MỤC TIÊU 10 ĐIỂM
+              🎯 MỤC TIÊU 10đ
             </span>
             {deadline && (
-              <RingTimer seconds={secondsLeft} totalSeconds={15} size={42} strokeWidth={3.5} />
+              <RingTimer seconds={secondsLeft} totalSeconds={15} size={44} strokeWidth={4} />
             )}
           </div>
         </div>
 
-        <div className="quiz-text">
+        {/* Question Text */}
+        <div
+          className="quiz-text"
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: '1.08rem',
+            fontWeight: 800,
+            color: '#0F172A',
+            lineHeight: 1.5,
+            paddingTop: 4
+          }}
+        >
           {question.question}
         </div>
       </div>

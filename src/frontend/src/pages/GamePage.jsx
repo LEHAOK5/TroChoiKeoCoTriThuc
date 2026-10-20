@@ -30,6 +30,13 @@ export default function GamePage({
     if (gameOverData) {
       setShowCutscene(true);
     }
+    const handleHash = () => {
+      if (window.location.hash.includes('cutscene')) {
+        setShowCutscene(true);
+      }
+    };
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
   }, [gameOverData]);
 
   const teamACount = roomState?.teamA?.length || 2;
@@ -45,6 +52,8 @@ export default function GamePage({
         winner={gameOverData?.winner}
         teamACount={teamACount}
         teamBCount={teamBCount}
+        lastResult={lastResult}
+        isBuzzed={uiState === 'BUZZER_SELF' || uiState === 'BUZZER_OPPONENT'}
       />
 
       {/* Tier 2: Quiz Question (25%) */}
@@ -60,6 +69,7 @@ export default function GamePage({
         deadline={deadline}
         buzzerData={buzzerData}
         reboundData={reboundData}
+        lastResult={lastResult}
         onPressBuzzer={onPressBuzzer}
         onSubmitAnswer={onSubmitAnswer}
       />
@@ -67,8 +77,6 @@ export default function GamePage({
       {/* Result feedback overlay */}
       <FeedbackOverlay result={lastResult} />
 
-      {/* 3-2-1 Countdown Overlay */}
-      <CountdownOverlay seconds={countdown} />
 
       {/* Step 4: Victory Cutscene "Kéo ngã đối thủ" (6-sec animation first) */}
       {gameOverData && showCutscene && (

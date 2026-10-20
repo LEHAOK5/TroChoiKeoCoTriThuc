@@ -13,7 +13,8 @@ export default function RingTimer({
   const strokeDashoffset = circumference * (1 - progress);
 
   const isCritical = seconds <= 3 && seconds > 0;
-  const strokeColor = isCritical ? '#FF1744' : progress > 0.45 ? '#00F0FF' : '#FFD600';
+  // Progress color: Blue -> Yellow -> Red
+  const strokeColor = isCritical ? '#EF4444' : progress > 0.45 ? '#191AFE' : '#F59E0B';
 
   useEffect(() => {
     if (isCritical && typeof navigator !== 'undefined' && navigator.vibrate) {
@@ -39,13 +40,13 @@ export default function RingTimer({
       className={isCritical ? 'ring-timer-critical' : ''}
     >
       <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-        {/* Background Track */}
+        {/* Background Track with Comic Border */}
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          fill="rgba(11, 19, 43, 0.6)"
-          stroke="rgba(255, 255, 255, 0.12)"
+          fill="#FFFFFF"
+          stroke="#E2E8F0"
           strokeWidth={strokeWidth}
         />
         {/* Dynamic Sweep Ring */}
@@ -60,8 +61,7 @@ export default function RingTimer({
           strokeDashoffset={strokeDashoffset}
           strokeLinecap="round"
           style={{
-            transition: 'stroke-dashoffset 0.25s linear, stroke 0.3s ease',
-            filter: `drop-shadow(0 0 6px ${strokeColor})`
+            transition: 'stroke-dashoffset 0.25s linear, stroke 0.3s ease'
           }}
         />
       </svg>
@@ -75,7 +75,7 @@ export default function RingTimer({
           justifyContent: 'center',
           fontFamily: 'var(--font-title)',
           fontWeight: 900,
-          fontSize: size >= 48 ? '1.05rem' : '0.88rem',
+          fontSize: size >= 48 ? '1.15rem' : '0.92rem',
           color: strokeColor,
           lineHeight: 1
         }}

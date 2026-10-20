@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { unlockAudio } from '../utils/audio';
+import { unlockAudio, playRegistrationTheme } from '../utils/audio';
 import { checkRoomCode } from '../services/api';
 
 export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
@@ -109,12 +109,11 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
         <h1
           style={{
             fontFamily: 'var(--font-title)',
-            fontSize: '2.3rem',
+            fontSize: '2.4rem',
             fontWeight: 900,
-            letterSpacing: '0.04em',
-            background: 'linear-gradient(90deg, #00F0FF, #FFFFFF 50%, #FF6B00)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
+            letterSpacing: '0.02em',
+            color: '#1E40AF',
+            textShadow: '2px 2px 0 #93C5FD',
             textTransform: 'uppercase',
             marginBottom: 4
           }}
@@ -123,22 +122,21 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
           <span style={{ fontSize: '1.2rem' }}>⚡</span>
-          <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 600 }}>
-            Đấu Trường Trí Tuệ IT & Pháp Luật
+          <span style={{ color: '#334155', fontSize: '0.92rem', fontWeight: 800, fontFamily: 'var(--font-title)' }}>
+            Đấu Trường 2D Trí Tuệ IT & Pháp Luật
           </span>
           <span style={{ fontSize: '1.2rem' }}>🔥</span>
         </div>
       </div>
 
-      {/* Registration Glass Card */}
+      {/* Registration Comic Card */}
       <div
         style={{
-          background: 'var(--glass-surface)',
-          border: 'var(--glass-border)',
-          backdropFilter: 'var(--glass-blur)',
-          borderRadius: 22,
+          background: '#FFFFFF',
+          border: '2.5px solid var(--comic-black)',
+          borderRadius: 24,
           padding: '24px 22px',
-          boxShadow: 'var(--glass-shadow)'
+          boxShadow: '0 6px 0 var(--comic-black)'
         }}
       >
         <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '1.25rem', fontWeight: 800, marginBottom: 12 }}>
@@ -154,7 +152,7 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
           </div>
         )}
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} onFocus={() => playRegistrationTheme()}>
           {/* ROOM CODE INPUT (TOP PRIORITY) */}
           <div style={{ marginBottom: 16, background: 'rgba(255, 214, 0, 0.08)', border: '1.5px solid var(--color-steal)', borderRadius: 14, padding: 12 }}>
             <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, color: 'var(--color-steal)', marginBottom: 6 }}>
@@ -176,15 +174,16 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
                 style={{
                   flex: 1,
                   padding: '12px 14px',
-                  background: 'rgba(0, 0, 0, 0.5)',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
-                  borderRadius: 10,
-                  color: 'var(--color-steal)',
+                  background: '#FFFFFF',
+                  border: '2.5px solid var(--comic-black)',
+                  borderRadius: 12,
+                  color: '#0F172A',
                   fontSize: '1.2rem',
                   fontWeight: 900,
                   letterSpacing: 2,
                   outline: 'none',
-                  textTransform: 'uppercase'
+                  textTransform: 'uppercase',
+                  boxShadow: '0 2px 0 var(--comic-black)'
                 }}
               />
               <button
@@ -192,13 +191,15 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
                 onClick={() => verifyRoom(formData.roomCode)}
                 disabled={checkingRoom || !formData.roomCode.trim()}
                 style={{
-                  padding: '0 14px',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  color: '#FFF',
-                  borderRadius: 10,
-                  fontSize: '0.82rem',
-                  fontWeight: 700,
+                  padding: '0 16px',
+                  background: '#191AFE',
+                  border: '2px solid var(--comic-black)',
+                  boxShadow: '0 2px 0 var(--comic-black)',
+                  color: '#FFFFFF',
+                  borderRadius: 12,
+                  fontSize: '0.85rem',
+                  fontWeight: 900,
+                  fontFamily: 'var(--font-title)',
                   cursor: 'pointer'
                 }}
               >
@@ -328,33 +329,34 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
                     onClick={() => canJoinA && setFormData({ ...formData, preferredTeam: 'A' })}
                     id="select-team-a-btn"
                     style={{
-                      padding: '10px',
-                      borderRadius: 14,
+                      padding: '12px 10px',
+                      borderRadius: 16,
                       border: !canJoinA
-                        ? '1px solid rgba(255,255,255,0.08)'
+                        ? '2px solid #CBD5E1'
                         : isSelected
-                        ? '2px solid var(--team-a-cyan)'
-                        : '1px solid rgba(255,255,255,0.15)',
+                        ? '2.5px solid #0284C7'
+                        : '2px solid var(--comic-black)',
                       background: !canJoinA
-                        ? 'rgba(255, 255, 255, 0.02)'
+                        ? '#F1F5F9'
                         : isSelected
-                        ? 'rgba(0, 240, 255, 0.18)'
-                        : 'rgba(255,255,255,0.05)',
-                      boxShadow: isSelected ? '0 0 16px var(--team-a-glow)' : 'none',
-                      color: !canJoinA ? '#666' : '#FFF',
+                        ? '#E0F2FE'
+                        : '#FFFFFF',
+                      boxShadow: isSelected ? '0 4px 0 #0284C7' : '0 3px 0 var(--comic-black)',
+                      color: !canJoinA ? '#94A3B8' : '#0F172A',
                       cursor: !canJoinA ? 'not-allowed' : 'pointer',
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
                       gap: 3,
-                      opacity: !canJoinA ? 0.6 : 1
+                      opacity: !canJoinA ? 0.6 : 1,
+                      transition: 'all 0.1s ease'
                     }}
                   >
-                    <span style={{ fontSize: '1.3rem' }}>⚡</span>
-                    <span style={{ fontWeight: 800, fontSize: '0.88rem', color: !canJoinA ? '#888' : 'var(--team-a-cyan)' }}>
+                    <span style={{ fontSize: '1.4rem' }}>⚡</span>
+                    <span style={{ fontWeight: 900, fontFamily: 'var(--font-title)', fontSize: '0.9rem', color: !canJoinA ? '#94A3B8' : '#0284C7' }}>
                       ĐỘI A - TIA CHỚP
                     </span>
-                    <span style={{ fontSize: '0.72rem', color: !canJoinA ? '#FF5252' : isSelected ? '#00E676' : 'var(--text-muted)' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: !canJoinA ? '#EF4444' : isSelected ? '#16A34A' : '#64748B' }}>
                       {!canJoinA
                         ? `🔒 ĐÃ ĐỦ (${roomInfo?.teamACount}/${roomInfo?.maxPerTeam})`
                         : isSelected
@@ -376,33 +378,34 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
                     onClick={() => canJoinB && setFormData({ ...formData, preferredTeam: 'B' })}
                     id="select-team-b-btn"
                     style={{
-                      padding: '10px',
-                      borderRadius: 14,
+                      padding: '12px 10px',
+                      borderRadius: 16,
                       border: !canJoinB
-                        ? '1px solid rgba(255,255,255,0.08)'
+                        ? '2px solid #CBD5E1'
                         : isSelected
-                        ? '2px solid var(--team-b-orange)'
-                        : '1px solid rgba(255,255,255,0.15)',
+                        ? '2.5px solid #EA580C'
+                        : '2px solid var(--comic-black)',
                       background: !canJoinB
-                        ? 'rgba(255, 255, 255, 0.02)'
+                        ? '#F1F5F9'
                         : isSelected
-                        ? 'rgba(255, 107, 0, 0.18)'
-                        : 'rgba(255,255,255,0.05)',
-                      boxShadow: isSelected ? '0 0 16px var(--team-b-glow)' : 'none',
-                      color: !canJoinB ? '#666' : '#FFF',
+                        ? '#FFEDD5'
+                        : '#FFFFFF',
+                      boxShadow: isSelected ? '0 4px 0 #EA580C' : '0 3px 0 var(--comic-black)',
+                      color: !canJoinB ? '#94A3B8' : '#0F172A',
                       cursor: !canJoinB ? 'not-allowed' : 'pointer',
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
                       gap: 3,
-                      opacity: !canJoinB ? 0.6 : 1
+                      opacity: !canJoinB ? 0.6 : 1,
+                      transition: 'all 0.1s ease'
                     }}
                   >
-                    <span style={{ fontSize: '1.3rem' }}>🔥</span>
-                    <span style={{ fontWeight: 800, fontSize: '0.88rem', color: !canJoinB ? '#888' : 'var(--team-b-orange)' }}>
+                    <span style={{ fontSize: '1.4rem' }}>🔥</span>
+                    <span style={{ fontWeight: 900, fontFamily: 'var(--font-title)', fontSize: '0.9rem', color: !canJoinB ? '#94A3B8' : '#EA580C' }}>
                       ĐỘI B - NGỌN LỬA
                     </span>
-                    <span style={{ fontSize: '0.72rem', color: !canJoinB ? '#FF5252' : isSelected ? '#00E676' : 'var(--text-muted)' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: !canJoinB ? '#EF4444' : isSelected ? '#16A34A' : '#64748B' }}>
                       {!canJoinB
                         ? `🔒 ĐÃ ĐỦ (${roomInfo?.teamBCount}/${roomInfo?.maxPerTeam})`
                         : isSelected
@@ -415,13 +418,13 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '14px 0 18px', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '14px 0 18px', fontSize: '0.85rem', color: '#334155', fontWeight: 600 }}>
             <input
               type="checkbox"
               id="consent"
               checked={formData.consent}
               onChange={e => setFormData({ ...formData, consent: e.target.checked })}
-              style={{ width: 18, height: 18, accentColor: 'var(--team-a-cyan)' }}
+              style={{ width: 18, height: 18, accentColor: '#191AFE' }}
             />
             <label htmlFor="consent">
               Tôi đồng ý tham gia thi đấu theo thể lệ gian hàng Kéo Co Tri Thức.
@@ -434,13 +437,14 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
             disabled={isLoading || !formData.consent || Boolean(roomInfo?.isFull)}
             style={{
               width: '100%',
-              height: 52,
+              height: 54,
               background: roomInfo?.isFull
-                ? 'rgba(255, 23, 68, 0.2)'
-                : 'var(--team-a-gradient)',
-              border: roomInfo?.isFull ? '1px solid #FF1744' : 'none',
-              color: roomInfo?.isFull ? '#FF8080' : '#0B132B',
-              fontSize: '1.1rem',
+                ? '#FEE2E2'
+                : 'linear-gradient(180deg, #4E4FFF 0%, #191AFE 100%)',
+              border: '2.5px solid var(--comic-black)',
+              boxShadow: '0 5px 0 var(--comic-black)',
+              color: roomInfo?.isFull ? '#DC2626' : '#FFFFFF',
+              fontSize: '1.15rem',
               fontWeight: 900,
               textTransform: 'uppercase',
               letterSpacing: '0.04em',

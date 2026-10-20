@@ -6,50 +6,110 @@ import RegisterPage from './pages/RegisterPage';
 import LobbyPage from './pages/LobbyPage';
 import GamePage from './pages/GamePage';
 import AdminPage from './pages/admin/AdminPage';
+import CountdownOverlay from './components/CountdownOverlay';
 import {
   playBuzzer,
   playCorrect,
   playWrong,
   playRopePull,
-  playCountdown
+  playCountdown,
+  playVictory,
+  setBGMMode,
+  stopBGM,
+  playRegistrationTheme,
+  stopRegistrationTheme,
+  isMuted,
+  toggleMute,
+  subscribeMute,
+  unlockAudio
 } from './utils/audio';
 import { BOOTH_LABEL } from './config/env';
-
 export default function App() {
+  const isCutscenePreview = typeof window !== 'undefined' && window.location.hash.startsWith('#cutscene');
+  const isGamePreview = typeof window !== 'undefined' && (window.location.hash === '#game' || window.location.hash === '#preview' || isCutscenePreview);
   const [currentPage, setCurrentPage] = useState(() => {
     if (window.location.hash === '#admin' || window.location.search.includes('admin')) return 'ADMIN';
+    if (isGamePreview) return 'GAME';
     return 'REGISTER';
   });
   const [isConnected, setIsConnected] = useState(false);
   const [pingMs, setPingMs] = useState(25);
   const [isReconnecting, setIsReconnecting] = useState(false);
+  const [audioMuted, setAudioMuted] = useState(() => isMuted());
+
+  // Listen to mute state changes and unlock audio on first interaction
+  useEffect(() => {
+    const unsub = subscribeMute((val) => setAudioMuted(val));
+    const handleFirstGesture = () => {
+      unlockAudio();
+      if (currentPageRef.current === 'REGISTER') {
+        playRegistrationTheme();
+      }
+    };
+    window.addEventListener('click', handleFirstGesture, { once: true });
+    window.addEventListener('touchstart', handleFirstGesture, { once: true });
+    return () => {
+      unsub();
+      window.removeEventListener('click', handleFirstGesture);
+      window.removeEventListener('touchstart', handleFirstGesture);
+    };
+  }, []);
 
   // Player & Session (Isolated per browser tab using sessionStorage)
   const [player, setPlayer] = useState(() => {
     try {
       const saved = sessionStorage.getItem('keoco_player');
-      return saved ? JSON.parse(saved) : null;
+      return saved ? JSON.parse(saved) : (isGamePreview ? { name: 'Thí sinh A', team: 'A' } : null);
     } catch {
       return null;
     }
   });
   const [sessionToken, setSessionToken] = useState(() => sessionStorage.getItem('keoco_token') || '');
 
-  // Room & Battle States
-  const [roomState, setRoomState] = useState(null);
-  const [scoreA, setScoreA] = useState(0);
+  // Room & Battle States (5 vs 5 mặc định cho sinh viên VHU)
+  const [roomState, setRoomState] = useState(() => isGamePreview ? {
+    teamA: [{}, {}, {}, {}, {}],
+    teamB: [{}, {}, {}, {}, {}],
+    mode: '5vs5',
+    maxPerTeam: 5
+  } : null);
+  const [scoreA, setScoreA] = useState(1);
   const [scoreB, setScoreB] = useState(0);
-  const [ropeOffset, setRopeOffset] = useState(0);
+  const [ropeOffset, setRopeOffset] = useState(-2);
   const [countdown, setCountdown] = useState(null);
 
   // In-Game UI state: 'QUESTION_WAITING', 'BUZZER_SELF', 'BUZZER_OPPONENT', 'STEAL_PHASE', 'LOCKED'
   const [uiState, setUiState] = useState('QUESTION_WAITING');
-  const [currentQuestion, setCurrentQuestion] = useState(null);
+  const [currentQuestion, setCurrentQuestion] = useState(() => {
+    if (isGamePreview) {
+      return {
+        question: 'Việc xóa, thay đổi dữ liệu trên hệ thống máy tính của người khác mà không có sự cho phép có thể bị xử lý theo quy định nào?',
+        category: 'LAW',
+        options: [
+          'Bộ luật Hình sự – Tội xâm phạm trái phép vào mạng máy tính',
+          'Chỉ yêu cầu khôi phục lại dữ liệu ban đầu',
+          'Chỉ xử lý theo Luật Dân sự thông thường',
+          'Không có quy định pháp luật điều chỉnh'
+        ]
+      };
+    }
+    return null;
+  });
   const [deadline, setDeadline] = useState(null);
   const [buzzerData, setBuzzerData] = useState(null);
   const [reboundData, setReboundData] = useState(null);
   const [lastResult, setLastResult] = useState(null);
-  const [gameOverData, setGameOverData] = useState(null);
+  const [gameOverData, setGameOverData] = useState(() => {
+    if (isCutscenePreview) {
+      return {
+        winner: window.location.hash === '#cutscene-b' ? 'B' : 'A',
+        scoreA: window.location.hash === '#cutscene-b' ? 4 : 10,
+        scoreB: window.location.hash === '#cutscene-b' ? 10 : 4,
+        matchCode: 'MATCH-VHU-FINAL'
+      };
+    }
+    return null;
+  });
 
   // Synchronized state refs to prevent stale closures in socket events
   const playerRef = useRef(player);
@@ -63,6 +123,21 @@ export default function App() {
   useEffect(() => { roomStateRef.current = roomState; }, [roomState]);
   useEffect(() => { uiStateRef.current = uiState; }, [uiState]);
   useEffect(() => { currentPageRef.current = currentPage; }, [currentPage]);
+
+  useEffect(() => {
+    if (currentPage === 'REGISTER') {
+      stopBGM();
+      playRegistrationTheme();
+    } else if (currentPage === 'LOBBY') {
+      stopRegistrationTheme(true);
+      setBGMMode('LOBBY');
+    } else if (currentPage === 'GAME') {
+      stopRegistrationTheme(true);
+    } else if (currentPage === 'ADMIN') {
+      stopRegistrationTheme(false);
+      stopBGM();
+    }
+  }, [currentPage]);
 
   useEffect(() => {
     // Persistent single Socket.io connection
@@ -110,7 +185,9 @@ export default function App() {
     socket.on('startCountdown', ({ seconds }) => {
       setCountdown(seconds);
       playCountdown(seconds);
-      if (seconds <= 0) {
+      if (seconds > 0) {
+        setBGMMode('COUNTDOWN');
+      } else {
         setCountdown(null);
       }
     });
@@ -127,6 +204,14 @@ export default function App() {
       setScoreA(sA);
       setScoreB(sB);
       setRopeOffset(rO);
+
+      // Dynamic BGM: Nếu sắp chạm vạch thắng (offset >= 2 hoặc tỷ số >= 3), kích hoạt TENSION BGM 152BPM!
+      const isMatchPoint = Math.abs(rO || 0) >= 2 || (sA !== undefined && sB !== undefined && (sA >= 3 || sB >= 3));
+      if (isMatchPoint) {
+        setBGMMode('TENSION');
+      } else {
+        setBGMMode('BATTLE');
+      }
     });
 
     socket.on('buzzerAwarded', (data) => {
@@ -149,6 +234,9 @@ export default function App() {
       if (result.isCorrect) {
         playCorrect();
         playRopePull();
+        if (Math.abs(result.ropeOffset || 0) >= 2) {
+          setBGMMode('TENSION');
+        }
       } else {
         playWrong();
       }
@@ -171,6 +259,8 @@ export default function App() {
     });
 
     socket.on('gameOver', (data) => {
+      stopBGM();
+      playVictory();
       setGameOverData(data);
       setScoreA(data.scoreA);
       setScoreB(data.scoreB);
@@ -330,12 +420,14 @@ export default function App() {
               <span
                 style={{
                   fontSize: '0.78rem',
-                  fontWeight: 800,
+                  fontWeight: 900,
+                  fontFamily: 'var(--font-title)',
                   padding: '3px 10px',
-                  borderRadius: 12,
-                  background: player.team === 'A' ? 'rgba(0, 240, 255, 0.15)' : 'rgba(255, 107, 0, 0.15)',
-                  color: player.team === 'A' ? 'var(--team-a-cyan)' : 'var(--team-b-orange)',
-                  border: `1px solid ${player.team === 'A' ? 'var(--team-a-cyan)' : 'var(--team-b-orange)'}`
+                  borderRadius: 999,
+                  background: player.team === 'A' ? '#E0F2FE' : '#FFEDD5',
+                  color: player.team === 'A' ? '#0284C7' : '#EA580C',
+                  border: '2px solid var(--comic-black)',
+                  boxShadow: '0 2px 0 var(--comic-black)'
                 }}
               >
                 {player.team === 'A' ? '⚡ ĐỘI A' : '🔥 ĐỘI B'}
@@ -349,11 +441,12 @@ export default function App() {
                 title="Đăng xuất / Đổi tài khoản sinh viên"
                 id="header-logout-btn"
                 style={{
-                  background: 'rgba(255, 23, 68, 0.12)',
-                  border: '1px solid rgba(255, 23, 68, 0.4)',
-                  color: '#FF5252',
+                  background: '#FEE2E2',
+                  border: '2px solid var(--comic-black)',
+                  boxShadow: '0 2px 0 var(--comic-black)',
+                  color: '#DC2626',
                   padding: '4px 10px',
-                  borderRadius: 10,
+                  borderRadius: 999,
                   cursor: 'pointer',
                   fontSize: '0.76rem',
                   fontWeight: 800,
@@ -372,19 +465,50 @@ export default function App() {
             <button
               onClick={() => setCurrentPage(currentPage === 'ADMIN' ? (player ? 'LOBBY' : 'REGISTER') : 'ADMIN')}
               style={{
-                background: currentPage === 'ADMIN' ? 'rgba(0, 240, 255, 0.2)' : 'rgba(255, 215, 0, 0.15)',
-                border: currentPage === 'ADMIN' ? '1px solid var(--team-a-cyan)' : '1px solid var(--color-steal)',
-                color: currentPage === 'ADMIN' ? 'var(--team-a-cyan)' : 'var(--color-steal)',
+                background: currentPage === 'ADMIN' ? '#E4E5FF' : '#FEF08A',
+                border: '2px solid var(--comic-black)',
+                boxShadow: '0 2px 0 var(--comic-black)',
+                color: currentPage === 'ADMIN' ? '#1011B8' : '#713F12',
                 padding: '4px 10px',
-                borderRadius: 12,
+                borderRadius: 999,
                 cursor: 'pointer',
                 fontSize: '0.78rem',
-                fontWeight: 800
+                fontWeight: 900,
+                fontFamily: 'var(--font-title)'
               }}
             >
               {currentPage === 'ADMIN' ? '🎮 Quay lại Game' : '🏛️ Quản trị BTC'}
             </button>
           )}
+          {/* Nút Bật/Tắt Âm Thanh & Nhạc Game (Dynamic BGM Mute Toggle) */}
+          <button
+            onClick={() => {
+              unlockAudio();
+              const next = toggleMute();
+              setAudioMuted(next);
+            }}
+            title={audioMuted ? "Bật âm thanh & nhạc game" : "Tắt âm thanh & nhạc game (Mute)"}
+            id="audio-mute-toggle-btn"
+            style={{
+              background: audioMuted ? '#FEE2E2' : '#DCFCE7',
+              border: '2px solid var(--comic-black)',
+              boxShadow: '0 2px 0 var(--comic-black)',
+              color: audioMuted ? '#DC2626' : '#15803D',
+              padding: '4px 10px',
+              borderRadius: 999,
+              cursor: 'pointer',
+              fontSize: '0.78rem',
+              fontWeight: 900,
+              fontFamily: 'var(--font-title)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5
+            }}
+          >
+            <span>{audioMuted ? '🔇' : '🔊'}</span>
+            <span>{audioMuted ? 'TẮT ÂM' : 'BẬT NHẠC'}</span>
+          </button>
+
           <ConnectionBadge isConnected={isConnected} pingMs={pingMs} />
         </div>
       </header>
@@ -440,6 +564,15 @@ export default function App() {
 
       {currentPage === 'ADMIN' && (
         <AdminPage onBackToGame={() => setCurrentPage(player ? 'LOBBY' : 'REGISTER')} />
+      )}
+
+      {/* Global Face-Off 3-2-1 Countdown Overlay */}
+      {(countdown !== null || (typeof window !== 'undefined' && window.location.hash === '#countdown')) && (
+        <CountdownOverlay
+          seconds={countdown !== null ? countdown : 3}
+          roomState={roomState}
+          player={player}
+        />
       )}
     </div>
   );

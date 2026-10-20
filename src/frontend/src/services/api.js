@@ -148,3 +148,12 @@ export async function getAdminRooms(token) {
   if (!res.ok) throw new Error('Phiên đăng nhập quản trị không hợp lệ');
   return res.json();
 }
+
+export async function getAdminMatches(token, limit = 100) {
+  const res = await fetch(`${API_URL}/api/admin/matches?limit=${limit}`, {
+    headers: getAdminHeaders(token)
+  });
+  if (!res.ok) throw new Error('Không thể tải lịch sử trận đấu');
+  return res.json();
+}
+

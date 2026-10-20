@@ -1,304 +1,526 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { playVictory } from '../utils/audio';
+import React, { useState, useEffect } from 'react';
+import confetti from 'canvas-confetti';
+import PullerCharacter from './PullerCharacter';
+import RefereeCharacter from './RefereeCharacter';
+import { playVictory, playRopePull, playWhistle } from '../utils/audio';
 import { triggerHaptic } from '../utils/haptics';
 
 export default function VictoryCutscene({ winner = 'A', onDone }) {
+  // 3-Phases: 'PULL' (0-1.8s) -> 'FALL' (1.8-3.8s) -> 'CELEBRATE' (3.8-6.8s)
+  const [phase, setPhase] = useState('PULL');
   const [canSkip, setCanSkip] = useState(false);
-  const [videoError, setVideoError] = useState(false);
-  const canvasRef = useRef(null);
-  const animFrameRef = useRef(null);
 
-  const isA = winner === 'A';
-  const winnerName = isA ? 'ĐỘI A - TIA CHỚP' : 'ĐỘI B - NGỌN LỬA';
-  const winnerColor = isA ? '#00F0FF' : '#FF6B00';
-  const loserName = isA ? 'ĐỘI B - NGỌN LỬA' : 'ĐỘI A - TIA CHỚP';
+  const isWinnerA = winner === 'A';
+  const winnerName = isWinnerA ? 'ĐỘI A - TIA CHỚP' : 'ĐỘI B - NGỌN LỬA';
+  const loserName = isWinnerA ? 'ĐỘI B - NGỌN LỬA' : 'ĐỘI A - TIA CHỚP';
+  const winnerBadgeColor = isWinnerA ? '#0284C7' : '#EA580C';
 
   useEffect(() => {
-    // Play celebratory victory fanfare
-    playVictory();
-    triggerHaptic([60, 40, 100, 50, 200]);
+    // Initial sound & haptic
+    playRopePull();
+    triggerHaptic([60, 40, 100]);
 
-    // Show skip button after 1.5s
-    const skipTimer = setTimeout(() => {
-      setCanSkip(true);
-    }, 1500);
+    // Timer: Enable skip button after 1.2s
+    const skipTimer = setTimeout(() => setCanSkip(true), 1200);
 
-    // Auto complete after 6.8s
+    // Timer: Phase 2 - Fall & Slapstick (2.2s)
+    const fallTimer = setTimeout(() => {
+      setPhase('FALL');
+      playWhistle();
+      triggerHaptic([100, 50, 180]);
+    }, 2200);
+
+    // Timer: Phase 3 - Victory Celebration & Confetti (4.5s)
+    const celebrateTimer = setTimeout(() => {
+      setPhase('CELEBRATE');
+      playVictory();
+
+      // Launch Confetti fireworks cannons
+      const end = Date.now() + 4.0 * 1000;
+      const interval = setInterval(() => {
+        if (Date.now() > end) {
+          clearInterval(interval);
+          return;
+        }
+        confetti({
+          startVelocity: 35,
+          spread: 360,
+          ticks: 60,
+          origin: { x: Math.random() * 0.6 + 0.2, y: Math.random() * 0.4 + 0.1 },
+          colors: isWinnerA
+            ? ['#0284C7', '#38BDF8', '#FACC15', '#FFFFFF', '#10B981']
+            : ['#EA580C', '#FB923C', '#FACC15', '#FFFFFF', '#EF4444']
+        });
+      }, 350);
+    }, 4500);
+
+    // Timer: Auto finish after 9.0s
     const doneTimer = setTimeout(() => {
       onDone();
-    }, 6800);
+    }, 9000);
 
     return () => {
       clearTimeout(skipTimer);
+      clearTimeout(fallTimer);
+      clearTimeout(celebrateTimer);
       clearTimeout(doneTimer);
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };
-  }, [onDone]);
+  }, [onDone, isWinnerA]);
 
-  // Cinematic 6-second Canvas Cutscene (Storyboard: Tension -> Big Yank -> Slip & Tumble -> Victory Cheer)
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    let startTime = performance.now();
-
-    // Generate confetti particles
-    const confettiCount = 70;
-    const confetti = Array.from({ length: confettiCount }).map(() => ({
-      x: Math.random() * 600,
-      y: Math.random() * -300,
-      size: 5 + Math.random() * 6,
-      color: ['#00F0FF', '#FF6B00', '#FFD600', '#00E676', '#FF1744', '#CDB9FF'][Math.floor(Math.random() * 6)],
-      speedY: 2 + Math.random() * 4,
-      speedX: (Math.random() - 0.5) * 3,
-      angle: Math.random() * Math.PI * 2,
-      spin: (Math.random() - 0.5) * 0.1
-    }));
-
-    const render = (time) => {
-      const elapsed = (time - startTime) / 1000; // in seconds
-      ctx.clearRect(0, 0, 600, 600);
-
-      // Dark Neon Grid Floor
-      ctx.fillStyle = '#0B132B';
-      ctx.fillRect(0, 0, 600, 600);
-
-      // Perspective Grid Lines
-      ctx.strokeStyle = 'rgba(0, 240, 255, 0.12)';
-      ctx.lineWidth = 1;
-      for (let i = 0; i <= 600; i += 40) {
-        ctx.beginPath();
-        ctx.moveTo(i, 400);
-        ctx.lineTo(i * 1.4 - 120, 600);
-        ctx.stroke();
-      }
-
-      // Laser Center Line
-      ctx.strokeStyle = '#FF1744';
-      ctx.lineWidth = 3;
-      ctx.shadowColor = '#FF1744';
-      ctx.shadowBlur = 12;
-      ctx.beginPath();
-      ctx.moveTo(300, 360);
-      ctx.lineTo(300, 580);
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-
-      // Phase calculation (0-1s: Standoff; 1-2.5s: Hard Yank; 2.5-4s: Tumble; 4-6.8s: Confetti Cheer)
-      let pullProgress = 0;
-      if (elapsed > 1 && elapsed <= 2.5) {
-        pullProgress = (elapsed - 1) / 1.5;
-      } else if (elapsed > 2.5) {
-        pullProgress = 1;
-      }
-
-      const ropeShift = (isA ? -1 : 1) * pullProgress * 140;
-
-      // Draw Rope
-      ctx.strokeStyle = '#D4A373';
-      ctx.lineWidth = 8;
-      ctx.beginPath();
-      ctx.moveTo(60 + (isA ? ropeShift * 0.4 : 0), 460);
-      ctx.quadraticCurveTo(300 + ropeShift, 465 + (elapsed < 2.5 ? Math.sin(elapsed * 15) * 4 : 0), 540 + (!isA ? ropeShift * 0.4 : 0), 460);
-      ctx.stroke();
-
-      // Red Ribbon Knot
-      const ribbonX = 300 + ropeShift;
-      ctx.fillStyle = '#FF1744';
-      ctx.shadowColor = '#FF1744';
-      ctx.shadowBlur = 14;
-      ctx.fillRect(ribbonX - 8, 442, 16, 26);
-      ctx.shadowBlur = 0;
-
-      // Winning Team (Lean back hard and cheer)
-      const winX = isA ? 140 + ropeShift * 0.3 : 460 + ropeShift * 0.3;
-      const winLean = isA ? -0.45 : 0.45;
-      const isCheering = elapsed > 3.5;
-
-      ctx.save();
-      ctx.translate(winX, 450);
-      ctx.rotate(isCheering ? (isA ? -0.1 : 0.1) : winLean);
-
-      // Body
-      ctx.fillStyle = winnerColor;
-      ctx.shadowColor = winnerColor;
-      ctx.shadowBlur = 10;
-      ctx.fillRect(-14, -40, 28, 42);
-      ctx.shadowBlur = 0;
-      // Head
-      ctx.fillStyle = '#1C2541';
-      ctx.beginPath();
-      ctx.arc(0, -56, 14, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = winnerColor;
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      // Arms (Cheering if > 3.5s)
-      ctx.strokeStyle = '#FFFFFF';
-      ctx.lineWidth = 5;
-      ctx.beginPath();
-      if (isCheering) {
-        ctx.moveTo(-12, -35); ctx.lineTo(-24, -75);
-        ctx.moveTo(12, -35); ctx.lineTo(24, -75);
-      } else {
-        ctx.moveTo(-10, -30); ctx.lineTo(isA ? 15 : -15, -15);
-      }
-      ctx.stroke();
-      ctx.restore();
-
-      // Losing Team (Slips across line & falls over!)
-      const loseX = isA ? 430 + ropeShift : 170 + ropeShift;
-      const isFallen = elapsed > 2.8;
-      const fallAngle = isA ? (Math.min(1.3, (elapsed - 2.5) * 1.5)) : -(Math.min(1.3, (elapsed - 2.5) * 1.5));
-
-      ctx.save();
-      ctx.translate(loseX, 470);
-      ctx.rotate(isFallen ? fallAngle : (isA ? 0.3 : -0.3));
-
-      // Loser Body
-      ctx.fillStyle = isA ? '#FF6B00' : '#00F0FF';
-      ctx.fillRect(-12, -38, 24, 38);
-      // Loser Head
-      ctx.fillStyle = '#1C2541';
-      ctx.beginPath();
-      ctx.arc(0, -52, 13, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = isA ? '#FF6B00' : '#00F0FF';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      // Confused Face 'X X'
-      if (isFallen) {
-        ctx.fillStyle = '#FF1744';
-        ctx.font = 'bold 10px monospace';
-        ctx.fillText('X X', -8, -50);
-      }
-      ctx.restore();
-
-      // Confetti Shower (Starts at 3.2s)
-      if (elapsed > 3.2) {
-        confetti.forEach(p => {
-          ctx.save();
-          ctx.translate(p.x, p.y);
-          ctx.rotate(p.angle);
-          ctx.fillStyle = p.color;
-          ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
-          ctx.restore();
-
-          p.y += p.speedY;
-          p.x += p.speedX;
-          p.angle += p.spin;
-          if (p.y > 600) p.y = -20;
-        });
-      }
-
-      // Cinematic Text Overlay
-      if (elapsed > 3.0) {
-        ctx.save();
-        ctx.textAlign = 'center';
-
-        ctx.font = 'bold 22px "Baloo 2", sans-serif';
-        ctx.fillStyle = '#FFD600';
-        ctx.shadowColor = 'rgba(255, 214, 0, 0.8)';
-        ctx.shadowBlur = 16;
-        ctx.fillText('🏆 CHIẾN THẮNG TUYỆT ĐỐI 10 ĐIỂM! 🏆', 300, 140);
-
-        ctx.font = '900 36px "Baloo 2", sans-serif';
-        ctx.fillStyle = winnerColor;
-        ctx.shadowColor = winnerColor;
-        ctx.shadowBlur = 24;
-        ctx.fillText(`${winnerName} VÔ ĐỊCH!`, 300, 195);
-        ctx.shadowBlur = 0;
-
-        ctx.font = '600 15px "Be Vietnam Pro", sans-serif';
-        ctx.fillStyle = '#E2E8F0';
-        ctx.fillText(`Tuyệt vời! ${loserName} đã thi đấu vô cùng kiên cường!`, 300, 235);
-        ctx.restore();
-      }
-
-      if (elapsed < 6.8) {
-        animFrameRef.current = requestAnimationFrame(render);
-      }
-    };
-
-    animFrameRef.current = requestAnimationFrame(render);
-  }, [winner, isA, winnerColor, winnerName, loserName]);
+  // Rope offset shifts dynamically per phase
+  let ropeOffset = 0;
+  if (phase === 'PULL') ropeOffset = isWinnerA ? -4 : 4;
+  if (phase === 'FALL') ropeOffset = isWinnerA ? -9 : 9;
+  if (phase === 'CELEBRATE') ropeOffset = isWinnerA ? -10 : 10;
 
   return (
     <div
       style={{
         position: 'fixed',
         inset: 0,
-        background: '#0B132B',
         zIndex: 9999,
+        background: 'radial-gradient(circle at center, #1E3A8A 0%, #0F172A 100%)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: 16
+        padding: '16px',
+        overflow: 'hidden',
+        userSelect: 'none'
       }}
+      className={phase === 'FALL' ? 'screen-shake-anim' : ''}
     >
-      {/* Fallback & Custom Video check */}
-      <video
-        src={`/assets/video/win_${isA ? 'team_a' : 'team_b'}.mp4`}
-        poster={`/assets/video/win_${isA ? 'team_a' : 'team_b'}.webp`}
-        muted
-        playsInline
-        autoPlay
-        onError={() => setVideoError(true)}
+      {/* Tia sáng chiến thắng quay tròn (Manga Action Sunburst Background) */}
+      <div
         style={{
-          display: videoError ? 'none' : 'block',
-          width: '100%',
-          maxWidth: 540,
-          aspectRatio: '1/1',
-          borderRadius: 20,
-          border: `2px solid ${winnerColor}`,
-          boxShadow: `0 0 30px ${winnerColor}`
+          position: 'absolute',
+          width: '180vw',
+          height: '180vh',
+          background: 'repeating-conic-gradient(from 0deg, rgba(254, 240, 138, 0.08) 0deg 15deg, transparent 15deg 30deg)',
+          animation: 'starSpin 30s infinite linear',
+          pointerEvents: 'none',
+          zIndex: 1
         }}
       />
 
-      {/* Cinematic 60FPS Canvas Cutscene (Displays when video file is not present or as primary animation) */}
+      {/* KHUNG SÂN ĐẤU CHÍNH (2D Neo-Brutalism Stadium Box) */}
       <div
         style={{
-          display: videoError ? 'block' : 'none',
-          position: 'relative',
           width: '100%',
-          maxWidth: 540,
-          aspectRatio: '1/1',
-          borderRadius: 20,
+          maxWidth: '920px',
+          background: '#FFFFFF',
+          border: '3.5px solid var(--comic-black)',
+          borderRadius: 24,
+          boxShadow: '0 12px 0 var(--comic-black)',
+          position: 'relative',
+          zIndex: 10,
           overflow: 'hidden',
-          border: `2px solid ${winnerColor}`,
-          boxShadow: `0 0 35px ${winnerColor}`
+          display: 'flex',
+          flexDirection: 'column'
         }}
       >
-        <canvas
-          ref={canvasRef}
-          width={600}
-          height={600}
-          style={{ width: '100%', height: '100%' }}
-        />
-      </div>
-
-      {/* Skip Button */}
-      {canSkip && (
-        <button
-          onClick={onDone}
-          className="btn-tactile"
+        {/* BANNER TIÊU ĐỀ GIAI ĐOẠN TRẬN ĐẤU */}
+        <div
           style={{
-            marginTop: 18,
-            padding: '10px 24px',
-            background: 'rgba(255, 255, 255, 0.15)',
-            border: '1.5px solid rgba(255, 255, 255, 0.3)',
-            color: '#FFFFFF',
-            fontSize: '0.9rem',
-            fontWeight: 800,
-            borderRadius: 14,
-            cursor: 'pointer'
+            background: phase === 'CELEBRATE'
+              ? 'linear-gradient(90deg, #FACC15, #F59E0B)'
+              : (phase === 'FALL' ? '#EF4444' : '#0284C7'),
+            borderBottom: '3px solid var(--comic-black)',
+            padding: '12px 18px',
+            textAlign: 'center',
+            color: phase === 'CELEBRATE' ? '#713F12' : '#FFFFFF',
+            fontFamily: 'var(--font-title)',
+            fontWeight: 900,
+            fontSize: '1.25rem',
+            letterSpacing: '0.5px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 10,
+            textShadow: phase === 'CELEBRATE' ? 'none' : '1.5px 1.5px 0 var(--comic-black)',
+            transition: 'background 0.3s ease'
           }}
         >
-          Bỏ qua Cutscene ⏩
-        </button>
-      )}
+          {phase === 'PULL' && <span>⚡ CÚ KÉO QUYẾT ĐỊNH — DỒN TOÀN LỰC! ⚡</span>}
+          {phase === 'FALL' && <span>💥 KÉO PHĂNG ĐỐI THỦ — ĐỔI CỤC DIỆN! 💥</span>}
+          {phase === 'CELEBRATE' && <span>🏆 CHIẾN THẮNG TUYỆT ĐỐI — VÔ ĐỊCH VHU! 🏆</span>}
+        </div>
+
+        {/* KHÔNG GIAN ĐẤU TRƯỜNG KÉO CO 2D (Grass Arena) */}
+        <div
+          style={{
+            height: '240px',
+            background: 'linear-gradient(180deg, #166534 0%, #15803D 50%, #14532D 100%)',
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+            paddingBottom: '22px',
+            overflow: 'hidden'
+          }}
+        >
+          {/* Hàng rào & Khán giả cổ vũ phía sau */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              height: '42px',
+              background: 'rgba(15, 23, 42, 0.4)',
+              borderBottom: '2px solid rgba(255, 255, 255, 0.2)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-around',
+              fontSize: '18px',
+              pointerEvents: 'none'
+            }}
+          >
+            <span>👥 VHU</span>
+            <span>👏 CỐ LÊN!</span>
+            <span>🔥 VĂN HIẾN</span>
+            <span>⚡ ĐỈNH CAO</span>
+            <span>🎉 CHIẾN THẮNG!</span>
+          </div>
+
+          {/* Sọc sân cỏ & Vạch ranh giới trung tâm */}
+          <div
+            style={{
+              position: 'absolute',
+              top: '42px',
+              left: '50%',
+              bottom: 0,
+              width: '4px',
+              background: '#FFFFFF',
+              transform: 'translateX(-50%)',
+              zIndex: 2,
+              boxShadow: '0 0 8px rgba(255, 255, 255, 0.6)'
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              top: '42px',
+              left: '50%',
+              bottom: 0,
+              width: '80px',
+              borderLeft: '2px dashed rgba(255, 255, 255, 0.4)',
+              borderRight: '2px dashed rgba(255, 255, 255, 0.4)',
+              transform: 'translateX(-50%)',
+              pointerEvents: 'none',
+              zIndex: 2
+            }}
+          />
+
+          {/* TRỌNG TÀI VHU Ở GIỮA */}
+          <div style={{ position: 'absolute', bottom: '18px', left: '50%', transform: 'translateX(-50%)', zIndex: 6 }}>
+            <RefereeCharacter
+              ropeOffset={ropeOffset}
+              lastResult={{ isCorrect: true }}
+              isBuzzed={false}
+              winner={winner}
+            />
+          </div>
+
+          {/* DÂY THỪNG THI ĐẤU (Rope) */}
+          <div
+            style={{
+              position: 'absolute',
+              left: '5%',
+              right: '5%',
+              bottom: '48px',
+              height: '14px',
+              background: 'repeating-linear-gradient(45deg, #D4A373, #D4A373 10px, #B08968 10px, #B08968 20px)',
+              border: '2px solid var(--comic-black)',
+              borderRadius: 7,
+              zIndex: 4,
+              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)',
+              transform: `translateX(${ropeOffset * 10}px)`,
+              transition: 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)'
+            }}
+          >
+            {/* Cờ ruy băng đỏ mốc tâm */}
+            <div
+              style={{
+                position: 'absolute',
+                left: '50%',
+                top: '-16px',
+                transform: 'translateX(-50%)',
+                width: '18px',
+                height: '32px',
+                background: '#DC2626',
+                border: '2px solid var(--comic-black)',
+                borderRadius: 4,
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
+              }}
+            >
+              <span style={{ fontSize: '10px', display: 'block', textAlign: 'center', lineHeight: '28px', color: '#FFF' }}>
+                🚩
+              </span>
+            </div>
+          </div>
+
+          {/* ======================================================= */}
+          {/* ĐỘI A (BÊN TRÁI - ÁO XANH DƯƠNG VHU) */}
+          {/* ======================================================= */}
+          <div
+            style={{
+              position: 'absolute',
+              left: isWinnerA ? '6%' : (phase === 'FALL' ? '28%' : '10%'),
+              bottom: '22px',
+              display: 'flex',
+              gap: '6px',
+              alignItems: 'flex-end',
+              zIndex: 5,
+              transition: 'all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              transform: (!isWinnerA && phase === 'FALL') ? 'rotate(15deg) translateY(18px)' : 'none'
+            }}
+          >
+            {[0, 1, 2, 3, 4].map((idx) => (
+              <PullerCharacter
+                key={`teamA_${idx}`}
+                team="A"
+                index={idx}
+                isPulling={isWinnerA && phase === 'PULL'}
+                isFallen={!isWinnerA && (phase === 'FALL' || phase === 'CELEBRATE')}
+                isCheering={isWinnerA && phase === 'CELEBRATE'}
+              />
+            ))}
+
+            {/* Bong bóng thoại Đội A */}
+            {isWinnerA && phase === 'PULL' && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '-45px',
+                  left: '10px',
+                  background: '#FEF08A',
+                  border: '2px solid var(--comic-black)',
+                  boxShadow: '0 3px 0 var(--comic-black)',
+                  borderRadius: 14,
+                  padding: '4px 10px',
+                  fontWeight: 900,
+                  fontSize: '0.82rem',
+                  fontFamily: 'var(--font-title)',
+                  color: '#713F12',
+                  whiteSpace: 'nowrap',
+                  animation: 'comicPop 0.3s ease-out'
+                }}
+              >
+                ⚡ 1... 2... KÉO PHĂNG! 💨
+              </div>
+            )}
+
+            {!isWinnerA && phase === 'FALL' && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '-45px',
+                  right: '0',
+                  background: '#FEE2E2',
+                  border: '2px solid var(--comic-black)',
+                  boxShadow: '0 3px 0 var(--comic-black)',
+                  borderRadius: 14,
+                  padding: '4px 10px',
+                  fontWeight: 900,
+                  fontSize: '0.82rem',
+                  fontFamily: 'var(--font-title)',
+                  color: '#991B1B',
+                  whiteSpace: 'nowrap',
+                  animation: 'comicPop 0.3s ease-out'
+                }}
+              >
+                😵 Úi giời ơi té rồi! 💫
+              </div>
+            )}
+          </div>
+
+          {/* ======================================================= */}
+          {/* ĐỘI B (BÊN PHẢI - ÁO CAM VHU) */}
+          {/* ======================================================= */}
+          <div
+            style={{
+              position: 'absolute',
+              right: !isWinnerA ? '6%' : (phase === 'FALL' ? '28%' : '10%'),
+              bottom: '22px',
+              display: 'flex',
+              gap: '6px',
+              alignItems: 'flex-end',
+              zIndex: 5,
+              transition: 'all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              transform: (isWinnerA && phase === 'FALL') ? 'rotate(-15deg) translateY(18px)' : 'none'
+            }}
+          >
+            {[4, 3, 2, 1, 0].map((idx) => (
+              <PullerCharacter
+                key={`teamB_${idx}`}
+                team="B"
+                index={idx}
+                isPulling={!isWinnerA && phase === 'PULL'}
+                isFallen={isWinnerA && (phase === 'FALL' || phase === 'CELEBRATE')}
+                isCheering={!isWinnerA && phase === 'CELEBRATE'}
+              />
+            ))}
+
+            {/* Bong bóng thoại Đội B */}
+            {!isWinnerA && phase === 'PULL' && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '-45px',
+                  right: '10px',
+                  background: '#FFEDD5',
+                  border: '2px solid var(--comic-black)',
+                  boxShadow: '0 3px 0 var(--comic-black)',
+                  borderRadius: 14,
+                  padding: '4px 10px',
+                  fontWeight: 900,
+                  fontSize: '0.82rem',
+                  fontFamily: 'var(--font-title)',
+                  color: '#9A3412',
+                  whiteSpace: 'nowrap',
+                  animation: 'comicPop 0.3s ease-out'
+                }}
+              >
+                🔥 DÔ TA! RÁNG LÊN NÀO! 💨
+              </div>
+            )}
+
+            {isWinnerA && phase === 'FALL' && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '-45px',
+                  left: '0',
+                  background: '#FEE2E2',
+                  border: '2px solid var(--comic-black)',
+                  boxShadow: '0 3px 0 var(--comic-black)',
+                  borderRadius: 14,
+                  padding: '4px 10px',
+                  fontWeight: 900,
+                  fontSize: '0.82rem',
+                  fontFamily: 'var(--font-title)',
+                  color: '#991B1B',
+                  whiteSpace: 'nowrap',
+                  animation: 'comicPop 0.3s ease-out'
+                }}
+              >
+                💫 Oái mất đà rồi! 😵
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ======================================================= */}
+        {/* BANNER CHIẾN THẮNG & CÚP VÀNG GIAI ĐOẠN 3 (CELEBRATE) */}
+        {/* ======================================================= */}
+        <div
+          style={{
+            padding: '20px 24px',
+            textAlign: 'center',
+            background: '#FFFFFF',
+            position: 'relative'
+          }}
+        >
+          {phase === 'CELEBRATE' ? (
+            <div style={{ animation: 'comicPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)' }}>
+              {/* Cúp Vàng VHU khổng lồ đáp xuống */}
+              <div
+                style={{
+                  fontSize: '4.5rem',
+                  lineHeight: '1',
+                  marginBottom: '8px',
+                  animation: 'trophyDrop 0.8s ease-out forwards',
+                  filter: 'drop-shadow(0 6px 0 rgba(15, 23, 42, 0.2))'
+                }}
+              >
+                🏆
+              </div>
+
+              {/* Tên Đội Vô Địch */}
+              <h2
+                style={{
+                  fontFamily: 'var(--font-title)',
+                  fontSize: '1.9rem',
+                  fontWeight: 900,
+                  color: winnerBadgeColor,
+                  margin: '0 0 6px 0',
+                  textTransform: 'uppercase',
+                  textShadow: '2px 2px 0 var(--comic-black)'
+                }}
+              >
+                {winnerName} VÔ ĐỊCH!
+              </h2>
+
+              <p
+                style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '0.95rem',
+                  fontWeight: 800,
+                  color: '#0F172A',
+                  margin: 0
+                }}
+              >
+                🎉 Xin chúc mừng! {loserName} cũng đã thi đấu cực kỳ kiên cường và quả cảm!
+              </p>
+            </div>
+          ) : (
+            <div style={{ minHeight: '80px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+              <p
+                style={{
+                  fontFamily: 'var(--font-title)',
+                  fontSize: '1.15rem',
+                  fontWeight: 900,
+                  color: '#0F172A',
+                  margin: '0 0 4px 0'
+                }}
+              >
+                {phase === 'PULL' ? '⏳ Hai đội đang giằng co nghẹt thở từng centimet dây...' : '🎺 Trọng tài đã thổi còi xác nhận kết quả hiệp đấu!'}
+              </p>
+              <span style={{ fontSize: '0.85rem', color: '#64748B', fontWeight: 700 }}>
+                {phase === 'PULL' ? 'Ai sẽ là người kéo phăng vạch phân cách trước?' : 'Chuẩn bị tiến vào lễ vinh danh trao cúp vàng VHU!'}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* NÚT BỎ QUA CUTSCENE (2D Neo-Brutalism Tactile Button) */}
+      <button
+        onClick={onDone}
+        id="btn-skip-victory-cutscene"
+        style={{
+          marginTop: '22px',
+          background: '#FFFFFF',
+          border: '2.5px solid var(--comic-black)',
+          boxShadow: '0 5px 0 var(--comic-black)',
+          borderRadius: 999,
+          padding: '10px 24px',
+          color: '#0F172A',
+          fontFamily: 'var(--font-title)',
+          fontSize: '0.95rem',
+          fontWeight: 900,
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          zIndex: 20,
+          opacity: canSkip ? 1 : 0.6,
+          pointerEvents: canSkip ? 'auto' : 'none',
+          transition: 'all 0.15s ease'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-2px)';
+          e.currentTarget.style.boxShadow = '0 7px 0 var(--comic-black)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'none';
+          e.currentTarget.style.boxShadow = '0 5px 0 var(--comic-black)';
+        }}
+      >
+        <span>Bỏ qua Cutscene</span>
+        <span>⏩</span>
+      </button>
     </div>
   );
 }
