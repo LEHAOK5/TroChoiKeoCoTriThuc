@@ -19,6 +19,14 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Auto-detect room code from URL query parameter (e.g. ?room=8291)
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -103,13 +111,13 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
   };
 
   return (
-    <div style={{ maxWidth: 480, margin: '16px auto', padding: '0 16px', width: '100%' }}>
+    <div style={{ maxWidth: 480, margin: isMobile ? '8px auto' : '16px auto', padding: isMobile ? '0 10px' : '0 16px', width: '100%', boxSizing: 'border-box' }}>
       {/* Header Motif */}
-      <div style={{ textAlign: 'center', marginBottom: 18 }}>
+      <div style={{ textAlign: 'center', marginBottom: isMobile ? 12 : 18 }}>
         <h1
           style={{
             fontFamily: 'var(--font-title)',
-            fontSize: '2.4rem',
+            fontSize: isMobile ? '1.8rem' : '2.4rem',
             fontWeight: 900,
             letterSpacing: '0.02em',
             color: '#1E40AF',
@@ -120,12 +128,12 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
         >
           KÉO CO TRI THỨC
         </h1>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-          <span style={{ fontSize: '1.2rem' }}>⚡</span>
-          <span style={{ color: '#334155', fontSize: '0.92rem', fontWeight: 800, fontFamily: 'var(--font-title)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+          <span style={{ fontSize: isMobile ? '1rem' : '1.2rem' }}>⚡</span>
+          <span style={{ color: '#334155', fontSize: isMobile ? '0.82rem' : '0.92rem', fontWeight: 800, fontFamily: 'var(--font-title)' }}>
             Đấu Trường 2D Trí Tuệ IT & Pháp Luật
           </span>
-          <span style={{ fontSize: '1.2rem' }}>🔥</span>
+          <span style={{ fontSize: isMobile ? '1rem' : '1.2rem' }}>🔥</span>
         </div>
       </div>
 
@@ -134,36 +142,46 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
         style={{
           background: '#FFFFFF',
           border: '2.5px solid var(--comic-black)',
-          borderRadius: 24,
-          padding: '24px 22px',
-          boxShadow: '0 6px 0 var(--comic-black)'
+          borderRadius: 20,
+          padding: isMobile ? '16px 14px' : '24px 22px',
+          boxShadow: '0 6px 0 var(--comic-black)',
+          width: '100%',
+          boxSizing: 'border-box'
         }}
       >
-        <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '1.25rem', fontWeight: 800, marginBottom: 12 }}>
+        <h2 style={{ fontFamily: 'var(--font-title)', fontSize: isMobile ? '1.15rem' : '1.25rem', fontWeight: 800, marginBottom: 10 }}>
           📝 ĐĂNG KÝ VÀO PHÒNG ĐẤU
         </h2>
-        <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: 16 }}>
+        <p style={{ fontSize: isMobile ? '0.78rem' : '0.82rem', color: '#475569', marginBottom: 14 }}>
           Nhập mã phòng do Ban Tổ Chức tại quầy cấp và điền thông tin để bắt đầu:
         </p>
 
         {errorMsg && (
-          <div style={{ background: 'rgba(255, 23, 68, 0.2)', border: '1px solid #FF1744', borderRadius: 10, padding: '10px 14px', color: '#FF8080', fontSize: '0.88rem', marginBottom: 14 }}>
+          <div style={{ background: '#FEE2E2', border: '1.5px solid #EF4444', borderRadius: 10, padding: '10px 12px', color: '#B91C1C', fontSize: '0.85rem', fontWeight: 700, marginBottom: 14 }}>
             ⚠️ {errorMsg}
           </div>
         )}
 
         <form onSubmit={handleSubmit} onFocus={() => playRegistrationTheme()}>
           {/* ROOM CODE INPUT (TOP PRIORITY) */}
-          <div style={{ marginBottom: 16, background: 'rgba(255, 214, 0, 0.08)', border: '1.5px solid var(--color-steal)', borderRadius: 14, padding: 12 }}>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 800, color: 'var(--color-steal)', marginBottom: 6 }}>
-              🔑 MÃ PHÒNG THI ĐẤU * (Hỏi Ban Tổ Chức tại quầy)
+          <div style={{
+            marginBottom: 14,
+            background: '#FEFCE8',
+            border: '2px solid #CA8A04',
+            borderRadius: 14,
+            padding: isMobile ? '10px 10px' : '12px 14px',
+            boxSizing: 'border-box',
+            width: '100%'
+          }}>
+            <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 800, color: '#854D0E', marginBottom: 6 }}>
+              🔑 MÃ PHÒNG THI ĐẤU * (Hỏi BTC tại quầy)
             </label>
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'stretch', width: '100%' }}>
               <input
                 type="text"
                 required
                 maxLength={8}
-                placeholder="Ví dụ: 8291"
+                placeholder="MÃ PHÒNG (VD: 8291)"
                 value={formData.roomCode}
                 onChange={e => {
                   const val = e.target.value.toUpperCase();
@@ -173,17 +191,20 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
                 onBlur={() => verifyRoom(formData.roomCode)}
                 style={{
                   flex: 1,
-                  padding: '12px 14px',
+                  minWidth: 0,
+                  width: '100%',
+                  padding: isMobile ? '10px 10px' : '12px 14px',
                   background: '#FFFFFF',
-                  border: '2.5px solid var(--comic-black)',
-                  borderRadius: 12,
+                  border: '2px solid var(--comic-black)',
+                  borderRadius: 10,
                   color: '#0F172A',
-                  fontSize: '1.2rem',
+                  fontSize: isMobile ? '1.05rem' : '1.2rem',
                   fontWeight: 900,
-                  letterSpacing: 2,
+                  letterSpacing: 1.5,
                   outline: 'none',
                   textTransform: 'uppercase',
-                  boxShadow: '0 2px 0 var(--comic-black)'
+                  boxShadow: '0 2px 0 var(--comic-black)',
+                  boxSizing: 'border-box'
                 }}
               />
               <button
@@ -191,16 +212,22 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
                 onClick={() => verifyRoom(formData.roomCode)}
                 disabled={checkingRoom || !formData.roomCode.trim()}
                 style={{
-                  padding: '0 16px',
+                  flexShrink: 0,
+                  minWidth: isMobile ? 80 : 96,
+                  padding: isMobile ? '0 10px' : '0 16px',
                   background: '#191AFE',
                   border: '2px solid var(--comic-black)',
                   boxShadow: '0 2px 0 var(--comic-black)',
                   color: '#FFFFFF',
-                  borderRadius: 12,
-                  fontSize: '0.85rem',
+                  borderRadius: 10,
+                  fontSize: isMobile ? '0.82rem' : '0.85rem',
                   fontWeight: 900,
                   fontFamily: 'var(--font-title)',
-                  cursor: 'pointer'
+                  cursor: (checkingRoom || !formData.roomCode.trim()) ? 'not-allowed' : 'pointer',
+                  whiteSpace: 'nowrap',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}
               >
                 {checkingRoom ? '...' : 'Kiểm tra'}
@@ -209,12 +236,32 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
 
             {/* Room Status Indicator */}
             {roomInfo && (
-              <div style={{ marginTop: 8, fontSize: '0.8rem', color: '#00E676', fontWeight: 700 }}>
-                ✅ Phòng hợp lệ: Chế độ {roomInfo.mode} ({roomInfo.maxPerTeam} vs {roomInfo.maxPerTeam}) • Đội A: {roomInfo.teamACount}/{roomInfo.maxPerTeam} • Đội B: {roomInfo.teamBCount}/{roomInfo.maxPerTeam}
+              <div style={{
+                marginTop: 8,
+                fontSize: '0.78rem',
+                color: '#15803D',
+                background: '#DCFCE7',
+                border: '1.5px solid #16A34A',
+                padding: '6px 10px',
+                borderRadius: 8,
+                fontWeight: 700,
+                wordBreak: 'break-word'
+              }}>
+                ✅ Phòng #{roomInfo.roomCode}: {roomInfo.mode} ({roomInfo.maxPerTeam}vs{roomInfo.maxPerTeam}) • Đội A: {roomInfo.teamACount}/{roomInfo.maxPerTeam} • Đội B: {roomInfo.teamBCount}/{roomInfo.maxPerTeam}
               </div>
             )}
             {roomError && (
-              <div style={{ marginTop: 8, fontSize: '0.8rem', color: '#FF5252', fontWeight: 600 }}>
+              <div style={{
+                marginTop: 8,
+                fontSize: '0.78rem',
+                color: '#B91C1C',
+                background: '#FEE2E2',
+                border: '1.5px solid #EF4444',
+                padding: '6px 10px',
+                borderRadius: 8,
+                fontWeight: 700,
+                wordBreak: 'break-word'
+              }}>
                 ❌ {roomError}
               </div>
             )}
@@ -333,8 +380,8 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
                     onClick={() => canJoinA && setFormData({ ...formData, preferredTeam: 'A' })}
                     id="select-team-a-btn"
                     style={{
-                      padding: '12px 10px',
-                      borderRadius: 16,
+                      padding: isMobile ? '10px 4px' : '12px 10px',
+                      borderRadius: 14,
                       border: !canJoinA
                         ? '2px solid #CBD5E1'
                         : isSelected
@@ -351,16 +398,18 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      gap: 3,
+                      gap: 2,
                       opacity: !canJoinA ? 0.6 : 1,
-                      transition: 'all 0.1s ease'
+                      transition: 'all 0.1s ease',
+                      width: '100%',
+                      boxSizing: 'border-box'
                     }}
                   >
-                    <span style={{ fontSize: '1.4rem' }}>⚡</span>
-                    <span style={{ fontWeight: 900, fontFamily: 'var(--font-title)', fontSize: '0.9rem', color: !canJoinA ? '#94A3B8' : '#0284C7' }}>
+                    <span style={{ fontSize: isMobile ? '1.2rem' : '1.4rem' }}>⚡</span>
+                    <span style={{ fontWeight: 900, fontFamily: 'var(--font-title)', fontSize: isMobile ? '0.82rem' : '0.9rem', color: !canJoinA ? '#94A3B8' : '#0284C7', textAlign: 'center' }}>
                       ĐỘI A - TIA CHỚP
                     </span>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: !canJoinA ? '#EF4444' : isSelected ? '#16A34A' : '#64748B' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 700, color: !canJoinA ? '#EF4444' : isSelected ? '#16A34A' : '#64748B', textAlign: 'center' }}>
                       {!canJoinA
                         ? `🔒 ĐÃ ĐỦ (${roomInfo?.teamACount}/${roomInfo?.maxPerTeam})`
                         : isSelected
@@ -382,8 +431,8 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
                     onClick={() => canJoinB && setFormData({ ...formData, preferredTeam: 'B' })}
                     id="select-team-b-btn"
                     style={{
-                      padding: '12px 10px',
-                      borderRadius: 16,
+                      padding: isMobile ? '10px 4px' : '12px 10px',
+                      borderRadius: 14,
                       border: !canJoinB
                         ? '2px solid #CBD5E1'
                         : isSelected
@@ -400,16 +449,18 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      gap: 3,
+                      gap: 2,
                       opacity: !canJoinB ? 0.6 : 1,
-                      transition: 'all 0.1s ease'
+                      transition: 'all 0.1s ease',
+                      width: '100%',
+                      boxSizing: 'border-box'
                     }}
                   >
-                    <span style={{ fontSize: '1.4rem' }}>🔥</span>
-                    <span style={{ fontWeight: 900, fontFamily: 'var(--font-title)', fontSize: '0.9rem', color: !canJoinB ? '#94A3B8' : '#EA580C' }}>
+                    <span style={{ fontSize: isMobile ? '1.2rem' : '1.4rem' }}>🔥</span>
+                    <span style={{ fontWeight: 900, fontFamily: 'var(--font-title)', fontSize: isMobile ? '0.82rem' : '0.9rem', color: !canJoinB ? '#94A3B8' : '#EA580C', textAlign: 'center' }}>
                       ĐỘI B - NGỌN LỬA
                     </span>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: !canJoinB ? '#EF4444' : isSelected ? '#16A34A' : '#64748B' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: 700, color: !canJoinB ? '#EF4444' : isSelected ? '#16A34A' : '#64748B', textAlign: 'center' }}>
                       {!canJoinB
                         ? `🔒 ĐÃ ĐỦ (${roomInfo?.teamBCount}/${roomInfo?.maxPerTeam})`
                         : isSelected
@@ -422,7 +473,7 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
             </div>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '14px 0 18px', fontSize: '0.85rem', color: '#334155', fontWeight: 600 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '14px 0 18px', fontSize: isMobile ? '0.78rem' : '0.85rem', color: '#334155', fontWeight: 600 }}>
             <input
               type="checkbox"
               id="consent"
@@ -441,14 +492,14 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
             disabled={isLoading || !formData.consent || Boolean(roomInfo?.isFull)}
             style={{
               width: '100%',
-              height: 54,
+              height: isMobile ? 48 : 54,
               background: roomInfo?.isFull
                 ? '#FEE2E2'
                 : 'linear-gradient(180deg, #4E4FFF 0%, #191AFE 100%)',
               border: '2.5px solid var(--comic-black)',
               boxShadow: '0 5px 0 var(--comic-black)',
               color: roomInfo?.isFull ? '#DC2626' : '#FFFFFF',
-              fontSize: '1.15rem',
+              fontSize: isMobile ? '1.02rem' : '1.15rem',
               fontWeight: 900,
               textTransform: 'uppercase',
               letterSpacing: '0.04em',

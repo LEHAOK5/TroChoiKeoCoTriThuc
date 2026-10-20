@@ -42,6 +42,14 @@ export default function AdminPage({ onBackToGame }) {
   // Tab Navigation: 'ROOMS' | 'STUDENTS' | 'MATCHES'
   const [activeTab, setActiveTab] = useState('ROOMS');
 
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Students & Matches Data
   const [registrations, setRegistrations] = useState([]);
   const [loadingRegistrations, setLoadingRegistrations] = useState(false);
@@ -220,20 +228,20 @@ export default function AdminPage({ onBackToGame }) {
   }, [registrations, searchStudent]);
 
   return (
-    <div style={{ maxWidth: 1060, margin: '20px auto', padding: '0 16px', width: '100%' }}>
+    <div style={{ maxWidth: 1060, margin: isMobile ? '12px auto' : '20px auto', padding: isMobile ? '0 10px' : '0 16px', width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-title)', fontSize: '1.6rem', fontWeight: 900, margin: 0, color: '#0F172A' }}>
+          <h1 style={{ fontFamily: 'var(--font-title)', fontSize: isMobile ? '1.3rem' : '1.6rem', fontWeight: 900, margin: 0, color: '#0F172A' }}>
             🏛️ BẢNG ĐIỀU KHIỂN BAN TỔ CHỨC
           </h1>
           {adminUser && (
-            <div style={{ fontSize: '0.85rem', color: '#0369A1', marginTop: 4, fontWeight: 700 }}>
+            <div style={{ fontSize: '0.82rem', color: '#0369A1', marginTop: 4, fontWeight: 700 }}>
               👤 Đăng nhập: <strong>{adminUser.full_name}</strong> ({adminUser.role})
             </div>
           )}
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {isAuthenticated && (
             <button
               onClick={handleLogout}
@@ -436,24 +444,25 @@ export default function AdminPage({ onBackToGame }) {
           )}
 
           {/* 3 TAB NAVIGATION BAR (2D COMIC BUTTONS) */}
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'nowrap', overflowX: 'auto', WebkitOverflowScrolling: 'touch', borderBottom: '2.5px solid var(--comic-black)', paddingBottom: 12 }}>
+          <div style={{ display: 'flex', gap: isMobile ? 6 : 10, flexWrap: 'nowrap', overflowX: 'auto', WebkitOverflowScrolling: 'touch', borderBottom: '2.5px solid var(--comic-black)', paddingBottom: isMobile ? 8 : 12, maxWidth: '100%', boxSizing: 'border-box' }}>
             <button
               onClick={() => setActiveTab('ROOMS')}
               style={{
-                padding: '10px 18px',
+                flexShrink: 0,
+                padding: isMobile ? '8px 12px' : '10px 18px',
                 borderRadius: 14,
                 border: '2px solid var(--comic-black)',
                 background: activeTab === 'ROOMS' ? '#0284C7' : '#FFFFFF',
                 color: activeTab === 'ROOMS' ? '#FFFFFF' : '#0F172A',
                 fontWeight: 900,
-                fontSize: '0.92rem',
+                fontSize: isMobile ? '0.82rem' : '0.92rem',
                 cursor: 'pointer',
                 boxShadow: activeTab === 'ROOMS' ? '0 4px 0 var(--comic-black)' : '0 2px 0 var(--comic-black)',
                 transform: activeTab === 'ROOMS' ? 'translateY(-2px)' : 'none',
                 transition: 'all 0.15s ease',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 8
+                gap: 6
               }}
             >
               <span>🎮</span>
@@ -461,9 +470,9 @@ export default function AdminPage({ onBackToGame }) {
               <span style={{
                 background: activeTab === 'ROOMS' ? '#FFFFFF' : '#E0F2FE',
                 color: activeTab === 'ROOMS' ? '#0284C7' : '#0369A1',
-                padding: '1px 8px',
+                padding: '1px 7px',
                 borderRadius: 999,
-                fontSize: '0.75rem',
+                fontSize: '0.72rem',
                 fontWeight: 900
               }}>
                 {rooms.length}
@@ -473,20 +482,21 @@ export default function AdminPage({ onBackToGame }) {
             <button
               onClick={() => { setActiveTab('STUDENTS'); loadRegistrations(); }}
               style={{
-                padding: '10px 18px',
+                flexShrink: 0,
+                padding: isMobile ? '8px 12px' : '10px 18px',
                 borderRadius: 14,
                 border: '2px solid var(--comic-black)',
                 background: activeTab === 'STUDENTS' ? '#0284C7' : '#FFFFFF',
                 color: activeTab === 'STUDENTS' ? '#FFFFFF' : '#0F172A',
                 fontWeight: 900,
-                fontSize: '0.92rem',
+                fontSize: isMobile ? '0.82rem' : '0.92rem',
                 cursor: 'pointer',
                 boxShadow: activeTab === 'STUDENTS' ? '0 4px 0 var(--comic-black)' : '0 2px 0 var(--comic-black)',
                 transform: activeTab === 'STUDENTS' ? 'translateY(-2px)' : 'none',
                 transition: 'all 0.15s ease',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 8
+                gap: 6
               }}
             >
               <span>📋</span>
@@ -494,9 +504,9 @@ export default function AdminPage({ onBackToGame }) {
               <span style={{
                 background: activeTab === 'STUDENTS' ? '#FFFFFF' : '#FEF08A',
                 color: activeTab === 'STUDENTS' ? '#0284C7' : '#713F12',
-                padding: '1px 8px',
+                padding: '1px 7px',
                 borderRadius: 999,
-                fontSize: '0.75rem',
+                fontSize: '0.72rem',
                 fontWeight: 900
               }}>
                 {stats?.totalRegistrations || registrations.length}
@@ -506,20 +516,21 @@ export default function AdminPage({ onBackToGame }) {
             <button
               onClick={() => { setActiveTab('MATCHES'); loadMatches(); }}
               style={{
-                padding: '10px 18px',
+                flexShrink: 0,
+                padding: isMobile ? '8px 12px' : '10px 18px',
                 borderRadius: 14,
                 border: '2px solid var(--comic-black)',
                 background: activeTab === 'MATCHES' ? '#0284C7' : '#FFFFFF',
                 color: activeTab === 'MATCHES' ? '#FFFFFF' : '#0F172A',
                 fontWeight: 900,
-                fontSize: '0.92rem',
+                fontSize: isMobile ? '0.82rem' : '0.92rem',
                 cursor: 'pointer',
                 boxShadow: activeTab === 'MATCHES' ? '0 4px 0 var(--comic-black)' : '0 2px 0 var(--comic-black)',
                 transform: activeTab === 'MATCHES' ? 'translateY(-2px)' : 'none',
                 transition: 'all 0.15s ease',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 8
+                gap: 6
               }}
             >
               <span>🏆</span>
@@ -527,9 +538,9 @@ export default function AdminPage({ onBackToGame }) {
               <span style={{
                 background: activeTab === 'MATCHES' ? '#FFFFFF' : '#DCFCE7',
                 color: activeTab === 'MATCHES' ? '#0284C7' : '#15803D',
-                padding: '1px 8px',
+                padding: '1px 7px',
                 borderRadius: 999,
-                fontSize: '0.75rem',
+                fontSize: '0.72rem',
                 fontWeight: 900
               }}>
                 {stats?.totalMatches || matches.length}
@@ -541,39 +552,39 @@ export default function AdminPage({ onBackToGame }) {
           {/* TAB 1: QUẢN LÝ PHÒNG ĐẤU & LIVE MATCHES                  */}
           {/* ======================================================== */}
           {activeTab === 'ROOMS' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {/* Quick Stats Grid (2D Neo-brutalism Cards) */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
-                <div style={{ background: '#FFFFFF', border: '2.5px solid var(--comic-black)', borderRadius: 16, padding: '16px 18px', boxShadow: '0 4px 0 var(--comic-black)' }}>
-                  <div style={{ fontSize: '0.8rem', color: '#475569', fontWeight: 800 }}>👥 TỔNG ĐĂNG KÝ</div>
-                  <div style={{ fontFamily: 'var(--font-title)', fontSize: '2.2rem', fontWeight: 900, color: '#0284C7', lineHeight: 1.2 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fit, minmax(180px, 1fr))', gap: isMobile ? 8 : 12 }}>
+                <div style={{ background: '#FFFFFF', border: '2.5px solid var(--comic-black)', borderRadius: 14, padding: isMobile ? '12px 10px' : '16px 18px', boxShadow: '0 4px 0 var(--comic-black)' }}>
+                  <div style={{ fontSize: isMobile ? '0.72rem' : '0.8rem', color: '#475569', fontWeight: 800 }}>👥 TỔNG ĐĂNG KÝ</div>
+                  <div style={{ fontFamily: 'var(--font-title)', fontSize: isMobile ? '1.6rem' : '2.2rem', fontWeight: 900, color: '#0284C7', lineHeight: 1.2 }}>
                     {stats?.totalRegistrations || 0}
                   </div>
-                  <small style={{ color: '#64748B', fontWeight: 600 }}>Sinh viên tại gian hàng</small>
+                  <small style={{ color: '#64748B', fontWeight: 600, fontSize: isMobile ? '0.7rem' : '0.8rem' }}>Sinh viên gian hàng</small>
                 </div>
 
-                <div style={{ background: '#FFFFFF', border: '2.5px solid var(--comic-black)', borderRadius: 16, padding: '16px 18px', boxShadow: '0 4px 0 var(--comic-black)' }}>
-                  <div style={{ fontSize: '0.8rem', color: '#475569', fontWeight: 800 }}>📚 NGÂN HÀNG CÂU HỎI</div>
-                  <div style={{ fontFamily: 'var(--font-title)', fontSize: '2.2rem', fontWeight: 900, color: '#D97706', lineHeight: 1.2 }}>
+                <div style={{ background: '#FFFFFF', border: '2.5px solid var(--comic-black)', borderRadius: 14, padding: isMobile ? '12px 10px' : '16px 18px', boxShadow: '0 4px 0 var(--comic-black)' }}>
+                  <div style={{ fontSize: isMobile ? '0.72rem' : '0.8rem', color: '#475569', fontWeight: 800 }}>📚 CÂU HỎI</div>
+                  <div style={{ fontFamily: 'var(--font-title)', fontSize: isMobile ? '1.6rem' : '2.2rem', fontWeight: 900, color: '#D97706', lineHeight: 1.2 }}>
                     {stats?.totalQuestions || 0}
                   </div>
-                  <small style={{ color: '#64748B', fontWeight: 600 }}>{stats?.questionsIT || 0} IT + {stats?.questionsLAW || 0} Luật</small>
+                  <small style={{ color: '#64748B', fontWeight: 600, fontSize: isMobile ? '0.7rem' : '0.8rem' }}>{stats?.questionsIT || 0} IT + {stats?.questionsLAW || 0} Luật</small>
                 </div>
 
-                <div style={{ background: '#FFFFFF', border: '2.5px solid var(--comic-black)', borderRadius: 16, padding: '16px 18px', boxShadow: '0 4px 0 var(--comic-black)' }}>
-                  <div style={{ fontSize: '0.8rem', color: '#475569', fontWeight: 800 }}>⚔️ TRẬN ĐÃ ĐẤU</div>
-                  <div style={{ fontFamily: 'var(--font-title)', fontSize: '2.2rem', fontWeight: 900, color: '#16A34A', lineHeight: 1.2 }}>
+                <div style={{ background: '#FFFFFF', border: '2.5px solid var(--comic-black)', borderRadius: 14, padding: isMobile ? '12px 10px' : '16px 18px', boxShadow: '0 4px 0 var(--comic-black)' }}>
+                  <div style={{ fontSize: isMobile ? '0.72rem' : '0.8rem', color: '#475569', fontWeight: 800 }}>⚔️ TRẬN ĐÃ ĐẤU</div>
+                  <div style={{ fontFamily: 'var(--font-title)', fontSize: isMobile ? '1.6rem' : '2.2rem', fontWeight: 900, color: '#16A34A', lineHeight: 1.2 }}>
                     {stats?.totalMatches || 0}
                   </div>
-                  <small style={{ color: '#64748B', fontWeight: 600 }}>Thắng A: <strong>{stats?.winsA || 0}</strong> | Thắng B: <strong>{stats?.winsB || 0}</strong></small>
+                  <small style={{ color: '#64748B', fontWeight: 600, fontSize: isMobile ? '0.7rem' : '0.8rem' }}>Thắng A: <strong>{stats?.winsA || 0}</strong> | B: <strong>{stats?.winsB || 0}</strong></small>
                 </div>
 
-                <div style={{ background: '#FFFFFF', border: '2.5px solid var(--comic-black)', borderRadius: 16, padding: '16px 18px', boxShadow: '0 4px 0 var(--comic-black)' }}>
-                  <div style={{ fontSize: '0.8rem', color: '#475569', fontWeight: 800 }}>🚪 PHÒNG ĐANG MỞ</div>
-                  <div style={{ fontFamily: 'var(--font-title)', fontSize: '2.2rem', fontWeight: 900, color: '#EA580C', lineHeight: 1.2 }}>
+                <div style={{ background: '#FFFFFF', border: '2.5px solid var(--comic-black)', borderRadius: 14, padding: isMobile ? '12px 10px' : '16px 18px', boxShadow: '0 4px 0 var(--comic-black)' }}>
+                  <div style={{ fontSize: isMobile ? '0.72rem' : '0.8rem', color: '#475569', fontWeight: 800 }}>🚪 PHÒNG ĐANG MỞ</div>
+                  <div style={{ fontFamily: 'var(--font-title)', fontSize: isMobile ? '1.6rem' : '2.2rem', fontWeight: 900, color: '#EA580C', lineHeight: 1.2 }}>
                     {rooms.length}
                   </div>
-                  <small style={{ color: '#64748B', fontWeight: 600 }}>Tự động làm mới 2.5s</small>
+                  <small style={{ color: '#64748B', fontWeight: 600, fontSize: isMobile ? '0.7rem' : '0.8rem' }}>Tự làm mới 2.5s</small>
                 </div>
               </div>
 
