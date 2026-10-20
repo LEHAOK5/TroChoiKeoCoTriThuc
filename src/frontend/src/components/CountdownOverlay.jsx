@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { announceStart } from '../utils/announcer';
 
 export default function CountdownOverlay({ seconds, roomState, player }) {
   if (seconds === null || seconds === undefined) return null;
@@ -13,8 +14,12 @@ export default function CountdownOverlay({ seconds, roomState, player }) {
   const mode = roomState?.mode || '1vs1';
   const maxPerTeam = roomState?.maxPerTeam || 1;
 
-  // Haptic feedback per second
+  // Haptic feedback & voice announcer per second
   useEffect(() => {
+    if (seconds === 0) {
+      announceStart();
+    }
+
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
       try {
         if (seconds === 0) {

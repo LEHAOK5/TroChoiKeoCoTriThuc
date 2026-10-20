@@ -26,6 +26,17 @@ import {
   subscribeMute,
   unlockAudio
 } from './utils/audio';
+import {
+  announceBuzzer,
+  announceCorrect,
+  announceWrong,
+  announceRebound,
+  announceBothWrong,
+  announceVictory,
+  isVoiceMuted,
+  toggleVoiceMute,
+  subscribeVoiceMute
+} from './utils/announcer';
 import { BOOTH_LABEL } from './config/env';
 export default function App() {
   const isCutscenePreview = typeof window !== 'undefined' && window.location.hash.startsWith('#cutscene');
@@ -39,10 +50,12 @@ export default function App() {
   const [pingMs, setPingMs] = useState(25);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [audioMuted, setAudioMuted] = useState(() => isMuted());
+  const [voiceMuted, setVoiceMutedState] = useState(() => isVoiceMuted());
 
   // Listen to mute state changes and unlock audio on first interaction
   useEffect(() => {
-    const unsub = subscribeMute((val) => setAudioMuted(val));
+    const unsubAudio = subscribeMute((val) => setAudioMuted(val));
+    const unsubVoice = subscribeVoiceMute((val) => setVoiceMutedState(val));
     const handleFirstGesture = () => {
       unlockAudio();
       if (currentPageRef.current === 'REGISTER') {
@@ -52,7 +65,8 @@ export default function App() {
     window.addEventListener('click', handleFirstGesture, { once: true });
     window.addEventListener('touchstart', handleFirstGesture, { once: true });
     return () => {
-      unsub();
+      unsubAudio();
+      unsubVoice();
       window.removeEventListener('click', handleFirstGesture);
       window.removeEventListener('touchstart', handleFirstGesture);
     };
@@ -220,6 +234,7 @@ export default function App() {
     socket.on('buzzerAwarded', (data) => {
       playBuzzer();
       playCrowdMurmur();
+      announceBuzzer(data.team);
       setBuzzerData(data);
       setDeadline(data.deadline);
 
@@ -239,18 +254,21 @@ export default function App() {
         playCorrect();
         playRopePull();
         playCrowdCheer();
+        announceCorrect(result.answeringTeam);
         if (Math.abs(result.ropeOffset || 0) >= 2) {
           setBGMMode('TENSION');
         }
       } else {
         playWrong();
         playCrowdGasp();
+        announceWrong(result.answeringTeam);
       }
     });
 
     socket.on('reboundOpen', (data) => {
       playWrong();
       playCrowdGasp();
+      announceRebound(data.reboundTeam);
       setReboundData(data);
       setDeadline(data.deadline);
 
@@ -262,6 +280,7 @@ export default function App() {
     socket.on('bothTeamsWrong', (data) => {
       playWrong();
       playCrowdGasp();
+      announceBothWrong();
       setLastResult(data);
       setUiState('LOCKED');
     });
@@ -269,6 +288,7 @@ export default function App() {
     socket.on('gameOver', (data) => {
       stopBGM();
       playVictory();
+      announceVictory(data.winner);
       setGameOverData(data);
       setScoreA(data.scoreA);
       setScoreB(data.scoreB);
@@ -515,6 +535,34 @@ export default function App() {
           >
             <span>{audioMuted ? '🔇' : '🔊'}</span>
             <span>{audioMuted ? 'TẮT ÂM' : 'BẬT NHẠC'}</span>
+          </button>
+
+          {/* Nút Bật/Tắt Giọng MC Gameshow (Voice Announcer Toggle) */}
+          <button
+            onClick={() => {
+              const next = toggleVoiceMute();
+              setVoiceMutedState(next);
+            }}
+            title={voiceMuted ? "Bật giọng MC Gameshow" : "Tắt giọng MC Gameshow (dành cho khi có MC thật)"}
+            id="voice-announcer-toggle-btn"
+            style={{
+              background: voiceMuted ? '#FEE2E2' : '#EFF6FF',
+              border: '2px solid var(--comic-black)',
+              boxShadow: '0 2px 0 var(--comic-black)',
+              color: voiceMuted ? '#DC2626' : '#1D4ED8',
+              padding: '4px 10px',
+              borderRadius: 999,
+              cursor: 'pointer',
+              fontSize: '0.78rem',
+              fontWeight: 900,
+              fontFamily: 'var(--font-title)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5
+            }}
+          >
+            <span>{voiceMuted ? '🔇' : '🎙️'}</span>
+            <span>{voiceMuted ? 'TẮT MC' : 'MC BẬT'}</span>
           </button>
 
           <ConnectionBadge isConnected={isConnected} pingMs={pingMs} />
