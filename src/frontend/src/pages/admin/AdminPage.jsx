@@ -308,12 +308,9 @@ export default function AdminPage({ onBackToGame }) {
             🔐
           </div>
 
-          <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '1.4rem', color: '#1E3A8A', marginBottom: 6, fontWeight: 900 }}>
+          <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '1.4rem', color: '#1E3A8A', marginBottom: 22, fontWeight: 900 }}>
             ĐĂNG NHẬP BAN TỔ CHỨC
           </h2>
-          <p style={{ fontSize: '0.85rem', color: '#475569', marginBottom: 22, fontWeight: 600 }}>
-            Quyền tạo phòng thi đấu và giám sát sự kiện được bảo mật bởi Supabase
-          </p>
 
           {errorMsg && (
             <div style={{ background: '#FEE2E2', border: '2px solid #DC2626', color: '#B91C1C', padding: '10px 14px', borderRadius: 12, fontSize: '0.85rem', fontWeight: 800, marginBottom: 18, textAlign: 'left' }}>
@@ -339,8 +336,9 @@ export default function AdminPage({ onBackToGame }) {
                 border: '2px solid var(--comic-black)',
                 borderRadius: 12,
                 color: '#0F172A',
-                fontSize: '0.98rem',
-                fontWeight: 700,
+                fontFamily: 'var(--font-body)',
+                fontSize: '1.1rem',
+                fontWeight: 900,
                 outline: 'none',
                 boxShadow: '0 2px 0 var(--comic-black)'
               }}
@@ -366,9 +364,10 @@ export default function AdminPage({ onBackToGame }) {
                   border: '2px solid var(--comic-black)',
                   borderRadius: 12,
                   color: '#0F172A',
-                  fontSize: '1.15rem',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: '1.1rem',
                   fontWeight: 900,
-                  letterSpacing: showPassword ? 'normal' : '3px',
+                  letterSpacing: (showPassword || !password) ? 'normal' : '3px',
                   outline: 'none',
                   boxShadow: '0 2px 0 var(--comic-black)',
                   WebkitTextSecurity: showPassword ? 'none' : 'asterisk'
