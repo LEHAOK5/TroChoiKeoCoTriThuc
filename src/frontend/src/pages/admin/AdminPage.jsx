@@ -763,22 +763,22 @@ export default function AdminPage({ onBackToGame }) {
                         >
                           {/* Top Bar of Room Card */}
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, borderBottom: '2px solid #E2E8F0', paddingBottom: 14, marginBottom: 14 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 12, flexWrap: 'wrap' }}>
                               <div style={{
                                 fontFamily: 'var(--font-title)',
-                                fontSize: '1.8rem',
+                                fontSize: isMobile ? '1.4rem' : '1.8rem',
                                 fontWeight: 900,
                                 color: '#1E3A8A',
                                 background: '#FEF08A',
                                 border: '2px solid var(--comic-black)',
-                                padding: '4px 14px',
+                                padding: isMobile ? '2px 10px' : '4px 14px',
                                 borderRadius: 12,
                                 letterSpacing: 2,
                                 boxShadow: '0 2px 0 var(--comic-black)'
                               }}>
                                 #{r.roomCode}
                               </div>
-                              <div>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
                                 <span style={{
                                   background: '#E0F2FE',
                                   color: '#0369A1',
@@ -786,8 +786,7 @@ export default function AdminPage({ onBackToGame }) {
                                   padding: '4px 10px',
                                   borderRadius: 8,
                                   fontSize: '0.8rem',
-                                  fontWeight: 800,
-                                  marginRight: 8
+                                  fontWeight: 800
                                 }}>
                                   Chế độ: {r.mode || '1vs1'} ({max} vs {max})
                                 </span>
