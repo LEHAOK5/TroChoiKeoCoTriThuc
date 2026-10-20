@@ -21,9 +21,9 @@ export default function RefereeCharacter({ ropeOffset = 0, lastResult = null, is
   // Nội dung khung thoại (Speech Bubble)
   let bubbleText = '';
   if (winner === 'A') {
-    bubbleText = '🚩 ĐỘI A +1 Điểm!';
+    bubbleText = '🏆 ĐỘI A CHIẾN THẮNG!';
   } else if (winner === 'B') {
-    bubbleText = '🚩 ĐỘI B +1 Điểm!';
+    bubbleText = '🏆 ĐỘI B CHIẾN THẮNG!';
   } else if (winner === 'DRAW') {
     bubbleText = '⚖️ HÒA NHAU!';
   } else if (isBuzzed) {
