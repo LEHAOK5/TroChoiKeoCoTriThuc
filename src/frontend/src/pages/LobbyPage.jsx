@@ -8,6 +8,14 @@ export default function LobbyPage({
   onAddBot,
   onLogout
 }) {
+  const [isMobile, setIsMobile] = React.useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
+
+  React.useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const teamA = roomState?.teamA || [];
   const teamB = roomState?.teamB || [];
   const mode = roomState?.mode || '1vs1';
@@ -27,7 +35,7 @@ export default function LobbyPage({
   const hasOpponent = (currentTeam === 'A' ? teamB.length : teamA.length) > 0;
 
   return (
-    <div style={{ maxWidth: 780, margin: '18px auto', padding: '0 16px', width: '100%', display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div style={{ maxWidth: 780, margin: isMobile ? '10px auto' : '18px auto', padding: isMobile ? '0 10px' : '0 16px', width: '100%', display: 'flex', flexDirection: 'column', gap: isMobile ? 12 : 16 }}>
       {/* Top Bar: User Greeting + Room Info + Logout */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         {/* User Pill & Logout Button */}
@@ -580,7 +588,7 @@ export default function LobbyPage({
           className="btn-tactile"
           style={{
             width: '100%',
-            height: 60,
+            height: isMobile ? 52 : 60,
             borderRadius: 16,
             border: '3px solid var(--comic-black)',
             boxShadow: isMyReady ? '0 5px 0 #92400E' : '0 6px 0 var(--comic-black)',
@@ -588,7 +596,7 @@ export default function LobbyPage({
               ? 'linear-gradient(180deg, #FACC15 0%, #EAB308 100%)'
               : 'linear-gradient(180deg, #22C55E 0%, #16A34A 100%)',
             color: isMyReady ? '#713F12' : '#FFFFFF',
-            fontSize: '1.22rem',
+            fontSize: isMobile ? '1.02rem' : '1.22rem',
             fontWeight: 900,
             letterSpacing: '0.04em',
             textShadow: isMyReady ? 'none' : '0 1px 2px rgba(0,0,0,0.3)',

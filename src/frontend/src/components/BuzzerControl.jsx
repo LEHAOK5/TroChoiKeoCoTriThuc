@@ -211,34 +211,49 @@ export default function BuzzerControl({
                 style={{
                   background: isRevealedCorrect ? '#16A34A' : isRevealedWrong ? '#DC2626' : badgeTheme.bg,
                   color: (isRevealedCorrect || isRevealedWrong) ? '#FFFFFF' : badgeTheme.text,
-                  border: '2px solid var(--comic-black)'
+                  border: '2px solid var(--comic-black)',
+                  flexShrink: 0
                 }}
               >
-                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 900, fontSize: '0.95rem' }}>
+                <span style={{ fontFamily: 'var(--font-title)', fontWeight: 900, fontSize: isMobile ? '0.85rem' : '0.95rem' }}>
                   {letter}
                 </span>
               </div>
-              <span style={{ fontSize: '1.1rem', marginRight: 4 }}>{glyph}</span>
-              <span style={{ flex: 1, lineHeight: 1.4, fontWeight: 800, fontSize: '0.98rem', color: '#0F172A' }}>
+              <span style={{ fontSize: isMobile ? '0.95rem' : '1.1rem', marginRight: 6, flexShrink: 0 }}>{glyph}</span>
+              <span
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  lineHeight: 1.35,
+                  fontWeight: 800,
+                  fontSize: isMobile ? '0.86rem' : '0.98rem',
+                  color: '#0F172A',
+                  textAlign: 'left',
+                  wordBreak: 'break-word',
+                  overflowWrap: 'anywhere',
+                  whiteSpace: 'normal'
+                }}
+              >
                 {opt}
               </span>
 
               {/* Reveal Checkmark or Cross */}
               {isRevealedCorrect && (
-                <span style={{ fontSize: '1.3rem', color: '#16A34A', marginLeft: 'auto', fontWeight: 900 }}>
+                <span style={{ fontSize: '1.2rem', color: '#16A34A', marginLeft: 'auto', fontWeight: 900, flexShrink: 0 }}>
                   ✅
                 </span>
               )}
               {isRevealedWrong && (
-                <span style={{ fontSize: '1.3rem', color: '#DC2626', marginLeft: 'auto', fontWeight: 900 }}>
+                <span style={{ fontSize: '1.2rem', color: '#DC2626', marginLeft: 'auto', fontWeight: 900, flexShrink: 0 }}>
                   ❌
                 </span>
               )}
               {!isRevealedCorrect && !isRevealedWrong && (isWaiting || isOpponent || isLocked) && !isWrongEliminated && (
                 <span
                   style={{
-                    fontSize: '1.15rem',
+                    fontSize: '1.05rem',
                     marginLeft: 'auto',
+                    flexShrink: 0,
                     display: 'inline-block',
                     animation: 'lockRock 2s infinite ease-in-out'
                   }}
@@ -247,7 +262,7 @@ export default function BuzzerControl({
                 </span>
               )}
               {isWrongEliminated && !isRevealedCorrect && (
-                <span style={{ fontSize: '1.2rem', color: '#EF4444', marginLeft: 'auto' }}>
+                <span style={{ fontSize: '1.1rem', color: '#EF4444', marginLeft: 'auto', flexShrink: 0 }}>
                   ❌
                 </span>
               )}

@@ -264,35 +264,45 @@ html, body {
 @media (max-width: 640px) {
   .app-header {
     height: 48px;
-    padding: 0 10px;
+    padding: 0 8px;
+    overflow: hidden;
+  }
+  .brand-box {
+    gap: 4px;
+    flex-shrink: 0;
   }
   .brand-title {
-    font-size: 1.05rem;
+    font-size: 0.95rem;
+    white-space: nowrap !important;
   }
   .brand-title .full-title {
     display: none;
   }
   .brand-title .short-title {
     display: inline;
+    white-space: nowrap !important;
   }
   .booth-tag {
     display: none;
   }
   .header-actions {
-    gap: 5px;
+    gap: 3px;
+    flex-shrink: 0;
   }
   .header-btn-text {
     display: none;
   }
   .connection-badge {
-    padding: 3px 8px;
-    font-size: 0.7rem;
+    padding: 2px 6px;
+    font-size: 0.68rem;
   }
   .game-layout {
-    height: calc(100dvh - 48px);
-    padding: 4px 8px 8px;
+    min-height: calc(100dvh - 48px);
+    padding: 4px 6px 12px;
     gap: 6px;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
@@ -740,31 +750,36 @@ html, body {
 
 @media (max-width: 640px) {
   .buzzer-tactile {
-    width: 125px;
-    height: 125px;
+    width: 110px;
+    height: 110px;
   }
   .buzzer-icon {
-    font-size: 2.2rem;
+    font-size: 2rem;
   }
   .buzzer-label {
-    font-size: 0.95rem;
+    font-size: 0.9rem;
   }
   .answer-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 6px;
+    width: 100%;
   }
   .answer-btn {
-    min-height: 46px;
-    padding: 6px 10px;
+    min-height: 42px;
+    padding: 8px 12px;
     font-size: 0.88rem;
-    gap: 6px;
+    gap: 8px;
     border-radius: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: left;
   }
   .glyph-badge {
     width: 26px;
     height: 26px;
     font-size: 0.85rem;
     border-radius: 8px;
+    flex-shrink: 0;
   }
 }
 

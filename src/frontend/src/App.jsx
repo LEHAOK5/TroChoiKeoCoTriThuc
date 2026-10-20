@@ -52,6 +52,14 @@ export default function App() {
   const [audioMuted, setAudioMuted] = useState(() => isMuted());
   const [voiceMuted, setVoiceMutedState] = useState(() => isVoiceMuted());
 
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Listen to mute state changes and unlock audio on first interaction
   useEffect(() => {
     const unsubAudio = subscribeMute((val) => setAudioMuted(val));
@@ -450,19 +458,20 @@ export default function App() {
             <>
               <span
                 style={{
-                  fontSize: '0.78rem',
+                  fontSize: isMobile ? '0.72rem' : '0.78rem',
                   fontWeight: 900,
                   fontFamily: 'var(--font-title)',
-                  padding: '3px 8px',
+                  padding: isMobile ? '2px 6px' : '3px 8px',
                   borderRadius: 999,
                   background: player.team === 'A' ? '#E0F2FE' : '#FFEDD5',
                   color: player.team === 'A' ? '#0284C7' : '#EA580C',
-                  border: '2px solid var(--comic-black)',
+                  border: '1.5px solid var(--comic-black)',
                   boxShadow: '0 2px 0 var(--comic-black)',
-                  whiteSpace: 'nowrap'
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0
                 }}
               >
-                {player.team === 'A' ? '⚡ ĐỘI A' : '🔥 ĐỘI B'}
+                {player.team === 'A' ? (isMobile ? '⚡A' : '⚡ ĐỘI A') : (isMobile ? '🔥B' : '🔥 ĐỘI B')}
               </span>
               <button
                 onClick={() => {
@@ -474,17 +483,18 @@ export default function App() {
                 id="header-logout-btn"
                 style={{
                   background: '#FEE2E2',
-                  border: '2px solid var(--comic-black)',
+                  border: '1.5px solid var(--comic-black)',
                   boxShadow: '0 2px 0 var(--comic-black)',
                   color: '#DC2626',
-                  padding: '4px 8px',
+                  padding: isMobile ? '3px 6px' : '4px 8px',
                   borderRadius: 999,
                   cursor: 'pointer',
                   fontSize: '0.76rem',
                   fontWeight: 800,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 3
+                  gap: 3,
+                  flexShrink: 0
                 }}
               >
                 <span>🚪</span>
@@ -499,15 +509,16 @@ export default function App() {
               onClick={() => setCurrentPage(currentPage === 'ADMIN' ? (player ? 'LOBBY' : 'REGISTER') : 'ADMIN')}
               style={{
                 background: currentPage === 'ADMIN' ? '#E4E5FF' : '#FEF08A',
-                border: '2px solid var(--comic-black)',
+                border: '1.5px solid var(--comic-black)',
                 boxShadow: '0 2px 0 var(--comic-black)',
                 color: currentPage === 'ADMIN' ? '#1011B8' : '#713F12',
-                padding: '4px 8px',
+                padding: isMobile ? '3px 6px' : '4px 8px',
                 borderRadius: 999,
                 cursor: 'pointer',
-                fontSize: '0.78rem',
+                fontSize: '0.76rem',
                 fontWeight: 900,
-                fontFamily: 'var(--font-title)'
+                fontFamily: 'var(--font-title)',
+                flexShrink: 0
               }}
             >
               {currentPage === 'ADMIN' ? '🎮 Game' : '🏛️ BTC'}
@@ -524,18 +535,19 @@ export default function App() {
             id="audio-mute-toggle-btn"
             style={{
               background: audioMuted ? '#FEE2E2' : '#DCFCE7',
-              border: '2px solid var(--comic-black)',
+              border: '1.5px solid var(--comic-black)',
               boxShadow: '0 2px 0 var(--comic-black)',
               color: audioMuted ? '#DC2626' : '#15803D',
-              padding: '4px 8px',
+              padding: isMobile ? '3px 6px' : '4px 8px',
               borderRadius: 999,
               cursor: 'pointer',
-              fontSize: '0.78rem',
+              fontSize: '0.76rem',
               fontWeight: 900,
               fontFamily: 'var(--font-title)',
               display: 'flex',
               alignItems: 'center',
-              gap: 4
+              gap: 3,
+              flexShrink: 0
             }}
           >
             <span>{audioMuted ? '🔇' : '🔊'}</span>
@@ -552,25 +564,26 @@ export default function App() {
             id="voice-announcer-toggle-btn"
             style={{
               background: voiceMuted ? '#FEE2E2' : '#EFF6FF',
-              border: '2px solid var(--comic-black)',
+              border: '1.5px solid var(--comic-black)',
               boxShadow: '0 2px 0 var(--comic-black)',
               color: voiceMuted ? '#DC2626' : '#1D4ED8',
-              padding: '4px 8px',
+              padding: isMobile ? '3px 6px' : '4px 8px',
               borderRadius: 999,
               cursor: 'pointer',
-              fontSize: '0.78rem',
+              fontSize: '0.76rem',
               fontWeight: 900,
               fontFamily: 'var(--font-title)',
               display: 'flex',
               alignItems: 'center',
-              gap: 4
+              gap: 3,
+              flexShrink: 0
             }}
           >
             <span>{voiceMuted ? '🔇' : '🎙️'}</span>
             <span className="header-btn-text">{voiceMuted ? 'TẮT MC' : 'MC BẬT'}</span>
           </button>
 
-          <ConnectionBadge isConnected={isConnected} pingMs={pingMs} />
+          <ConnectionBadge isConnected={isConnected} pingMs={pingMs} compact={isMobile} />
         </div>
       </header>
 

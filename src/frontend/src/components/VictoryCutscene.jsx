@@ -9,6 +9,13 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
   // 3-Phases: 'PULL' (0-1.8s) -> 'FALL' (1.8-3.8s) -> 'CELEBRATE' (3.8-6.8s)
   const [phase, setPhase] = useState('PULL');
   const [canSkip, setCanSkip] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const isWinnerA = winner === 'A';
   const winnerName = isWinnerA ? 'ĐỘI A - TIA CHỚP' : 'ĐỘI B - NGỌN LỬA';
@@ -84,7 +91,7 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '16px',
+        padding: isMobile ? '8px' : '16px',
         overflow: 'hidden',
         userSelect: 'none'
       }}
@@ -110,8 +117,8 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
           maxWidth: '920px',
           background: '#FFFFFF',
           border: '3.5px solid var(--comic-black)',
-          borderRadius: 24,
-          boxShadow: '0 12px 0 var(--comic-black)',
+          borderRadius: isMobile ? 16 : 24,
+          boxShadow: isMobile ? '0 6px 0 var(--comic-black)' : '0 12px 0 var(--comic-black)',
           position: 'relative',
           zIndex: 10,
           overflow: 'hidden',
@@ -126,17 +133,17 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
               ? 'linear-gradient(90deg, #FACC15, #F59E0B)'
               : (phase === 'FALL' ? '#EF4444' : '#0284C7'),
             borderBottom: '3px solid var(--comic-black)',
-            padding: '12px 18px',
+            padding: isMobile ? '8px 10px' : '12px 18px',
             textAlign: 'center',
             color: phase === 'CELEBRATE' ? '#713F12' : '#FFFFFF',
             fontFamily: 'var(--font-title)',
             fontWeight: 900,
-            fontSize: '1.25rem',
+            fontSize: isMobile ? '0.88rem' : '1.25rem',
             letterSpacing: '0.5px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 10,
+            gap: 8,
             textShadow: phase === 'CELEBRATE' ? 'none' : '1.5px 1.5px 0 var(--comic-black)',
             transition: 'background 0.3s ease'
           }}
@@ -149,13 +156,13 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
         {/* KHÔNG GIAN ĐẤU TRƯỜNG KÉO CO 2D (Grass Arena) */}
         <div
           style={{
-            height: '240px',
+            height: isMobile ? '190px' : '240px',
             background: 'linear-gradient(180deg, #166534 0%, #15803D 50%, #14532D 100%)',
             position: 'relative',
             display: 'flex',
             alignItems: 'flex-end',
             justifyContent: 'center',
-            paddingBottom: '22px',
+            paddingBottom: isMobile ? '14px' : '22px',
             overflow: 'hidden'
           }}
         >
@@ -179,7 +186,7 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
               top: 0,
               left: '50%',
               bottom: 0,
-              width: '80px',
+              width: isMobile ? '50px' : '80px',
               borderLeft: '2px dashed rgba(255, 255, 255, 0.4)',
               borderRight: '2px dashed rgba(255, 255, 255, 0.4)',
               transform: 'translateX(-50%)',
@@ -189,7 +196,16 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
           />
 
           {/* TRỌNG TÀI VHU Ở GIỮA */}
-          <div style={{ position: 'absolute', bottom: '18px', left: '50%', transform: 'translateX(-50%)', zIndex: 6 }}>
+          <div
+            style={{
+              position: 'absolute',
+              bottom: isMobile ? '10px' : '18px',
+              left: '50%',
+              transform: isMobile ? 'translateX(-50%) scale(0.72)' : 'translateX(-50%)',
+              transformOrigin: 'bottom center',
+              zIndex: 6
+            }}
+          >
             <RefereeCharacter
               ropeOffset={ropeOffset}
               lastResult={{ isCorrect: true }}
@@ -202,16 +218,16 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
           <div
             style={{
               position: 'absolute',
-              left: '5%',
-              right: '5%',
-              bottom: '48px',
-              height: '14px',
+              left: '3%',
+              right: '3%',
+              bottom: isMobile ? '38px' : '48px',
+              height: isMobile ? '10px' : '14px',
               background: 'repeating-linear-gradient(45deg, #D4A373, #D4A373 10px, #B08968 10px, #B08968 20px)',
               border: '2px solid var(--comic-black)',
               borderRadius: 7,
               zIndex: 4,
               boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3)',
-              transform: `translateX(${ropeOffset * 10}px)`,
+              transform: `translateX(${ropeOffset * (isMobile ? 6 : 10)}px)`,
               transition: 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)'
             }}
           >
@@ -220,17 +236,17 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
               style={{
                 position: 'absolute',
                 left: '50%',
-                top: '-16px',
+                top: isMobile ? '-12px' : '-16px',
                 transform: 'translateX(-50%)',
-                width: '18px',
-                height: '32px',
+                width: isMobile ? '14px' : '18px',
+                height: isMobile ? '24px' : '32px',
                 background: '#DC2626',
                 border: '2px solid var(--comic-black)',
                 borderRadius: 4,
                 boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
               }}
             >
-              <span style={{ fontSize: '10px', display: 'block', textAlign: 'center', lineHeight: '28px', color: '#FFF' }}>
+              <span style={{ fontSize: isMobile ? '8px' : '10px', display: 'block', textAlign: 'center', lineHeight: isMobile ? '20px' : '28px', color: '#FFF' }}>
                 🚩
               </span>
             </div>
@@ -242,14 +258,17 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
           <div
             style={{
               position: 'absolute',
-              left: isWinnerA ? '6%' : (phase === 'FALL' ? '28%' : '10%'),
-              bottom: '22px',
+              left: isMobile ? (isWinnerA ? '2%' : (phase === 'FALL' ? '18%' : '4%')) : (isWinnerA ? '6%' : (phase === 'FALL' ? '28%' : '10%')),
+              bottom: isMobile ? '12px' : '22px',
               display: 'flex',
-              gap: '6px',
+              gap: isMobile ? '2px' : '6px',
               alignItems: 'flex-end',
               zIndex: 5,
               transition: 'all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)',
-              transform: (!isWinnerA && phase === 'FALL') ? 'rotate(15deg) translateY(18px)' : 'none'
+              transform: isMobile
+                ? (!isWinnerA && phase === 'FALL' ? 'scale(0.62) rotate(15deg) translateY(18px)' : 'scale(0.62)')
+                : (!isWinnerA && phase === 'FALL' ? 'rotate(15deg) translateY(18px)' : 'none'),
+              transformOrigin: 'bottom left'
             }}
           >
             {[0, 1, 2, 3, 4].map((idx) => (
@@ -268,15 +287,15 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
               <div
                 style={{
                   position: 'absolute',
-                  top: '-45px',
+                  top: isMobile ? '-36px' : '-45px',
                   left: '10px',
                   background: '#FEF08A',
                   border: '2px solid var(--comic-black)',
                   boxShadow: '0 3px 0 var(--comic-black)',
                   borderRadius: 14,
-                  padding: '4px 10px',
+                  padding: isMobile ? '2px 8px' : '4px 10px',
                   fontWeight: 900,
-                  fontSize: '0.82rem',
+                  fontSize: isMobile ? '0.72rem' : '0.82rem',
                   fontFamily: 'var(--font-title)',
                   color: '#713F12',
                   whiteSpace: 'nowrap',
@@ -291,15 +310,15 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
               <div
                 style={{
                   position: 'absolute',
-                  top: '-45px',
+                  top: isMobile ? '-36px' : '-45px',
                   right: '0',
                   background: '#FEE2E2',
                   border: '2px solid var(--comic-black)',
                   boxShadow: '0 3px 0 var(--comic-black)',
                   borderRadius: 14,
-                  padding: '4px 10px',
+                  padding: isMobile ? '2px 8px' : '4px 10px',
                   fontWeight: 900,
-                  fontSize: '0.82rem',
+                  fontSize: isMobile ? '0.72rem' : '0.82rem',
                   fontFamily: 'var(--font-title)',
                   color: '#991B1B',
                   whiteSpace: 'nowrap',
@@ -317,14 +336,17 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
           <div
             style={{
               position: 'absolute',
-              right: !isWinnerA ? '6%' : (phase === 'FALL' ? '28%' : '10%'),
-              bottom: '22px',
+              right: isMobile ? (!isWinnerA ? '2%' : (phase === 'FALL' ? '18%' : '4%')) : (!isWinnerA ? '6%' : (phase === 'FALL' ? '28%' : '10%')),
+              bottom: isMobile ? '12px' : '22px',
               display: 'flex',
-              gap: '6px',
+              gap: isMobile ? '2px' : '6px',
               alignItems: 'flex-end',
               zIndex: 5,
               transition: 'all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)',
-              transform: (isWinnerA && phase === 'FALL') ? 'rotate(-15deg) translateY(18px)' : 'none'
+              transform: isMobile
+                ? (isWinnerA && phase === 'FALL' ? 'scale(0.62) rotate(-15deg) translateY(18px)' : 'scale(0.62)')
+                : (isWinnerA && phase === 'FALL' ? 'rotate(-15deg) translateY(18px)' : 'none'),
+              transformOrigin: 'bottom right'
             }}
           >
             {[4, 3, 2, 1, 0].map((idx) => (
@@ -343,15 +365,15 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
               <div
                 style={{
                   position: 'absolute',
-                  top: '-45px',
+                  top: isMobile ? '-36px' : '-45px',
                   right: '10px',
                   background: '#FFEDD5',
                   border: '2px solid var(--comic-black)',
                   boxShadow: '0 3px 0 var(--comic-black)',
                   borderRadius: 14,
-                  padding: '4px 10px',
+                  padding: isMobile ? '2px 8px' : '4px 10px',
                   fontWeight: 900,
-                  fontSize: '0.82rem',
+                  fontSize: isMobile ? '0.72rem' : '0.82rem',
                   fontFamily: 'var(--font-title)',
                   color: '#9A3412',
                   whiteSpace: 'nowrap',
@@ -366,15 +388,15 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
               <div
                 style={{
                   position: 'absolute',
-                  top: '-45px',
+                  top: isMobile ? '-36px' : '-45px',
                   left: '0',
                   background: '#FEE2E2',
                   border: '2px solid var(--comic-black)',
                   boxShadow: '0 3px 0 var(--comic-black)',
                   borderRadius: 14,
-                  padding: '4px 10px',
+                  padding: isMobile ? '2px 8px' : '4px 10px',
                   fontWeight: 900,
-                  fontSize: '0.82rem',
+                  fontSize: isMobile ? '0.72rem' : '0.82rem',
                   fontFamily: 'var(--font-title)',
                   color: '#991B1B',
                   whiteSpace: 'nowrap',
@@ -392,7 +414,7 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
         {/* ======================================================= */}
         <div
           style={{
-            padding: '20px 24px',
+            padding: isMobile ? '14px 16px' : '20px 24px',
             textAlign: 'center',
             background: '#FFFFFF',
             position: 'relative'
@@ -403,7 +425,7 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
               {/* Cúp Vàng VHU khổng lồ đáp xuống */}
               <div
                 style={{
-                  fontSize: '4.5rem',
+                  fontSize: isMobile ? '3.2rem' : '4.5rem',
                   lineHeight: '1',
                   marginBottom: '8px',
                   animation: 'trophyDrop 0.8s ease-out forwards',
@@ -417,7 +439,7 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
               <h2
                 style={{
                   fontFamily: 'var(--font-title)',
-                  fontSize: '1.9rem',
+                  fontSize: isMobile ? '1.35rem' : '1.9rem',
                   fontWeight: 900,
                   color: winnerBadgeColor,
                   margin: '0 0 6px 0',
@@ -431,7 +453,7 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
               <p
                 style={{
                   fontFamily: 'var(--font-body)',
-                  fontSize: '0.95rem',
+                  fontSize: isMobile ? '0.82rem' : '0.95rem',
                   fontWeight: 800,
                   color: '#0F172A',
                   margin: 0
@@ -441,11 +463,11 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
               </p>
             </div>
           ) : (
-            <div style={{ minHeight: '80px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ minHeight: isMobile ? '60px' : '80px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
               <p
                 style={{
                   fontFamily: 'var(--font-title)',
-                  fontSize: '1.15rem',
+                  fontSize: isMobile ? '0.95rem' : '1.15rem',
                   fontWeight: 900,
                   color: '#0F172A',
                   margin: '0 0 4px 0'
@@ -453,7 +475,7 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
               >
                 {phase === 'PULL' ? '⏳ Hai đội đang giằng co nghẹt thở từng centimet dây...' : '🎺 Trọng tài đã thổi còi xác nhận kết quả hiệp đấu!'}
               </p>
-              <span style={{ fontSize: '0.85rem', color: '#64748B', fontWeight: 700 }}>
+              <span style={{ fontSize: isMobile ? '0.75rem' : '0.85rem', color: '#64748B', fontWeight: 700 }}>
                 {phase === 'PULL' ? 'Ai sẽ là người kéo phăng vạch phân cách trước?' : 'Chuẩn bị tiến vào lễ vinh danh trao cúp vàng VHU!'}
               </span>
             </div>
@@ -466,15 +488,15 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
         onClick={onDone}
         id="btn-skip-victory-cutscene"
         style={{
-          marginTop: '22px',
+          marginTop: isMobile ? '12px' : '22px',
           background: '#FFFFFF',
           border: '2.5px solid var(--comic-black)',
-          boxShadow: '0 5px 0 var(--comic-black)',
+          boxShadow: isMobile ? '0 3px 0 var(--comic-black)' : '0 5px 0 var(--comic-black)',
           borderRadius: 999,
-          padding: '10px 24px',
+          padding: isMobile ? '8px 18px' : '10px 24px',
           color: '#0F172A',
           fontFamily: 'var(--font-title)',
-          fontSize: '0.95rem',
+          fontSize: isMobile ? '0.85rem' : '0.95rem',
           fontWeight: 900,
           cursor: 'pointer',
           display: 'flex',

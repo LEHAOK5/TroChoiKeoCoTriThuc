@@ -1,8 +1,16 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { announceStart } from '../utils/announcer';
 
 export default function CountdownOverlay({ seconds, roomState, player }) {
   if (seconds === null || seconds === undefined) return null;
+
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const teamA = roomState?.teamA || [
     { name: player?.team === 'A' ? player?.name : 'Đội A', studentId: player?.team === 'A' ? player?.studentId : '231A...' }
@@ -76,7 +84,7 @@ export default function CountdownOverlay({ seconds, roomState, player }) {
   const currentStage = stageConfig[seconds] || stageConfig[0];
 
   return (
-    <div className="faceoff-backdrop">
+    <div className="faceoff-backdrop" style={{ padding: isMobile ? '12px 10px' : '20px' }}>
       {/* Top Banner: Arena Info */}
       <div
         style={{
@@ -84,22 +92,22 @@ export default function CountdownOverlay({ seconds, roomState, player }) {
           alignItems: 'center',
           justifyContent: 'center',
           flexWrap: 'wrap',
-          gap: 12,
-          marginBottom: 20
+          gap: isMobile ? 6 : 12,
+          marginBottom: isMobile ? 12 : 20
         }}
       >
         <div
           style={{
             background: '#FEF08A',
-            border: '2.5px solid var(--comic-black)',
+            border: '2px solid var(--comic-black)',
             boxShadow: 'var(--shadow-3d)',
-            padding: '6px 16px',
-            borderRadius: 14,
+            padding: isMobile ? '4px 10px' : '6px 16px',
+            borderRadius: 12,
             fontFamily: 'var(--font-title)',
             fontWeight: 900,
-            fontSize: '1.05rem',
+            fontSize: isMobile ? '0.85rem' : '1.05rem',
             color: '#713F12',
-            letterSpacing: 1.5
+            letterSpacing: 1
           }}
         >
           PHÒNG #{roomCode}
@@ -108,14 +116,14 @@ export default function CountdownOverlay({ seconds, roomState, player }) {
         <div
           style={{
             background: '#FFFFFF',
-            border: '2.5px solid var(--comic-black)',
+            border: '2px solid var(--comic-black)',
             boxShadow: 'var(--shadow-3d)',
-            padding: '6px 18px',
-            borderRadius: 14,
-            fontSize: '0.92rem',
+            padding: isMobile ? '4px 12px' : '6px 18px',
+            borderRadius: 12,
+            fontSize: isMobile ? '0.82rem' : '0.92rem',
             fontWeight: 900,
             color: '#191AFE',
-            letterSpacing: 1
+            letterSpacing: 0.5
           }}
         >
           ⚔️ SÂN ĐẤU KÉO CO TRI THỨC
@@ -124,30 +132,132 @@ export default function CountdownOverlay({ seconds, roomState, player }) {
         <div
           style={{
             background: '#E4E5FF',
-            border: '2.5px solid var(--comic-black)',
+            border: '2px solid var(--comic-black)',
             boxShadow: 'var(--shadow-3d)',
-            padding: '6px 14px',
-            borderRadius: 14,
-            fontSize: '0.86rem',
+            padding: isMobile ? '4px 10px' : '6px 14px',
+            borderRadius: 12,
+            fontSize: isMobile ? '0.78rem' : '0.86rem',
             fontWeight: 900,
             color: '#1011B8'
           }}
         >
-          🎮 Thể thức: {mode} ({maxPerTeam} vs {maxPerTeam})
+          🎮 {mode} ({maxPerTeam}vs{maxPerTeam})
         </div>
       </div>
 
-      {/* Main Face-Off Confrontation Board */}
-      <div
-        style={{
-          width: '100%',
-          maxWidth: 920,
-          display: 'grid',
-          gridTemplateColumns: '1fr auto 1fr',
-          alignItems: 'center',
-          gap: 16
-        }}
-      >
+      {/* MOBILE LAYOUT: Stacked Face-Off Bar + Center Pulse Circle */}
+      {isMobile ? (
+        <div style={{ width: '100%', maxWidth: 360, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          {/* Confrontation Horizontal Bar */}
+          <div
+            style={{
+              width: '100%',
+              background: '#FFFFFF',
+              border: '2.5px solid var(--comic-black)',
+              borderRadius: 16,
+              padding: '10px 12px',
+              boxShadow: '0 4px 0 var(--comic-black)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 8,
+              marginBottom: 10
+            }}
+          >
+            {/* Team A mini card */}
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+              <div style={{ width: 34, height: 34, borderRadius: 10, background: '#E0F2FE', border: '1.5px solid #0284C7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0 }}>⚡</div>
+              <div style={{ minWidth: 0, overflow: 'hidden' }}>
+                <div style={{ fontFamily: 'var(--font-title)', fontWeight: 900, color: '#0284C7', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>ĐỘI A - TIA CHỚP</div>
+                <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {teamA[0]?.name || 'Tia Chớp'}
+                </div>
+              </div>
+            </div>
+
+            {/* VS Badge */}
+            <div style={{ background: '#FEF08A', border: '2px solid var(--comic-black)', borderRadius: 8, padding: '3px 8px', fontFamily: 'var(--font-title)', fontWeight: 900, fontSize: '0.8rem', color: '#713F12', flexShrink: 0 }}>
+              VS
+            </div>
+
+            {/* Team B mini card */}
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 6, minWidth: 0, textAlign: 'right' }}>
+              <div style={{ minWidth: 0, overflow: 'hidden' }}>
+                <div style={{ fontFamily: 'var(--font-title)', fontWeight: 900, color: '#EA580C', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>ĐỘI B - NGỌN LỬA</div>
+                <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {teamB[0]?.name || 'Ngọn Lửa'}
+                </div>
+              </div>
+              <div style={{ width: 34, height: 34, borderRadius: 10, background: '#FFEDD5', border: '1.5px solid #EA580C', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0 }}>🔥</div>
+            </div>
+          </div>
+
+          {/* Center Giant Countdown Circle */}
+          <div
+            key={seconds}
+            style={{
+              width: 140,
+              height: 140,
+              borderRadius: '50%',
+              background: '#FFFFFF',
+              border: `5px solid ${currentStage.borderColor}`,
+              boxShadow: `0 0 35px ${currentStage.bgGlow}, 0 6px 0 var(--comic-black)`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '8px 0',
+              animation: 'countdownPulse 1s infinite alternate ease-in-out'
+            }}
+          >
+            <div
+              style={{
+                fontFamily: 'var(--font-title)',
+                fontSize: seconds > 0 ? '4.8rem' : '2.2rem',
+                fontWeight: 900,
+                color: currentStage.color,
+                lineHeight: 1,
+                textShadow: '2.5px 2.5px 0 var(--comic-black)',
+                letterSpacing: seconds > 0 ? '0' : '0.04em'
+              }}
+            >
+              {seconds > 0 ? seconds : 'CHIẾN!'}
+            </div>
+          </div>
+
+          {/* Subtitle Badge */}
+          <div
+            key={`badge-mob-${seconds}`}
+            style={{
+              background: currentStage.badgeBg,
+              border: '2px solid var(--comic-black)',
+              boxShadow: '0 3px 0 var(--comic-black)',
+              color: currentStage.badgeText,
+              padding: '6px 18px',
+              borderRadius: 999,
+              fontFamily: 'var(--font-title)',
+              fontWeight: 900,
+              fontSize: '0.92rem',
+              letterSpacing: '0.04em',
+              textAlign: 'center',
+              animation: 'countdownPop 0.35s ease',
+              marginBottom: 8
+            }}
+          >
+            {currentStage.label}
+          </div>
+        </div>
+      ) : (
+        /* DESKTOP LAYOUT: 3 Columns Face-Off Board */
+        <div
+          style={{
+            width: '100%',
+            maxWidth: 920,
+            display: 'grid',
+            gridTemplateColumns: '1fr auto 1fr',
+            alignItems: 'center',
+            gap: 16
+          }}
+        >
         {/* Left: Team A (Tia Chớp ⚡) */}
         <div
           style={{
@@ -437,6 +547,7 @@ export default function CountdownOverlay({ seconds, roomState, player }) {
           </div>
         </div>
       </div>
+    )}
 
       {/* Tension Rope & Flag Graphic */}
       <div

@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function ConnectionBadge({ isConnected, pingMs = 25 }) {
+export default function ConnectionBadge({ isConnected, pingMs = 25, compact = false }) {
   const signalLevel = !isConnected ? 0 : pingMs < 70 ? 3 : pingMs < 160 ? 2 : 1;
   const signalColor = !isConnected ? '#EF4444' : signalLevel === 3 ? '#16A34A' : signalLevel === 2 ? '#D97706' : '#DC2626';
 
@@ -11,22 +11,25 @@ export default function ConnectionBadge({ isConnected, pingMs = 25 }) {
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 6,
-        padding: '4px 10px',
+        gap: compact ? 3 : 5,
+        padding: compact ? '3px 6px' : '4px 9px',
         borderRadius: 999,
         background: '#FFFFFF',
-        border: '2px solid var(--comic-black)',
-        boxShadow: '0 2px 0 var(--comic-black)'
+        border: '1.5px solid var(--comic-black)',
+        boxShadow: '0 2px 0 var(--comic-black)',
+        flexShrink: 0
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 14 }}>
-        <span style={{ width: 3, height: 5, borderRadius: 1, background: signalLevel >= 1 ? signalColor : '#CBD5E1' }} />
-        <span style={{ width: 3, height: 9, borderRadius: 1, background: signalLevel >= 2 ? signalColor : '#CBD5E1' }} />
-        <span style={{ width: 3, height: 13, borderRadius: 1, background: signalLevel >= 3 ? signalColor : '#CBD5E1' }} />
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 2, height: 12 }}>
+        <span style={{ width: 2.5, height: 4, borderRadius: 1, background: signalLevel >= 1 ? signalColor : '#CBD5E1' }} />
+        <span style={{ width: 2.5, height: 7, borderRadius: 1, background: signalLevel >= 2 ? signalColor : '#CBD5E1' }} />
+        <span style={{ width: 2.5, height: 11, borderRadius: 1, background: signalLevel >= 3 ? signalColor : '#CBD5E1' }} />
       </div>
-      <span style={{ fontSize: '0.75rem', fontWeight: 900, color: signalColor, fontFamily: 'var(--font-title)' }}>
-        {isConnected ? (signalLevel === 3 ? 'Tốt' : `${pingMs}ms`) : 'Mất mạng'}
-      </span>
+      {!compact && (
+        <span style={{ fontSize: '0.72rem', fontWeight: 900, color: signalColor, fontFamily: 'var(--font-title)', whiteSpace: 'nowrap' }}>
+          {isConnected ? (signalLevel === 3 ? 'Tốt' : `${pingMs}ms`) : 'Mất'}
+        </span>
+      )}
     </div>
   );
 }
