@@ -159,35 +159,11 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
             overflow: 'hidden'
           }}
         >
-          {/* Hàng rào & Khán giả cổ vũ phía sau */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '42px',
-              background: 'rgba(15, 23, 42, 0.4)',
-              borderBottom: '2px solid rgba(255, 255, 255, 0.2)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-around',
-              fontSize: '18px',
-              pointerEvents: 'none'
-            }}
-          >
-            <span>👥 VHU</span>
-            <span>👏 CỐ LÊN!</span>
-            <span>🔥 VĂN HIẾN</span>
-            <span>⚡ ĐỈNH CAO</span>
-            <span>🎉 CHIẾN THẮNG!</span>
-          </div>
-
           {/* Sọc sân cỏ & Vạch ranh giới trung tâm */}
           <div
             style={{
               position: 'absolute',
-              top: '42px',
+              top: 0,
               left: '50%',
               bottom: 0,
               width: '4px',
@@ -200,7 +176,7 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
           <div
             style={{
               position: 'absolute',
-              top: '42px',
+              top: 0,
               left: '50%',
               bottom: 0,
               width: '80px',

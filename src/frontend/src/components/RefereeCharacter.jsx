@@ -4,8 +4,37 @@ export default function RefereeCharacter({ ropeOffset = 0, lastResult = null, is
   // Mắt trọng tài dõi theo độ lệch dây (-10 đến 10)
   const eyeOffset = Math.max(-2.5, Math.min(2.5, ropeOffset * 0.28));
 
-  // Thổi còi khi có chuông hoặc có điểm
-  const isWhistling = Boolean(lastResult?.isCorrect || isBuzzed);
+  // Thổi còi khi có chuông, có điểm hoặc có kết quả thắng
+  const isWhistling = Boolean(lastResult?.isCorrect || isBuzzed || winner);
+
+  // Xác định hướng phất cờ: Đội A bên trái (isPointingLeft = true), Đội B bên phải (isPointingLeft = false)
+  const isPointingLeft = winner === 'A'
+    ? true
+    : winner === 'B'
+    ? false
+    : lastResult?.answeringTeam === 'A'
+    ? true
+    : lastResult?.answeringTeam === 'B'
+    ? false
+    : ropeOffset < 0;
+
+  // Nội dung khung thoại (Speech Bubble)
+  let bubbleText = '';
+  if (winner === 'A') {
+    bubbleText = '🚩 ĐỘI A +1 Điểm!';
+  } else if (winner === 'B') {
+    bubbleText = '🚩 ĐỘI B +1 Điểm!';
+  } else if (winner === 'DRAW') {
+    bubbleText = '⚖️ HÒA NHAU!';
+  } else if (isBuzzed) {
+    bubbleText = '🎺 CÓ CHUÔNG!';
+  } else if (lastResult?.isCorrect) {
+    bubbleText = lastResult.answeringTeam === 'A'
+      ? '🚩 ĐỘI A +1 Điểm!'
+      : lastResult.answeringTeam === 'B'
+      ? '🚩 ĐỘI B +1 Điểm!'
+      : '🎺 TUÝT TUÝT! +1Đ';
+  }
 
   return (
     <div
@@ -23,7 +52,7 @@ export default function RefereeCharacter({ ropeOffset = 0, lastResult = null, is
       title="Trọng tài điều khiển trận đấu"
     >
       {/* Khung thoại thông báo của trọng tài */}
-      {isWhistling && (
+      {bubbleText && (
         <div
           style={{
             position: 'absolute',
@@ -42,20 +71,30 @@ export default function RefereeCharacter({ ropeOffset = 0, lastResult = null, is
             zIndex: 20
           }}
         >
-          {isBuzzed ? '🎺 CÓ CHUÔNG!' : '🎺 TUÝT TUÝT! +1Đ'}
+          {bubbleText}
         </div>
       )}
 
-      {/* SVG TRỌNG TÀI CHIBI SIÊU DỄ THƯƠNG */}
-      <svg
-        viewBox="0 0 56 72"
-        width="54"
-        height="68"
+      {/* Khung xoay hướng trọng tài về đội thắng */}
+      <div
         style={{
-          filter: 'drop-shadow(0 3px 0 rgba(15, 23, 42, 0.25))',
-          animation: isWhistling ? 'refereeJump 0.4s infinite alternate ease-in-out' : 'refereeIdle 2.2s infinite ease-in-out'
+          transform: isPointingLeft ? 'scaleX(-1)' : 'scaleX(1)',
+          transformOrigin: 'center center',
+          transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          display: 'flex',
+          justifyContent: 'center'
         }}
       >
+        {/* SVG TRỌNG TÀI CHIBI SIÊU DỄ THƯƠNG */}
+        <svg
+          viewBox="0 0 56 72"
+          width="54"
+          height="68"
+          style={{
+            filter: 'drop-shadow(0 3px 0 rgba(15, 23, 42, 0.25))',
+            animation: isWhistling ? 'refereeJump 0.4s infinite alternate ease-in-out' : 'refereeIdle 2.2s infinite ease-in-out'
+          }}
+        >
         {/* Bóng chân */}
         <ellipse cx="28" cy="68" rx="15" ry="3.5" fill="rgba(15, 23, 42, 0.25)" />
 
@@ -143,6 +182,7 @@ export default function RefereeCharacter({ ropeOffset = 0, lastResult = null, is
           <path d="M 25 25 Q 28 28 31 25" fill="none" stroke="#0F172A" strokeWidth="1.6" strokeLinecap="round" />
         )}
       </svg>
+      </div>
     </div>
   );
 }
