@@ -1,6 +1,6 @@
 // =====================================================================
-// KÉO CO TRI THỨC - GAMESHOW VOICE ANNOUNCER ENGINE (Web Speech API)
-// 100% Offline, Zero-latency, Dynamic Natural Vietnamese Voice (vi-VN)
+// KÉO CO TRI THỨC - GAMESHOW VOICE ANNOUNCER ENGINE (AI VIETNAMESE AUDIO)
+// 100% Giọng AI Tiếng Việt Gameshow Nam Minh (Neural Voice) Chuẩn Xác
 // =====================================================================
 
 import { isMuted } from './audio';
@@ -13,6 +13,7 @@ try {
 }
 
 const voiceListeners = new Set();
+let currentAudio = null;
 
 export function isVoiceMuted() {
   return isVoiceMutedState || isMuted();
@@ -24,9 +25,10 @@ export function setVoiceMuted(muted) {
     localStorage.setItem('keoco_voice_muted', isVoiceMutedState ? 'true' : 'false');
   } catch (e) {}
 
-  if (isVoiceMutedState && typeof window !== 'undefined' && window.speechSynthesis) {
+  if (isVoiceMutedState && currentAudio) {
     try {
-      window.speechSynthesis.cancel();
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
     } catch (e) {}
   }
 
@@ -46,148 +48,119 @@ export function subscribeVoiceMute(listener) {
   return () => voiceListeners.delete(listener);
 }
 
-// Cached voice
-let cachedViVoice = null;
-let voicesLoaded = false;
+// Bảng ánh xạ các file âm thanh giọng đọc AI tiếng Việt chuẩn
+const AUDIO_CLIPS = {
+  start: '/audio/announcer/start.mp3',             // "Sẵn sàng... Bắt đầu!"
+  buzzer_a: '/audio/announcer/buzzer_a.mp3',       // "Đội A đã cướp chuông!"
+  buzzer_b: '/audio/announcer/buzzer_b.mp3',       // "Đội B đã cướp chuông!"
+  correct: '/audio/announcer/correct.mp3',         // "Chính xác tuyệt đối!"
+  wrong: '/audio/announcer/wrong.mp3',             // "Quá tiếc nuối!"
+  victory: '/audio/announcer/victory.mp3',         // "Vô địch rồi!"
+  rebound_a: '/audio/announcer/rebound_a.mp3',     // "Cơ hội cướp điểm cho Đội A!"
+  rebound_b: '/audio/announcer/rebound_b.mp3',     // "Cơ hội cướp điểm cho Đội B!"
+  both_wrong: '/audio/announcer/both_wrong.mp3',   // "Cả hai đội đều chưa chính xác!"
+  match_point: '/audio/announcer/match_point.mp3'  // "Điểm quyết định!"
+};
 
-function getVietnameseVoice() {
-  if (typeof window === 'undefined' || !window.speechSynthesis) return null;
-  if (cachedViVoice) return cachedViVoice;
+// Cache các đối tượng Audio để phát ngay lập tức không bị delay
+const audioCache = {};
 
-  const voices = window.speechSynthesis.getVoices();
-  if (!voices || voices.length === 0) return null;
-
-  // 1. Ưu tiên giọng tiếng Việt tự nhiên chất lượng cao
-  const preferred = voices.find(v => 
-    (v.lang === 'vi-VN' || v.lang === 'vi_VN' || v.lang === 'vi') &&
-    (v.name.includes('Natural') || v.name.includes('HoaiMy') || v.name.includes('NamMinh') || v.name.includes('Google'))
-  );
-  if (preferred) {
-    cachedViVoice = preferred;
-    return preferred;
+function getOrCreateAudio(clipKey) {
+  const src = AUDIO_CLIPS[clipKey];
+  if (!src) return null;
+  if (!audioCache[clipKey]) {
+    const audio = new Audio(src);
+    audio.preload = 'auto';
+    audioCache[clipKey] = audio;
   }
-
-  // 2. Giọng tiếng Việt bất kỳ
-  const anyVi = voices.find(v => v.lang.startsWith('vi'));
-  if (anyVi) {
-    cachedViVoice = anyVi;
-    return anyVi;
-  }
-
-  return null;
+  return audioCache[clipKey];
 }
 
-// Lắng nghe khi trình duyệt nạp danh sách voices
-if (typeof window !== 'undefined' && window.speechSynthesis) {
-  window.speechSynthesis.onvoiceschanged = () => {
-    voicesLoaded = true;
-    cachedViVoice = null;
-    getVietnameseVoice();
-  };
+// Preload tất cả các file âm thanh khi ứng dụng khởi chạy
+if (typeof window !== 'undefined') {
+  Object.keys(AUDIO_CLIPS).forEach(key => {
+    try {
+      getOrCreateAudio(key);
+    } catch (e) {}
+  });
 }
 
-/**
- * Phát âm thanh giọng đọc MC
- */
-export function speak(text, options = {}) {
+function playClip(clipKey, volume = 1.0) {
   if (isVoiceMuted()) return;
-  if (typeof window === 'undefined' || !window.speechSynthesis) return;
+  if (typeof window === 'undefined') return;
 
   try {
-    // Huỷ câu đọc cũ nếu có để tránh dồn ứ âm thanh
-    window.speechSynthesis.cancel();
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'vi-VN';
-    utterance.rate = options.rate || 1.1;     // Tốc độ nhanh nhẹn, phong cách gameshow
-    utterance.pitch = options.pitch || 1.05;  // Cao độ hào hứng
-    utterance.volume = options.volume !== undefined ? options.volume : 1.0;
-
-    const viVoice = getVietnameseVoice();
-    if (viVoice) {
-      utterance.voice = viVoice;
+    // Ngắt câu đọc cũ nếu đang phát để nhường chỗ cho câu mới
+    if (currentAudio) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
     }
 
-    window.speechSynthesis.speak(utterance);
+    const audio = getOrCreateAudio(clipKey);
+    if (audio) {
+      audio.currentTime = 0;
+      audio.volume = volume;
+      currentAudio = audio;
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // Xử lý tự động khi trình duyệt yêu cầu tương tác đầu tiên
+        });
+      }
+    }
   } catch (err) {
-    // Im lặng bỏ qua nếu trình duyệt chặn autoplay âm thanh
+    // Im lặng bỏ qua nếu có lỗi phát sinh
   }
 }
 
 // =====================================================================
-// BỘ CÂU VOICE ANNOUNCER THEO TỪNG DIỄN BIẾN TRẬN ĐẤU
+// BỘ CÂU VOICE ANNOUNCER TIẾNG VIỆT THEO YÊU CẦU NGƯỜI DÙNG
 // =====================================================================
 
-// 1. Khi đếm ngược xong, bắt đầu trận đấu
+// 1. "Sẵn sàng... Bắt đầu!"
 export function announceStart() {
-  speak('Sẵn sàng... Bắt đầu!', { rate: 1.12, pitch: 1.1 });
+  playClip('start', 1.0);
 }
 
-// 2. Khi có đội cướp được chuông
+// 2. "Đội A đã cướp chuông!" / "Đội B đã cướp chuông!"
 export function announceBuzzer(team = 'A') {
-  const teamLabel = team === 'A' ? 'Đội A' : 'Đội B';
-  const phrases = [
-    `${teamLabel} đã cướp chuông!`,
-    `Chuông đã thuộc về ${teamLabel}!`
-  ];
-  const text = phrases[Math.floor(Math.random() * phrases.length)];
-  speak(text, { rate: 1.18, pitch: 1.05 });
-}
-
-// 3. Khi trả lời đúng (+1Đ)
-export function announceCorrect(team = 'A') {
-  const teamLabel = team === 'A' ? 'Đội A' : 'Đội B';
-  const phrases = [
-    'Chính xác tuyệt đối!',
-    'Rất xuất sắc! Cộng một điểm!',
-    `Câu trả lời chính xác! ${teamLabel} ghi điểm!`,
-    'Tuyệt vời! Kéo dây mạnh mẽ!'
-  ];
-  const text = phrases[Math.floor(Math.random() * phrases.length)];
-  speak(text, { rate: 1.12, pitch: 1.15 });
-}
-
-// 4. Khi trả lời sai / mất lượt
-export function announceWrong(team = 'A') {
-  const phrases = [
-    'Quá tiếc nuối!',
-    'Rất tiếc! Chưa chính xác!',
-    'Chưa chính xác rồi!',
-    'Mất lượt trả lời!'
-  ];
-  const text = phrases[Math.floor(Math.random() * phrases.length)];
-  speak(text, { rate: 1.08, pitch: 0.95 });
-}
-
-// 5. Khi mở lượt cướp điểm (Rebound)
-export function announceRebound(reboundTeam = 'B') {
-  const teamLabel = reboundTeam === 'B' ? 'Đội B' : 'Đội A';
-  speak(`Cơ hội cướp điểm cho ${teamLabel}!`, { rate: 1.15, pitch: 1.1 });
-}
-
-// 6. Khi cả 2 đội đều sai
-export function announceBothWrong() {
-  speak('Cả hai đội đều chưa chính xác!', { rate: 1.05, pitch: 0.95 });
-}
-
-// 7. Khi đạt Match Point (Điểm quyết định)
-export function announceMatchPoint(team = 'A') {
-  const teamLabel = team === 'A' ? 'Đội A' : 'Đội B';
-  speak(`Điểm quyết định! Cơ hội vô địch cho ${teamLabel}!`, { rate: 1.12, pitch: 1.2 });
-}
-
-// 8. Khi có đội chiến thắng chung cuộc
-export function announceVictory(winner = 'A') {
-  if (winner === 'DRAW') {
-    speak('Trận đấu kết thúc với kết quả hòa nhau!', { rate: 1.05, pitch: 1.05 });
-    return;
+  if (team === 'B') {
+    playClip('buzzer_b', 1.0);
+  } else {
+    playClip('buzzer_a', 1.0);
   }
-  const teamLabel = winner === 'A' ? 'Đội A' : 'Đội B';
-  const phrases = [
-    `Vô địch rồi! Xin chúc mừng ${teamLabel}!`,
-    `Chiến thắng tuyệt đối! ${teamLabel} đã giành chức vô địch!`,
-    `Chúc mừng ${teamLabel} xuất sắc trở thành nhà vô địch!`
-  ];
-  const text = phrases[Math.floor(Math.random() * phrases.length)];
-  speak(text, { rate: 1.08, pitch: 1.2 });
+}
+
+// 3. "Chính xác tuyệt đối!"
+export function announceCorrect() {
+  playClip('correct', 1.0);
+}
+
+// 4. "Quá tiếc nuối!"
+export function announceWrong() {
+  playClip('wrong', 1.0);
+}
+
+// 5. "Vô địch rồi!"
+export function announceVictory() {
+  playClip('victory', 1.0);
+}
+
+// 6. "Cơ hội cướp điểm cho Đội [A/B]!"
+export function announceRebound(reboundTeam = 'B') {
+  if (reboundTeam === 'A') {
+    playClip('rebound_a', 1.0);
+  } else {
+    playClip('rebound_b', 1.0);
+  }
+}
+
+// 7. "Cả hai đội đều chưa chính xác!"
+export function announceBothWrong() {
+  playClip('both_wrong', 1.0);
+}
+
+// 8. "Điểm quyết định!"
+export function announceMatchPoint() {
+  playClip('match_point', 1.0);
 }
