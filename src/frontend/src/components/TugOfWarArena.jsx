@@ -45,20 +45,33 @@ export default function TugOfWarArena({
     }
   }, [isMatchPoint]);
 
+  // Trạng thái kéo giật dây chủ động (2.5s) khi có đội ghi điểm thành công
+  const [activePullTeam, setActivePullTeam] = React.useState(null);
+
+  useEffect(() => {
+    if (lastResult?.isCorrect && lastResult?.answeringTeam) {
+      setActivePullTeam(lastResult.answeringTeam);
+      const timer = setTimeout(() => {
+        setActivePullTeam(null);
+      }, 2500);
+      return () => clearTimeout(timer);
+    }
+  }, [lastResult]);
+
   // Cố định hiển thị 5 vs 5 (10 nhân vật Chibi kéo dây cùng lúc)
   const countA = teamACount || 5;
   const countB = teamBCount || 5;
 
-  // Determine which side is actively pulling
-  const isAPulling = ropeOffset < -1;
-  const isBPulling = ropeOffset > 1;
+  // Đội chủ động kéo: khi vừa ghi điểm (activePullTeam) HOẶC khi đang dẫn điểm
+  const isAPulling = activePullTeam === 'A' || (ropeOffset < 0 && !activePullTeam);
+  const isBPulling = activePullTeam === 'B' || (ropeOffset > 0 && !activePullTeam);
 
   // Tính trạng thái tiếc nuối khi đội nhà sai hoặc đối thủ kéo mạnh
   const isAWrong = Boolean(lastResult && !lastResult.isCorrect && (lastResult.answeringTeam === 'A' || lastResult.failedTeam === 'A' || lastResult.reason === 'BOTH_INCORRECT'));
   const isBWrong = Boolean(lastResult && !lastResult.isCorrect && (lastResult.answeringTeam === 'B' || lastResult.failedTeam === 'B' || lastResult.reason === 'BOTH_INCORRECT'));
 
-  const isADismayed = isAWrong || isBCheering || ropeOffset > 2;
-  const isBDismayed = isBWrong || isACheering || ropeOffset < -2;
+  const isADismayed = isAWrong || isBPulling;
+  const isBDismayed = isBWrong || isAPulling;
 
   // Đội hình Team A: Thứ tự từ đuôi (Khóa đuôi #5) đến đầu (Tiên phong #1)
   const teamAIndices = [4, 3, 2, 1, 0];
@@ -73,15 +86,23 @@ export default function TugOfWarArena({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Đồng bộ độ dịch chuyển vật lý duy nhất cho: Sợi dây, Nơ cờ đỏ, Đội A và Đội B
-  // Mobile: Giới hạn tối đa 14px (khi ropeOffset = ±10) để chống tràn lề sân đấu
-  // Desktop: Giới hạn 38px
-  const maxShiftPx = isMobile ? 14 : 38;
-  const currentShiftPx = (ropeOffset / 10) * maxShiftPx;
+  // Lực giật động lực học (Impulse) khi vừa ghi điểm thành công
+  const impulseShift = activePullTeam === 'A' ? (isMobile ? -8 : -14) : activePullTeam === 'B' ? (isMobile ? 8 : 14) : 0;
+
+  // Độ dịch chuyển nơ cờ đỏ và sợi dây:
+  // Mỗi điểm chênh lệch sẽ kéo nơ dịch chuyển rõ rệt tối thiểu 6.5px (mobile) hoặc 13px (desktop)
+  // Kết hợp lực giật impulse khi vừa ghi điểm để tạo hiệu ứng kéo giật dây tức thì
+  const baseStepPx = isMobile ? 6.5 : 13;
+  const maxRibbonShift = isMobile ? 55 : 110;
+  const ribbonShiftPx = Math.max(-maxRibbonShift, Math.min(maxRibbonShift, (ropeOffset * baseStepPx) + impulseShift));
+
+  // Độ dịch chuyển đội hình kéo co: Giữ trong giới hạn an toàn để không tràn mép sân đấu
+  const maxPullerShift = isMobile ? 20 : 42;
+  const pullerShiftPx = Math.max(-maxPullerShift, Math.min(maxPullerShift, (ropeOffset / 10) * maxPullerShift + (impulseShift * 0.35)));
 
   // Khoảng cách từ vạch giữa (50%) đến người Tiên phong (#1) của mỗi đội
   const leaderGap = isMobile ? 22 : 36;
-  const pullerOverlap = isMobile ? -23 : -16;
+  const pullerOverlap = isMobile ? -25 : -17;
   const pullerScale = isMobile ? 0.68 : 1;
 
   return (
@@ -289,7 +310,7 @@ export default function TugOfWarArena({
           <div
             className="rope-line"
             style={{
-              transform: `translateX(${currentShiftPx}px)`
+              transform: `translateX(${ribbonShiftPx}px)`
             }}
           />
 
@@ -297,7 +318,7 @@ export default function TugOfWarArena({
           <div
             className="ribbon-knot"
             style={{
-              left: `calc(50% + ${currentShiftPx}px)`
+              left: `calc(50% + ${ribbonShiftPx}px)`
             }}
           />
 
@@ -311,7 +332,7 @@ export default function TugOfWarArena({
               display: 'flex',
               alignItems: 'flex-end',
               zIndex: 8,
-              transform: `translateX(${currentShiftPx}px) scale(${pullerScale})`,
+              transform: `translateX(${pullerShiftPx}px) scale(${pullerScale})`,
               transformOrigin: 'bottom right',
               transition: 'transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)'
             }}
@@ -357,7 +378,7 @@ export default function TugOfWarArena({
               display: 'flex',
               alignItems: 'flex-end',
               zIndex: 8,
-              transform: `translateX(${currentShiftPx}px) scale(${pullerScale})`,
+              transform: `translateX(${pullerShiftPx}px) scale(${pullerScale})`,
               transformOrigin: 'bottom left',
               transition: 'transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)'
             }}
