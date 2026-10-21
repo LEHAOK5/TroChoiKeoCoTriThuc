@@ -20,6 +20,7 @@ export default function GamePage({
   countdown,
   gameOverData,
   roomState,
+  player,
   onPressBuzzer,
   onSubmitAnswer,
   onRematch
@@ -91,6 +92,7 @@ export default function GamePage({
         <VictoryModal
           gameOverData={gameOverData}
           onRematch={onRematch}
+          player={player}
         />
       )}
     </main>

@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import confetti from 'canvas-confetti';
 import PullerCharacter from './PullerCharacter';
 import RefereeCharacter from './RefereeCharacter';
-import PoliceOfficerCharacter from './PoliceOfficerCharacter';
-import { playVictory, playRopePull, playWhistle } from '../utils/audio';
+import { playRopePull, playWhistle } from '../utils/audio';
 import { triggerHaptic } from '../utils/haptics';
 
 export default function VictoryCutscene({ winner = 'A', onDone }) {
-  // 4-Phases: 'PULL' (0-2.0s) -> 'FALL' (2.0-3.8s) -> 'JAIL' (3.8-6.2s) -> 'CELEBRATE' (6.2-10.5s)
+  // 2-Phases: 'PULL' (0-1.8s: Giằng co nghẹt thở) -> 'FALL' (1.8-4.2s: Kéo phăng ngã đối thủ) -> onDone()
   const [phase, setPhase] = useState('PULL');
   const [canSkip, setCanSkip] = useState(false);
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
@@ -19,75 +17,38 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
   }, []);
 
   const isWinnerA = winner === 'A';
-  const winnerName = isWinnerA ? 'ĐỘI A - TIA CHỚP' : 'ĐỘI B - NGỌN LỬA';
-  const loserName = isWinnerA ? 'ĐỘI B - NGỌN LỬA' : 'ĐỘI A - TIA CHỚP';
-  const winnerBadgeColor = isWinnerA ? '#1A1AFF' : '#EA580C';
 
   useEffect(() => {
     // Initial sound & haptic
     playRopePull();
     triggerHaptic([60, 40, 100]);
 
-    // Timer: Enable skip button after 1.2s
-    const skipTimer = setTimeout(() => setCanSkip(true), 1200);
+    // Timer: Enable skip button after 1s
+    const skipTimer = setTimeout(() => setCanSkip(true), 1000);
 
-    // Timer: Phase 2 - Fall & Slapstick (2.0s)
+    // Timer: Phase 2 - Fall & Slapstick (1.8s)
     const fallTimer = setTimeout(() => {
       setPhase('FALL');
       playWhistle();
       triggerHaptic([100, 50, 180]);
-    }, 2000);
+    }, 1800);
 
-    // Timer: Phase 3 - Police Arrest & Jail (3.8s)
-    const jailTimer = setTimeout(() => {
-      setPhase('JAIL');
-      playWhistle();
-      triggerHaptic([120, 80, 200]);
-    }, 3800);
-
-    // Timer: Phase 4 - Victory Celebration & Confetti (6.2s)
-    const celebrateTimer = setTimeout(() => {
-      setPhase('CELEBRATE');
-      playVictory();
-
-      // Launch Confetti fireworks cannons
-      const end = Date.now() + 4.0 * 1000;
-      const interval = setInterval(() => {
-        if (Date.now() > end) {
-          clearInterval(interval);
-          return;
-        }
-        confetti({
-          startVelocity: 35,
-          spread: 360,
-          ticks: 60,
-          origin: { x: Math.random() * 0.6 + 0.2, y: Math.random() * 0.4 + 0.1 },
-          colors: isWinnerA
-            ? ['#1A1AFF', '#4A4AFF', '#FACC15', '#FFFFFF', '#10B981']
-            : ['#EA580C', '#FB923C', '#FACC15', '#FFFFFF', '#EF4444']
-        });
-      }, 350);
-    }, 6200);
-
-    // Timer: Auto finish after 10.5s
+    // Timer: Finish cutscene after 4.2s and transition to personalized team result
     const doneTimer = setTimeout(() => {
       onDone();
-    }, 10500);
+    }, 4200);
 
     return () => {
       clearTimeout(skipTimer);
       clearTimeout(fallTimer);
-      clearTimeout(jailTimer);
-      clearTimeout(celebrateTimer);
       clearTimeout(doneTimer);
     };
-  }, [onDone, isWinnerA]);
+  }, [onDone]);
 
   // Rope offset shifts dynamically per phase
   let ropeOffset = 0;
   if (phase === 'PULL') ropeOffset = isWinnerA ? -4 : 4;
-  if (phase === 'FALL') ropeOffset = isWinnerA ? -9 : 9;
-  if (phase === 'JAIL' || phase === 'CELEBRATE') ropeOffset = isWinnerA ? -10 : 10;
+  if (phase === 'FALL') ropeOffset = isWinnerA ? -10 : 10;
 
   return (
     <div
@@ -106,7 +67,7 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
       }}
       className={phase === 'FALL' ? 'screen-shake-anim' : ''}
     >
-      {/* Tia sáng chiến thắng quay tròn (Manga Action Sunburst Background) */}
+      {/* Tia sáng Manga Action Sunburst Background */}
       <div
         style={{
           position: 'absolute',
@@ -138,15 +99,11 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
         {/* BANNER TIÊU ĐỀ GIAI ĐOẠN TRẬN ĐẤU */}
         <div
           style={{
-            background: phase === 'CELEBRATE'
-              ? 'linear-gradient(90deg, #FACC15, #F59E0B)'
-              : (phase === 'JAIL'
-                ? 'linear-gradient(90deg, #DC2626, #B91C1C)'
-                : (phase === 'FALL' ? '#EF4444' : '#1A1AFF')),
+            background: phase === 'FALL' ? '#EF4444' : '#1A1AFF',
             borderBottom: '3px solid var(--comic-black)',
             padding: isMobile ? '8px 10px' : '12px 18px',
             textAlign: 'center',
-            color: phase === 'CELEBRATE' ? '#713F12' : '#FFFFFF',
+            color: '#FFFFFF',
             fontFamily: 'var(--font-title)',
             fontWeight: 900,
             fontSize: isMobile ? '0.88rem' : '1.25rem',
@@ -155,14 +112,12 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
             alignItems: 'center',
             justifyContent: 'center',
             gap: 8,
-            textShadow: phase === 'CELEBRATE' ? 'none' : '1.5px 1.5px 0 var(--comic-black)',
+            textShadow: '1.5px 1.5px 0 var(--comic-black)',
             transition: 'background 0.3s ease'
           }}
         >
           {phase === 'PULL' && <span>⚡ CÚ KÉO QUYẾT ĐỊNH — DỒN TOÀN LỰC! ⚡</span>}
           {phase === 'FALL' && <span>💥 KÉO PHĂNG ĐỐI THỦ — ĐỔI CỤC DIỆN! 💥</span>}
-          {phase === 'JAIL' && <span>🚨 CÔNG AN BẮT BỎ TÙ — THI HÀNH ÁN ĐỘI THUA! 🚨</span>}
-          {phase === 'CELEBRATE' && <span>🏆 CHIẾN THẮNG TUYỆT ĐỐI — VÔ ĐỊCH VHU! 🏆</span>}
         </div>
 
         {/* KHÔNG GIAN ĐẤU TRƯỜNG KÉO CO 2D (Grass Arena) */}
@@ -221,7 +176,7 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
             <RefereeCharacter
               ropeOffset={ropeOffset}
               lastResult={{ isCorrect: true }}
-              isBuzzed={phase === 'JAIL'}
+              isBuzzed={phase === 'FALL'}
               winner={winner}
             />
           </div>
@@ -270,7 +225,7 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
           <div
             style={{
               position: 'absolute',
-              left: isMobile ? (isWinnerA ? '2%' : (phase === 'FALL' || phase === 'JAIL' ? '18%' : '4%')) : (isWinnerA ? '6%' : (phase === 'FALL' || phase === 'JAIL' ? '28%' : '10%')),
+              left: isMobile ? (isWinnerA ? '2%' : (phase === 'FALL' ? '18%' : '4%')) : (isWinnerA ? '6%' : (phase === 'FALL' ? '28%' : '10%')),
               bottom: isMobile ? '12px' : '22px',
               display: 'flex',
               gap: isMobile ? '2px' : '6px',
@@ -278,8 +233,8 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
               zIndex: 5,
               transition: 'all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)',
               transform: isMobile
-                ? (!isWinnerA && (phase === 'FALL' || phase === 'JAIL') ? 'scale(0.62) rotate(15deg) translateY(18px)' : 'scale(0.62)')
-                : (!isWinnerA && (phase === 'FALL' || phase === 'JAIL') ? 'rotate(15deg) translateY(18px)' : 'none'),
+                ? (!isWinnerA && phase === 'FALL' ? 'scale(0.62) rotate(15deg) translateY(18px)' : 'scale(0.62)')
+                : (!isWinnerA && phase === 'FALL' ? 'rotate(15deg) translateY(18px)' : 'none'),
               transformOrigin: 'bottom left'
             }}
           >
@@ -289,8 +244,8 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
                 team="A"
                 index={idx}
                 isPulling={isWinnerA && phase === 'PULL'}
-                isFallen={!isWinnerA && (phase === 'FALL' || phase === 'JAIL' || phase === 'CELEBRATE')}
-                isCheering={isWinnerA && (phase === 'JAIL' || phase === 'CELEBRATE')}
+                isFallen={!isWinnerA && phase === 'FALL'}
+                isCheering={isWinnerA && phase === 'FALL'}
               />
             ))}
 
@@ -348,7 +303,7 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
           <div
             style={{
               position: 'absolute',
-              right: isMobile ? (!isWinnerA ? '2%' : (phase === 'FALL' || phase === 'JAIL' ? '18%' : '4%')) : (!isWinnerA ? '6%' : (phase === 'FALL' || phase === 'JAIL' ? '28%' : '10%')),
+              right: isMobile ? (!isWinnerA ? '2%' : (phase === 'FALL' ? '18%' : '4%')) : (!isWinnerA ? '6%' : (phase === 'FALL' ? '28%' : '10%')),
               bottom: isMobile ? '12px' : '22px',
               display: 'flex',
               gap: isMobile ? '2px' : '6px',
@@ -356,8 +311,8 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
               zIndex: 5,
               transition: 'all 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)',
               transform: isMobile
-                ? (isWinnerA && (phase === 'FALL' || phase === 'JAIL') ? 'scale(0.62) rotate(-15deg) translateY(18px)' : 'scale(0.62)')
-                : (isWinnerA && (phase === 'FALL' || phase === 'JAIL') ? 'rotate(-15deg) translateY(18px)' : 'none'),
+                ? (isWinnerA && phase === 'FALL' ? 'scale(0.62) rotate(-15deg) translateY(18px)' : 'scale(0.62)')
+                : (isWinnerA && phase === 'FALL' ? 'rotate(-15deg) translateY(18px)' : 'none'),
               transformOrigin: 'bottom right'
             }}
           >
@@ -367,8 +322,8 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
                 team="B"
                 index={idx}
                 isPulling={!isWinnerA && phase === 'PULL'}
-                isFallen={isWinnerA && (phase === 'FALL' || phase === 'JAIL' || phase === 'CELEBRATE')}
-                isCheering={!isWinnerA && (phase === 'JAIL' || phase === 'CELEBRATE')}
+                isFallen={isWinnerA && phase === 'FALL'}
+                isCheering={!isWinnerA && phase === 'FALL'}
               />
             ))}
 
@@ -419,223 +374,42 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
               </div>
             )}
           </div>
-
-          {/* ======================================================= */}
-          {/* LỒNG SẮT NHÀ TÙ & CHÚ CÔNG AN RƠI XUỐNG ÚP ĐỘI THUA (JAIL PHASE) */}
-          {/* ======================================================= */}
-          {(phase === 'JAIL' || phase === 'CELEBRATE') && (
-            <div
-              style={{
-                position: 'absolute',
-                // Nằm ở bên phía đội thua
-                [isWinnerA ? 'right' : 'left']: isMobile ? '2%' : '8%',
-                bottom: isMobile ? '8px' : '16px',
-                zIndex: 8,
-                display: 'flex',
-                alignItems: 'flex-end',
-                gap: 6,
-                animation: 'jailDrop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards'
-              }}
-            >
-              {/* LỒNG SẮT 2D COMIC */}
-              <div
-                style={{
-                  width: isMobile ? '120px' : '160px',
-                  height: isMobile ? '95px' : '125px',
-                  background: 'rgba(15, 23, 42, 0.45)',
-                  border: '3px solid #000',
-                  borderRadius: 12,
-                  position: 'relative',
-                  overflow: 'hidden',
-                  boxShadow: '0 8px 16px rgba(0,0,0,0.6)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  padding: 4
-                }}
-              >
-                {/* Bảng tên phòng giam trên nóc lồng */}
-                <div
-                  style={{
-                    background: '#DC2626',
-                    border: '1.5px solid #000',
-                    color: '#FFF',
-                    fontSize: isMobile ? '0.58rem' : '0.68rem',
-                    fontWeight: 900,
-                    textAlign: 'center',
-                    padding: '1px 4px',
-                    borderRadius: 4,
-                    zIndex: 10
-                  }}
-                >
-                  🔒 PHÒNG GIAM VHU #001
-                </div>
-
-                {/* Các song sắt kim loại đứng */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    inset: 0,
-                    display: 'flex',
-                    justifyContent: 'space-around',
-                    pointerEvents: 'none',
-                    zIndex: 8
-                  }}
-                >
-                  {[1, 2, 3, 4, 5].map((bar) => (
-                    <div
-                      key={bar}
-                      style={{
-                        width: '4.5px',
-                        height: '100%',
-                        background: 'linear-gradient(90deg, #64748B, #CBD5E1 50%, #475569)',
-                        borderLeft: '1px solid #000',
-                        borderRight: '1px solid #000'
-                      }}
-                    />
-                  ))}
-                </div>
-
-                {/* Thanh khóa song sắt ngang */}
-                <div
-                  style={{
-                    position: 'absolute',
-                    left: 0,
-                    right: 0,
-                    top: '50%',
-                    height: '5px',
-                    background: '#94A3B8',
-                    borderTop: '1px solid #000',
-                    borderBottom: '1px solid #000',
-                    zIndex: 9
-                  }}
-                />
-
-                {/* Bong bóng tiếng khóc kêu oan trong tù */}
-                <div
-                  style={{
-                    alignSelf: 'center',
-                    background: '#FEF08A',
-                    border: '1.5px solid #000',
-                    color: '#713F12',
-                    fontSize: isMobile ? '0.56rem' : '0.66rem',
-                    fontWeight: 900,
-                    padding: '1px 6px',
-                    borderRadius: 6,
-                    zIndex: 10,
-                    animation: 'tearsStream 1s infinite ease-in-out'
-                  }}
-                >
-                  😭 Oan quá chú ơi!
-                </div>
-              </div>
-
-              {/* CHÚ CÔNG AN CHIBI ĐỨNG GÁC BÊN NGOÀI LỒNG */}
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                <PoliceOfficerCharacter isWhistling={true} width={isMobile ? 42 : 52} height={isMobile ? 56 : 68} />
-                <div
-                  style={{
-                    fontSize: isMobile ? '0.55rem' : '0.65rem',
-                    fontWeight: 900,
-                    background: '#EF4444',
-                    color: '#FFF',
-                    padding: '1px 5px',
-                    borderRadius: 4,
-                    border: '1px solid #000',
-                    marginTop: 2
-                  }}
-                >
-                  👮‍♂️ ĐÃ BẮT TÙ
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
-        {/* ======================================================= */}
-        {/* BANNER CHIẾN THẮNG & CÚP VÀNG GIAI ĐOẠN (CELEBRATE & JAIL) */}
-        {/* ======================================================= */}
+        {/* THÔNG BÁO DƯỚI KHUNG SÂN ĐẤU */}
         <div
           style={{
-            padding: isMobile ? '14px 16px' : '20px 24px',
+            padding: isMobile ? '12px 14px' : '16px 20px',
             textAlign: 'center',
             background: '#FFFFFF',
             position: 'relative'
           }}
         >
-          {phase === 'CELEBRATE' ? (
-            <div style={{ animation: 'comicPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)' }}>
-              {/* Cúp Vàng VHU khổng lồ đáp xuống */}
-              <div
-                style={{
-                  fontSize: isMobile ? '3.2rem' : '4.5rem',
-                  lineHeight: '1',
-                  marginBottom: '8px',
-                  animation: 'trophyDrop 0.8s ease-out forwards',
-                  filter: 'drop-shadow(0 6px 0 rgba(15, 23, 42, 0.2))'
-                }}
-              >
-                🏆
-              </div>
-
-              {/* Tên Đội Vô Địch */}
-              <h2
-                style={{
-                  fontFamily: 'var(--font-title)',
-                  fontSize: isMobile ? '1.35rem' : '1.9rem',
-                  fontWeight: 900,
-                  color: winnerBadgeColor,
-                  margin: '0 0 6px 0',
-                  textTransform: 'uppercase',
-                  textShadow: '2px 2px 0 var(--comic-black)'
-                }}
-              >
-                {winnerName} VÔ ĐỊCH!
-              </h2>
-
-              <p
-                style={{
-                  fontFamily: 'var(--font-body)',
-                  fontSize: isMobile ? '0.82rem' : '0.95rem',
-                  fontWeight: 800,
-                  color: '#0F172A',
-                  margin: 0
-                }}
-              >
-                🎉 Xin chúc mừng! {loserName} cũng đã thi đấu cực kỳ kiên cường và quả cảm!
-              </p>
-            </div>
-          ) : (
-            <div style={{ minHeight: isMobile ? '60px' : '80px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-              <p
-                style={{
-                  fontFamily: 'var(--font-title)',
-                  fontSize: isMobile ? '0.95rem' : '1.15rem',
-                  fontWeight: 900,
-                  color: phase === 'JAIL' ? '#DC2626' : '#0F172A',
-                  margin: '0 0 4px 0'
-                }}
-              >
-                {phase === 'PULL' && '⏳ Hai đội đang giằng co nghẹt thở từng centimet dây...'}
-                {phase === 'FALL' && '🎺 Vị Thẩm Phán đã gõ búa xác nhận kết quả hiệp đấu!'}
-                {phase === 'JAIL' && '🚨 CÔNG AN ĐÃ ẬP TỚI TỐNG GIAM ĐỘI THUA VÌ TỘI ĐOÁN MÒ! 🚨'}
-              </p>
-              <span style={{ fontSize: isMobile ? '0.75rem' : '0.85rem', color: '#64748B', fontWeight: 700 }}>
-                {phase === 'PULL' && 'Ai sẽ là người kéo phăng vạch phân cách trước?'}
-                {phase === 'FALL' && 'Lồng sắt đang hạ xuống để thi hành bản án công lý...'}
-                {phase === 'JAIL' && 'Chuẩn bị tiến vào lễ vinh danh trao cúp vàng VHU!'}
-              </span>
-            </div>
-          )}
+          <div style={{ minHeight: isMobile ? '50px' : '65px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <p
+              style={{
+                fontFamily: 'var(--font-title)',
+                fontSize: isMobile ? '0.92rem' : '1.15rem',
+                fontWeight: 900,
+                color: '#0F172A',
+                margin: '0 0 4px 0'
+              }}
+            >
+              {phase === 'PULL' ? '⏳ Hai đội đang giằng co nghẹt thở từng centimet dây...' : '🎺 Vị Thẩm Phán đã gõ búa xác nhận kết quả hiệp đấu!'}
+            </p>
+            <span style={{ fontSize: isMobile ? '0.74rem' : '0.85rem', color: '#64748B', fontWeight: 700 }}>
+              {phase === 'PULL' ? 'Ai sẽ là người kéo phăng vạch phân cách trước?' : 'Đang chuyển đến kết quả phân định cho 2 đội...'}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* NÚT BỎ QUA CUTSCENE (2D Neo-Brutalism Tactile Button) */}
+      {/* NÚT BỎ QUA CUTSCENE */}
       <button
         onClick={onDone}
         id="btn-skip-victory-cutscene"
         style={{
-          marginTop: isMobile ? '12px' : '22px',
+          marginTop: isMobile ? '12px' : '20px',
           background: '#FFFFFF',
           border: '2.5px solid var(--comic-black)',
           boxShadow: isMobile ? '0 3px 0 var(--comic-black)' : '0 5px 0 var(--comic-black)',
@@ -653,14 +427,6 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
           opacity: canSkip ? 1 : 0.6,
           pointerEvents: canSkip ? 'auto' : 'none',
           transition: 'all 0.15s ease'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'translateY(-2px)';
-          e.currentTarget.style.boxShadow = '0 7px 0 var(--comic-black)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'none';
-          e.currentTarget.style.boxShadow = '0 5px 0 var(--comic-black)';
         }}
       >
         <span>Bỏ qua Cutscene</span>

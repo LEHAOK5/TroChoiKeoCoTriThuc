@@ -630,6 +630,7 @@ export default function App() {
           countdown={countdown}
           gameOverData={gameOverData}
           roomState={roomState}
+          player={player}
           onPressBuzzer={handlePressBuzzer}
           onSubmitAnswer={handleSubmitAnswer}
           onRematch={handleRematch}

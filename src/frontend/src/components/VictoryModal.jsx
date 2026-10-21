@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { playVictory } from '../utils/audio';
 import JailCellMemeBox from './JailCellMemeBox';
+import WinnerCelebrationBox from './WinnerCelebrationBox';
 
-export default function VictoryModal({ gameOverData, onRematch }) {
+export default function VictoryModal({ gameOverData, onRematch, player }) {
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
 
   useEffect(() => {
@@ -17,6 +18,10 @@ export default function VictoryModal({ gameOverData, onRematch }) {
   const { winner, scoreA, scoreB, matchCode } = gameOverData;
   const isWinnerA = winner === 'A';
   const isWinnerB = winner === 'B';
+
+  // Xác định người chơi hiện tại thuộc Đội Thắng hay Đội Thua
+  const myTeam = player?.team;
+  const isMyTeamWinner = myTeam ? myTeam === winner : true;
 
   useEffect(() => {
     playVictory();
@@ -101,14 +106,22 @@ export default function VictoryModal({ gameOverData, onRematch }) {
           </span>
         </div>
 
-        {/* Khung hình meme hài hước: Đội thua bị tống giam vào tù */}
+        {/* Khung hình phân hóa theo đội: Đội Thắng hiển thị WinnerCelebrationBox, Đội Thua hiển thị JailCellMemeBox */}
         {(isWinnerA || isWinnerB) && (
           <div style={{ marginBottom: isMobile ? 8 : 12 }}>
-            <JailCellMemeBox
-              loserTeam={isWinnerA ? 'B' : 'A'}
-              loserName={isWinnerA ? 'ĐỘI B - NGỌN LỬA' : 'ĐỘI A - TIA CHỚP'}
-              isCompact={true}
-            />
+            {isMyTeamWinner ? (
+              <WinnerCelebrationBox
+                winnerTeam={winner}
+                winnerName={isWinnerA ? 'ĐỘI A - TIA CHỚP' : 'ĐỘI B - NGỌN LỬA'}
+                isCompact={true}
+              />
+            ) : (
+              <JailCellMemeBox
+                loserTeam={isWinnerA ? 'B' : 'A'}
+                loserName={isWinnerA ? 'ĐỘI B - NGỌN LỬA' : 'ĐỘI A - TIA CHỚP'}
+                isCompact={true}
+              />
+            )}
           </div>
         )}
 
