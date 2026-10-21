@@ -25,78 +25,27 @@ export default function JailCellMemeBox({ loserTeam = 'B', loserName = 'ĐỘI B
         width: '100%',
         maxWidth: isCompact ? '420px' : '560px',
         margin: '0 auto',
-        background: '#0F172A',
-        border: '3px solid var(--comic-black)',
-        borderRadius: 18,
-        padding: isCompact ? '10px 12px' : '14px 16px',
-        boxShadow: '0 6px 0 var(--comic-black)',
+        background: 'linear-gradient(180deg, #0A0A58 0%, #151590 55%, #0B0B50 100%)',
+        border: '2.5px solid var(--comic-black)',
+        borderRadius: 16,
+        padding: isCompact ? '8px 10px' : '12px 14px',
+        boxShadow: '0 5px 0 var(--comic-black)',
         position: 'relative',
         overflow: 'hidden',
         color: '#FFFFFF'
       }}
     >
-      {/* Còi cảnh sát nhấp nháy Đỏ - Xanh góc trên */}
+      {/* KHÔNG GIAN NHÀ TÙ: SONG SẮT & BỘ 3 NHÂN VẬT ĐỘI THUA & CHÚ CÔNG AN */}
       <div
         style={{
-          position: 'absolute',
-          top: 8,
-          left: 10,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          zIndex: 5
-        }}
-      >
-        <span
-          style={{
-            fontSize: isCompact ? '0.85rem' : '1rem',
-            animation: 'policeSirenBlink 0.6s infinite alternate'
-          }}
-        >
-          🚨
-        </span>
-        <span
-          style={{
-            fontSize: '0.72rem',
-            fontWeight: 900,
-            color: '#FEF08A',
-            letterSpacing: 0.5,
-            textTransform: 'uppercase'
-          }}
-        >
-          PHÂN CẢNH THI HÀNH ÁN TÙ
-        </span>
-      </div>
-
-      <div
-        style={{
-          position: 'absolute',
-          top: 8,
-          right: 10,
-          fontSize: '0.68rem',
-          fontWeight: 800,
-          background: '#EF4444',
-          color: '#FFF',
-          padding: '2px 8px',
-          borderRadius: 6,
-          border: '1.5px solid #000'
-        }}
-      >
-        MÃ PHÒNG GIAM: #VHU-PRISON
-      </div>
-
-      {/* KHÔNG GIAN NHÀ TÙ: SONG SẮT & ĐỘI THUA & CHÚ CÔNG AN */}
-      <div
-        style={{
-          marginTop: 26,
-          background: 'linear-gradient(180deg, #1E293B 0%, #0F172A 100%)',
+          background: 'linear-gradient(180deg, #101046 0%, #080826 100%)',
           border: '2px solid #334155',
-          borderRadius: 14,
-          padding: isCompact ? '10px 8px' : '14px 12px',
+          borderRadius: 12,
+          padding: isCompact ? '8px 6px' : '10px 10px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          gap: 8,
+          gap: 6,
           position: 'relative',
           overflow: 'hidden'
         }}
@@ -106,127 +55,185 @@ export default function JailCellMemeBox({ loserTeam = 'B', loserName = 'ĐỘI B
           style={{
             flex: 1,
             position: 'relative',
-            height: isCompact ? 100 : 120,
-            background: '#111827',
-            borderRadius: 10,
-            border: '2px solid #475569',
+            height: isCompact ? 104 : 122,
+            background: '#090A1A',
+            borderRadius: 8,
+            border: '2px solid #4338CA',
             overflow: 'hidden',
             display: 'flex',
             alignItems: 'flex-end',
-            justifyContent: 'center',
-            gap: 12,
-            paddingBottom: 4
+            justifyContent: 'space-around',
+            gap: 2,
+            paddingBottom: 2
           }}
         >
-          {/* Hậu cảnh tường gạch nhà tù */}
+          {/* Hậu cảnh tường gạch nhà tù ánh xanh */}
           <div
             style={{
               position: 'absolute',
               inset: 0,
               opacity: 0.15,
-              backgroundImage: 'linear-gradient(#475569 1px, transparent 1px), linear-gradient(90deg, #475569 1px, transparent 1px)',
-              backgroundSize: '16px 16px'
+              backgroundImage: 'linear-gradient(#6366F1 1px, transparent 1px), linear-gradient(90deg, #6366F1 1px, transparent 1px)',
+              backgroundSize: '14px 14px'
             }}
           />
 
-          {/* NHÂN VẬT 1: ĐỘI THUA KHÓC RÒNG TRONG ÁO TÙ SỌC */}
+          {/* NHÂN VẬT 1: KHÓC RÒNG TRONG ÁO TÙ SỌC */}
           <div
             style={{
               position: 'relative',
-              zIndex: 2,
+              zIndex: 3,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               animation: 'tearsStream 1.2s infinite ease-in-out'
             }}
           >
-            {/* Lời kêu oan */}
+            {/* Lời kêu oan - zIndex 15 hiển thị trước song sắt */}
             <div
               style={{
-                fontSize: '0.62rem',
+                position: 'relative',
+                zIndex: 15,
+                fontSize: '0.58rem',
                 fontWeight: 900,
                 background: '#FEF08A',
                 color: '#713F12',
-                padding: '1px 5px',
+                padding: '1px 4px',
                 borderRadius: 4,
                 border: '1px solid #000',
                 marginBottom: 2,
-                whiteSpace: 'nowrap'
+                whiteSpace: 'nowrap',
+                boxShadow: '0 1px 0 #000'
               }}
             >
-              😭 Oan quá chú ơi!
+              😭 Oan quá!
             </div>
 
-            <svg viewBox="0 0 36 46" width="36" height="46">
+            <svg viewBox="0 0 32 42" width="30" height="40">
               {/* Thân áo tù sọc ngang đen trắng */}
-              <path d="M 8 20 C 6 20, 5 36, 8 44 C 12 46, 24 46, 28 44 C 31 36, 30 20, 28 20 Z" fill="#FFFFFF" stroke="#000" strokeWidth="1.6" />
-              <line x1="8" y1="25" x2="28" y2="25" stroke="#000" strokeWidth="2.5" />
-              <line x1="7" y1="31" x2="29" y2="31" stroke="#000" strokeWidth="2.5" />
-              <line x1="7" y1="37" x2="29" y2="37" stroke="#000" strokeWidth="2.5" />
-              <line x1="8" y1="43" x2="28" y2="43" stroke="#000" strokeWidth="2.5" />
+              <path d="M 6 18 C 5 18, 4 33, 7 40 C 11 42, 21 42, 25 40 C 28 33, 27 18, 26 18 Z" fill="#FFFFFF" stroke="#000" strokeWidth="1.5" />
+              <line x1="6" y1="23" x2="26" y2="23" stroke="#000" strokeWidth="2.2" />
+              <line x1="5" y1="28" x2="27" y2="28" stroke="#000" strokeWidth="2.2" />
+              <line x1="5" y1="34" x2="27" y2="34" stroke="#000" strokeWidth="2.2" />
 
               {/* Đầu & Băng đô đội thua */}
-              <circle cx="18" cy="12" r="9" fill="#FED7AA" stroke="#000" strokeWidth="1.6" />
-              <rect x="9" y="8" width="18" height="3.5" rx="1" fill={teamBandColor} stroke="#000" strokeWidth="1" />
+              <circle cx="16" cy="11" r="8" fill="#FED7AA" stroke="#000" strokeWidth="1.5" />
+              <rect x="8" y="7.5" width="16" height="3" rx="1" fill={teamBandColor} stroke="#000" strokeWidth="0.8" />
 
               {/* Mắt nhắm khóc & Nước mắt phun trào kiểu anime */}
-              <path d="M 13 13 Q 15 11 17 13" stroke="#000" strokeWidth="1.8" fill="none" />
-              <path d="M 19 13 Q 21 11 23 13" stroke="#000" strokeWidth="1.8" fill="none" />
-              {/* Dòng nước mắt */}
-              <path d="M 12 14 C 9 18, 10 24, 7 28" stroke="#38BDF8" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-              <path d="M 24 14 C 27 18, 26 24, 29 28" stroke="#38BDF8" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+              <path d="M 11 12 Q 13 10 15 12" stroke="#000" strokeWidth="1.6" fill="none" />
+              <path d="M 17 12 Q 19 10 21 12" stroke="#000" strokeWidth="1.6" fill="none" />
+              <path d="M 10 13 C 7 17, 8 22, 5 26" stroke="#38BDF8" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+              <path d="M 22 13 C 25 17, 24 22, 27 26" stroke="#38BDF8" strokeWidth="2.2" fill="none" strokeLinecap="round" />
 
               {/* Miệng mếu */}
-              <path d="M 15 17 Q 18 15 21 17" stroke="#000" strokeWidth="1.5" fill="none" />
+              <path d="M 13 15 Q 16 13 19 15" stroke="#000" strokeWidth="1.4" fill="none" />
             </svg>
           </div>
 
-          {/* NHÂN VẬT 2: ĐỒNG ĐỘI ÔM ĐẦU KHÓC */}
+          {/* NHÂN VẬT 2: CHOÁNG VÁNG MẮT XOÁY ỐC (MỚI BỔ SUNG) */}
           <div
             style={{
               position: 'relative',
-              zIndex: 2,
+              zIndex: 3,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              animation: 'tearsStream 1.2s infinite ease-in-out 0.3s'
+              animation: 'tearsStream 1.2s infinite ease-in-out 0.2s'
             }}
           >
+            {/* Lời kêu oan - zIndex 15 hiển thị trước song sắt */}
             <div
               style={{
-                fontSize: '0.62rem',
+                position: 'relative',
+                zIndex: 15,
+                fontSize: '0.58rem',
                 fontWeight: 900,
                 background: '#FEF08A',
                 color: '#713F12',
-                padding: '1px 5px',
+                padding: '1px 4px',
                 borderRadius: 4,
                 border: '1px solid #000',
                 marginBottom: 2,
-                whiteSpace: 'nowrap'
+                whiteSpace: 'nowrap',
+                boxShadow: '0 1px 0 #000'
               }}
             >
-              😫 Cứu con với!
+              🥺 Biết thế!
             </div>
 
-            <svg viewBox="0 0 36 46" width="36" height="46">
-              <path d="M 8 20 C 6 20, 5 36, 8 44 C 12 46, 24 46, 28 44 C 31 36, 30 20, 28 20 Z" fill="#FFFFFF" stroke="#000" strokeWidth="1.6" />
-              <line x1="8" y1="25" x2="28" y2="25" stroke="#000" strokeWidth="2.5" />
-              <line x1="7" y1="31" x2="29" y2="31" stroke="#000" strokeWidth="2.5" />
-              <line x1="7" y1="37" x2="29" y2="37" stroke="#000" strokeWidth="2.5" />
-              <line x1="8" y1="43" x2="28" y2="43" stroke="#000" strokeWidth="2.5" />
+            <svg viewBox="0 0 32 42" width="30" height="40">
+              <path d="M 6 18 C 5 18, 4 33, 7 40 C 11 42, 21 42, 25 40 C 28 33, 27 18, 26 18 Z" fill="#FFFFFF" stroke="#000" strokeWidth="1.5" />
+              <line x1="6" y1="23" x2="26" y2="23" stroke="#000" strokeWidth="2.2" />
+              <line x1="5" y1="28" x2="27" y2="28" stroke="#000" strokeWidth="2.2" />
+              <line x1="5" y1="34" x2="27" y2="34" stroke="#000" strokeWidth="2.2" />
 
-              <circle cx="18" cy="12" r="9" fill="#FED7AA" stroke="#000" strokeWidth="1.6" />
-              <rect x="9" y="8" width="18" height="3.5" rx="1" fill={teamBandColor} stroke="#000" strokeWidth="1" />
+              <circle cx="16" cy="11" r="8" fill="#FED7AA" stroke="#000" strokeWidth="1.5" />
+              <rect x="8" y="7.5" width="16" height="3" rx="1" fill={teamBandColor} stroke="#000" strokeWidth="0.8" />
 
-              <path d="M 13 14 L 16 12 L 13 15" stroke="#000" strokeWidth="1.8" fill="none" />
-              <path d="M 23 14 L 20 12 L 23 15" stroke="#000" strokeWidth="1.8" fill="none" />
-              <path d="M 11 14 C 8 20, 9 26, 6 30" stroke="#38BDF8" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-              <path d="M 25 14 C 28 20, 27 26, 30 30" stroke="#38BDF8" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-              <ellipse cx="18" cy="18" rx="3.5" ry="2.5" fill="#EF4444" stroke="#000" strokeWidth="1" />
+              {/* Băng cá nhân chữ X trên trán */}
+              <line x1="14" y1="5.5" x2="18" y2="7.5" stroke="#FFFFFF" strokeWidth="1.6" strokeLinecap="round" />
+              <line x1="18" y1="5.5" x2="14" y2="7.5" stroke="#FFFFFF" strokeWidth="1.6" strokeLinecap="round" />
+
+              {/* Mắt xoáy ốc choáng váng kiểu comic */}
+              <circle cx="12" cy="12" r="2.2" fill="none" stroke="#000" strokeWidth="1.3" />
+              <circle cx="12" cy="12" r="0.8" fill="#000" />
+              <circle cx="20" cy="12" r="2.2" fill="none" stroke="#000" strokeWidth="1.3" />
+              <circle cx="20" cy="12" r="0.8" fill="#000" />
+
+              {/* Miệng lượn sóng ngơ ngác */}
+              <path d="M 13 16 Q 14.5 15 16 16.5 Q 17.5 18 19 16" stroke="#000" strokeWidth="1.3" fill="none" />
             </svg>
           </div>
 
-          {/* HÀNG SONG SẮT NHÀ TÙ ĐÈ LÊN NHÂN VẬT (Iron Bars) */}
+          {/* NHÂN VẬT 3: ÔM ĐẦU KÊU CỨU */}
+          <div
+            style={{
+              position: 'relative',
+              zIndex: 3,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              animation: 'tearsStream 1.2s infinite ease-in-out 0.4s'
+            }}
+          >
+            {/* Lời kêu oan - zIndex 15 hiển thị trước song sắt */}
+            <div
+              style={{
+                position: 'relative',
+                zIndex: 15,
+                fontSize: '0.58rem',
+                fontWeight: 900,
+                background: '#FEF08A',
+                color: '#713F12',
+                padding: '1px 4px',
+                borderRadius: 4,
+                border: '1px solid #000',
+                marginBottom: 2,
+                whiteSpace: 'nowrap',
+                boxShadow: '0 1px 0 #000'
+              }}
+            >
+              😫 Cứu với!
+            </div>
+
+            <svg viewBox="0 0 32 42" width="30" height="40">
+              <path d="M 6 18 C 5 18, 4 33, 7 40 C 11 42, 21 42, 25 40 C 28 33, 27 18, 26 18 Z" fill="#FFFFFF" stroke="#000" strokeWidth="1.5" />
+              <line x1="6" y1="23" x2="26" y2="23" stroke="#000" strokeWidth="2.2" />
+              <line x1="5" y1="28" x2="27" y2="28" stroke="#000" strokeWidth="2.2" />
+              <line x1="5" y1="34" x2="27" y2="34" stroke="#000" strokeWidth="2.2" />
+
+              <circle cx="16" cy="11" r="8" fill="#FED7AA" stroke="#000" strokeWidth="1.5" />
+              <rect x="8" y="7.5" width="16" height="3" rx="1" fill={teamBandColor} stroke="#000" strokeWidth="0.8" />
+
+              {/* Mắt nhắm chặt & Miệng há to kêu cứu */}
+              <path d="M 11 12 L 14 11 L 11 13" stroke="#000" strokeWidth="1.6" fill="none" />
+              <path d="M 21 12 L 18 11 L 21 13" stroke="#000" strokeWidth="1.6" fill="none" />
+              <ellipse cx="16" cy="15.5" rx="3.2" ry="2.2" fill="#DC2626" stroke="#000" strokeWidth="1" />
+            </svg>
+          </div>
+
+          {/* HÀNG SONG SẮT NHÀ TÙ ĐÈ LÊN NHÂN VẬT (Iron Bars) - zIndex: 10 */}
           <div
             style={{
               position: 'absolute',
@@ -236,17 +243,17 @@ export default function JailCellMemeBox({ loserTeam = 'B', loserName = 'ĐỘI B
               display: 'flex',
               justifyContent: 'space-around',
               alignItems: 'stretch',
-              padding: '0 4px'
+              padding: '0 2px'
             }}
           >
-            {[1, 2, 3, 4, 5, 6].map((bar) => (
+            {[1, 2, 3, 4, 5, 6, 7].map((bar) => (
               <div
                 key={bar}
                 style={{
-                  width: '5px',
+                  width: '4px',
                   height: '100%',
-                  background: 'linear-gradient(90deg, #64748B 0%, #CBD5E1 40%, #475569 100%)',
-                  boxShadow: '1px 0 3px rgba(0,0,0,0.8)',
+                  background: 'linear-gradient(90deg, #6366F1 0%, #E0E7FF 40%, #4338CA 100%)',
+                  boxShadow: '1px 0 2px rgba(0,0,0,0.8)',
                   borderRadius: 2
                 }}
               />
@@ -259,9 +266,9 @@ export default function JailCellMemeBox({ loserTeam = 'B', loserName = 'ĐỘI B
               position: 'absolute',
               left: 0,
               right: 0,
-              top: '40%',
-              height: '6px',
-              background: 'linear-gradient(180deg, #94A3B8 0%, #475569 100%)',
+              top: '46%',
+              height: '5px',
+              background: 'linear-gradient(180deg, #C7D2FE 0%, #4338CA 100%)',
               zIndex: 11,
               borderTop: '1px solid #000',
               borderBottom: '1px solid #000'
@@ -271,15 +278,15 @@ export default function JailCellMemeBox({ loserTeam = 'B', loserName = 'ĐỘI B
 
         {/* CHÚ CÔNG AN CHIBI ĐỨNG GÁC BÊN NGOÀI SONG SẮT */}
         <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <PoliceOfficerCharacter isWhistling={true} width={isCompact ? 46 : 54} height={isCompact ? 60 : 70} />
+          <PoliceOfficerCharacter isWhistling={true} width={isCompact ? 44 : 52} height={isCompact ? 58 : 68} />
           <div
             style={{
               marginTop: 2,
-              fontSize: '0.62rem',
+              fontSize: '0.6rem',
               fontWeight: 900,
               background: '#DC2626',
               color: '#FFF',
-              padding: '1px 6px',
+              padding: '1px 5px',
               borderRadius: 4,
               border: '1px solid #000',
               whiteSpace: 'nowrap'
@@ -293,29 +300,29 @@ export default function JailCellMemeBox({ loserTeam = 'B', loserName = 'ĐỘI B
       {/* BẢNG TỘI DANH SINH VIÊN HÀI HƯỚC */}
       <div
         style={{
-          marginTop: 10,
+          marginTop: 8,
           background: '#FEF08A',
           border: '2px solid var(--comic-black)',
-          borderRadius: 12,
-          padding: '8px 10px',
+          borderRadius: 10,
+          padding: '6px 8px',
           color: '#713F12',
           boxShadow: '0 2px 0 var(--comic-black)',
-          fontSize: isCompact ? '0.78rem' : '0.85rem',
+          fontSize: isCompact ? '0.74rem' : '0.82rem',
           lineHeight: 1.35
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
-          <strong style={{ fontFamily: 'var(--font-title)', color: '#991B1B', textTransform: 'uppercase' }}>
+          <strong style={{ fontFamily: 'var(--font-title)', color: '#991B1B', textTransform: 'uppercase', fontSize: '0.72rem' }}>
             ⚖️ PHÁN QUYẾT TỘI DANH:
           </strong>
-          <span style={{ fontSize: '0.7rem', fontWeight: 800, color: teamBandColor }}>
+          <span style={{ fontSize: '0.68rem', fontWeight: 900, color: teamBandColor }}>
             {loserName}
           </span>
         </div>
         <div>
           📜 <em>"{FUNNY_CRIMES[crimeIndex]}"</em>
         </div>
-        <div style={{ marginTop: 4, fontSize: '0.74rem', color: '#B45309', fontWeight: 700 }}>
+        <div style={{ marginTop: 2, fontSize: '0.7rem', color: '#B45309', fontWeight: 700 }}>
           🔒 <strong>Hình phạt:</strong> Áp giải đến Trạm 2 rót trà đá & xin chữ ký chúc mừng Đội Vô Địch!
         </div>
       </div>
