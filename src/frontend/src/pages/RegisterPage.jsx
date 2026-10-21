@@ -215,7 +215,7 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
                   flexShrink: 0,
                   minWidth: isMobile ? 80 : 96,
                   padding: isMobile ? '0 10px' : '0 16px',
-                  background: '#191AFE',
+                  background: '#1A1AFF',
                   border: '2px solid var(--comic-black)',
                   boxShadow: '0 2px 0 var(--comic-black)',
                   color: '#FFFFFF',
@@ -385,14 +385,14 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
                       border: !canJoinA
                         ? '2px solid #CBD5E1'
                         : isSelected
-                        ? '2.5px solid #0284C7'
+                        ? '2.5px solid #1A1AFF'
                         : '2px solid var(--comic-black)',
                       background: !canJoinA
                         ? '#F1F5F9'
                         : isSelected
-                        ? '#E0F2FE'
+                        ? '#E6E6FF'
                         : '#FFFFFF',
-                      boxShadow: isSelected ? '0 4px 0 #0284C7' : '0 3px 0 var(--comic-black)',
+                      boxShadow: isSelected ? '0 4px 0 #1A1AFF' : '0 3px 0 var(--comic-black)',
                       color: !canJoinA ? '#94A3B8' : '#0F172A',
                       cursor: !canJoinA ? 'not-allowed' : 'pointer',
                       display: 'flex',
@@ -406,7 +406,7 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
                     }}
                   >
                     <span style={{ fontSize: isMobile ? '1.2rem' : '1.4rem' }}>⚡</span>
-                    <span style={{ fontWeight: 900, fontFamily: 'var(--font-title)', fontSize: isMobile ? '0.82rem' : '0.9rem', color: !canJoinA ? '#94A3B8' : '#0284C7', textAlign: 'center' }}>
+                    <span style={{ fontWeight: 900, fontFamily: 'var(--font-title)', fontSize: isMobile ? '0.82rem' : '0.9rem', color: !canJoinA ? '#94A3B8' : '#1A1AFF', textAlign: 'center' }}>
                       ĐỘI A - TIA CHỚP
                     </span>
                     <span style={{ fontSize: '0.72rem', fontWeight: 700, color: !canJoinA ? '#EF4444' : isSelected ? '#16A34A' : '#64748B', textAlign: 'center' }}>
@@ -479,7 +479,7 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
               id="consent"
               checked={formData.consent}
               onChange={e => setFormData({ ...formData, consent: e.target.checked })}
-              style={{ width: 18, height: 18, accentColor: '#191AFE' }}
+              style={{ width: 18, height: 18, accentColor: '#1A1AFF' }}
             />
             <label htmlFor="consent">
               Tôi đồng ý tham gia thi đấu theo thể lệ gian hàng Kéo Co Tri Thức.
@@ -495,7 +495,7 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
               height: isMobile ? 48 : 54,
               background: roomInfo?.isFull
                 ? '#FEE2E2'
-                : 'linear-gradient(180deg, #4E4FFF 0%, #191AFE 100%)',
+                : 'linear-gradient(180deg, #4A4AFF 0%, #1A1AFF 100%)',
               border: '2.5px solid var(--comic-black)',
               boxShadow: '0 5px 0 var(--comic-black)',
               color: roomInfo?.isFull ? '#DC2626' : '#FFFFFF',

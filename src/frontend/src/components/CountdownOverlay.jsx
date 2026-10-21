@@ -44,11 +44,11 @@ export default function CountdownOverlay({ seconds, roomState, player }) {
   // Color config per count
   const stageConfig = {
     3: {
-      color: '#191AFE',
-      borderColor: '#191AFE',
-      bgGlow: 'rgba(25, 26, 254, 0.25)',
-      badgeBg: '#E4E5FF',
-      badgeText: '#1011B8',
+      color: '#1A1AFF',
+      borderColor: '#1A1AFF',
+      bgGlow: 'rgba(26, 26, 255, 0.35)',
+      badgeBg: '#E6E6FF',
+      badgeText: '#1010CC',
       label: 'CHUẨN BỊ... ⚡',
       hint: 'Hai đội vào vị trí sẵn sàng!'
     },
@@ -122,7 +122,7 @@ export default function CountdownOverlay({ seconds, roomState, player }) {
             borderRadius: 12,
             fontSize: isMobile ? '0.82rem' : '0.92rem',
             fontWeight: 900,
-            color: '#191AFE',
+            color: '#1A1AFF',
             letterSpacing: 0.5
           }}
         >
@@ -131,14 +131,14 @@ export default function CountdownOverlay({ seconds, roomState, player }) {
 
         <div
           style={{
-            background: '#E4E5FF',
+            background: '#E6E6FF',
             border: '2px solid var(--comic-black)',
             boxShadow: 'var(--shadow-3d)',
             padding: isMobile ? '4px 10px' : '6px 14px',
             borderRadius: 12,
             fontSize: isMobile ? '0.78rem' : '0.86rem',
             fontWeight: 900,
-            color: '#1011B8'
+            color: '#1010CC'
           }}
         >
           🎮 {mode} ({maxPerTeam}vs{maxPerTeam})
@@ -166,9 +166,9 @@ export default function CountdownOverlay({ seconds, roomState, player }) {
           >
             {/* Team A mini card */}
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-              <div style={{ width: 34, height: 34, borderRadius: 10, background: '#E0F2FE', border: '1.5px solid #0284C7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0 }}>⚡</div>
+              <div style={{ width: 34, height: 34, borderRadius: 10, background: '#E6E6FF', border: '1.5px solid #1A1AFF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', flexShrink: 0 }}>⚡</div>
               <div style={{ minWidth: 0, overflow: 'hidden' }}>
-                <div style={{ fontFamily: 'var(--font-title)', fontWeight: 900, color: '#0284C7', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>ĐỘI A - TIA CHỚP</div>
+                <div style={{ fontFamily: 'var(--font-title)', fontWeight: 900, color: '#1A1AFF', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>ĐỘI A - TIA CHỚP</div>
                 <div style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {teamA[0]?.name || 'Tia Chớp'}
                 </div>
@@ -262,8 +262,8 @@ export default function CountdownOverlay({ seconds, roomState, player }) {
         <div
           style={{
             background: '#FFFFFF',
-            border: '3px solid #0284C7',
-            boxShadow: '0 8px 0 #0284C7',
+            border: '3px solid #1A1AFF',
+            boxShadow: '0 8px 0 #1A1AFF',
             borderRadius: 22,
             padding: '20px 18px',
             display: 'flex',
@@ -281,7 +281,7 @@ export default function CountdownOverlay({ seconds, roomState, player }) {
               left: 0,
               right: 0,
               height: 6,
-              background: 'linear-gradient(90deg, #38BDF8 0%, #0284C7 100%)'
+              background: 'linear-gradient(90deg, #4A4AFF 0%, #1A1AFF 100%)'
             }}
           />
 
@@ -291,8 +291,8 @@ export default function CountdownOverlay({ seconds, roomState, player }) {
                 width: 48,
                 height: 48,
                 borderRadius: 14,
-                background: '#E0F2FE',
-                border: '2px solid #0284C7',
+                background: '#E6E6FF',
+                border: '2px solid #1A1AFF',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -303,9 +303,9 @@ export default function CountdownOverlay({ seconds, roomState, player }) {
             </div>
             <span
               style={{
-                background: '#E0F2FE',
-                color: '#0284C7',
-                border: '1.5px solid #0284C7',
+                background: '#E6E6FF',
+                color: '#1A1AFF',
+                border: '1.5px solid #1A1AFF',
                 padding: '3px 10px',
                 borderRadius: 10,
                 fontSize: '0.78rem',
@@ -320,7 +320,7 @@ export default function CountdownOverlay({ seconds, roomState, player }) {
             <h3
               style={{
                 fontFamily: 'var(--font-title)',
-                color: '#0284C7',
+                color: '#1A1AFF',
                 fontSize: '1.35rem',
                 fontWeight: 900,
                 margin: '0 0 4px 0'
@@ -339,8 +339,8 @@ export default function CountdownOverlay({ seconds, roomState, player }) {
               <div
                 key={idx}
                 style={{
-                  background: m.name === player?.name ? '#EFF6FF' : '#F8FAFC',
-                  border: '1.5px solid ' + (m.name === player?.name ? '#0284C7' : '#E2E8F0'),
+                  background: m.name === player?.name ? '#F3F3FF' : '#F8FAFC',
+                  border: '1.5px solid ' + (m.name === player?.name ? '#1A1AFF' : '#E2E8F0'),
                   padding: '6px 10px',
                   borderRadius: 10,
                   fontSize: '0.84rem',
@@ -350,7 +350,7 @@ export default function CountdownOverlay({ seconds, roomState, player }) {
                 }}
               >
                 <span style={{ fontWeight: 800, color: '#0F172A' }}>
-                  👤 {m.name} {m.name === player?.name && <span style={{ color: '#0284C7' }}>(Bạn)</span>}
+                  👤 {m.name} {m.name === player?.name && <span style={{ color: '#1A1AFF' }}>(Bạn)</span>}
                 </span>
                 <span style={{ fontSize: '0.74rem', color: '#64748B', fontWeight: 600 }}>
                   {m.studentId || ''}

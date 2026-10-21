@@ -138,7 +138,7 @@ export default function LobbyPage({
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: '0.92rem', color: 'var(--comic-black)', fontWeight: 700 }}>
           <span>
-            👥 Đã vào phòng: <strong style={{ color: '#191AFE', fontSize: '1.05rem' }}>{totalPlayers}/{targetTotal}</strong> người
+            👥 Đã vào phòng: <strong style={{ color: '#1A1AFF', fontSize: '1.05rem' }}>{totalPlayers}/{targetTotal}</strong> người
           </span>
           <span style={{ color: '#CBD5E1' }}>•</span>
           <span>
@@ -168,8 +168,8 @@ export default function LobbyPage({
         <div
           style={{
             background: '#FFFFFF',
-            border: currentTeam === 'A' ? '3px solid #0284C7' : '2.5px solid var(--comic-black)',
-            boxShadow: currentTeam === 'A' ? '0 6px 0 #0284C7' : 'var(--shadow-3d)',
+            border: currentTeam === 'A' ? '3px solid #1A1AFF' : '2.5px solid var(--comic-black)',
+            boxShadow: currentTeam === 'A' ? '0 6px 0 #1A1AFF' : 'var(--shadow-3d)',
             borderRadius: 18,
             padding: '18px',
             display: 'flex',
@@ -187,7 +187,7 @@ export default function LobbyPage({
             left: 0,
             right: 0,
             height: 6,
-            background: 'linear-gradient(90deg, #38BDF8 0%, #0284C7 100%)'
+            background: 'linear-gradient(90deg, #4A4AFF 0%, #1A1AFF 100%)'
           }} />
 
           <div>
@@ -196,8 +196,8 @@ export default function LobbyPage({
                 width: 44,
                 height: 44,
                 borderRadius: 12,
-                background: '#E0F2FE',
-                border: '2px solid #0284C7',
+                background: '#E6E6FF',
+                border: '2px solid #1A1AFF',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -206,9 +206,9 @@ export default function LobbyPage({
                 ⚡
               </div>
               <span style={{
-                background: teamA.length >= maxPerTeam ? '#DCFCE7' : '#E0F2FE',
-                border: '1.5px solid ' + (teamA.length >= maxPerTeam ? '#16A34A' : '#0284C7'),
-                color: teamA.length >= maxPerTeam ? '#15803D' : '#0369A1',
+                background: teamA.length >= maxPerTeam ? '#DCFCE7' : '#E6E6FF',
+                border: '1.5px solid ' + (teamA.length >= maxPerTeam ? '#16A34A' : '#1A1AFF'),
+                color: teamA.length >= maxPerTeam ? '#15803D' : '#1A1AFF',
                 padding: '4px 12px',
                 borderRadius: 10,
                 fontSize: '0.82rem',
@@ -220,7 +220,7 @@ export default function LobbyPage({
 
             <h3 style={{
               fontFamily: 'var(--font-title)',
-              color: '#0284C7',
+              color: '#1A1AFF',
               fontSize: '1.25rem',
               fontWeight: 900,
               margin: '0 0 4px 0',
@@ -242,13 +242,13 @@ export default function LobbyPage({
               padding: '12px',
               borderRadius: 12,
               border: '2.5px solid var(--comic-black)',
-              boxShadow: currentTeam === 'A' ? '0 4px 0 #0369A1' : '0 4px 0 var(--comic-black)',
+              boxShadow: currentTeam === 'A' ? '0 4px 0 #1010CC' : '0 4px 0 var(--comic-black)',
               background: currentTeam === 'A'
-                ? 'linear-gradient(180deg, #38BDF8 0%, #0284C7 100%)'
-                : (teamA.length >= maxPerTeam ? '#E2E8F0' : '#E0F2FE'),
+                ? 'linear-gradient(180deg, #4A4AFF 0%, #1A1AFF 100%)'
+                : (teamA.length >= maxPerTeam ? '#E2E8F0' : '#E6E6FF'),
               color: currentTeam === 'A'
                 ? '#FFFFFF'
-                : (teamA.length >= maxPerTeam ? '#94A3B8' : '#0284C7'),
+                : (teamA.length >= maxPerTeam ? '#94A3B8' : '#1A1AFF'),
               fontSize: '0.92rem',
               fontWeight: 900,
               cursor: currentTeam === 'A' || teamA.length >= maxPerTeam ? 'default' : 'pointer',
@@ -388,7 +388,7 @@ export default function LobbyPage({
           padding: '14px'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.88rem', marginBottom: 10, paddingBottom: 8, borderBottom: '2px solid #E2E8F0' }}>
-            <strong style={{ color: '#0284C7', fontWeight: 900 }}>
+            <strong style={{ color: '#1A1AFF', fontWeight: 900 }}>
               ⚡ THÀNH VIÊN ĐỘI A ({teamA.length}/{maxPerTeam})
             </strong>
             <span style={{
@@ -412,8 +412,8 @@ export default function LobbyPage({
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  background: p.socketId === player?.socketId ? '#EFF6FF' : '#F8FAFC',
-                  border: '1.5px solid ' + (p.socketId === player?.socketId ? '#BFDBFE' : '#E2E8F0'),
+                  background: p.socketId === player?.socketId ? '#F3F3FF' : '#F8FAFC',
+                  border: '1.5px solid ' + (p.socketId === player?.socketId ? '#C7C7FF' : '#E2E8F0'),
                   padding: '8px 12px',
                   borderRadius: 10,
                   fontSize: '0.86rem'
@@ -424,7 +424,7 @@ export default function LobbyPage({
                   <strong style={{ color: 'var(--comic-black)' }}>{p.name}</strong>
                   {p.socketId === player?.socketId && (
                     <span style={{
-                      background: '#0284C7',
+                      background: '#1A1AFF',
                       color: '#FFFFFF',
                       fontSize: '0.72rem',
                       fontWeight: 900,

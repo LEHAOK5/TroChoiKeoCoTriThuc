@@ -9,15 +9,15 @@
   --font-body: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-display: 'Nunito', 'Chakra Petch', sans-serif;
 
-  /* Vibrant Blue Palette (Chủ Đạo Mới: #191AFE) */
-  --blue-primary: #191AFE;
-  --blue-dark: #1011B8;
-  --blue-deep: #0A0A66;
-  --blue-light: #4E4FFF;
-  --blue-sky: #8081FF;
-  --blue-soft: #E4E5FF;
-  --blue-bg: #F2F3FF;
-  --game-backdrop: #E8E9FD;
+  /* HARMONY Blue Palette (#1A1AFF, CMYK: 100 65 0 0) */
+  --blue-primary: #1A1AFF;
+  --blue-dark: #1010CC;
+  --blue-deep: #0B0B80;
+  --blue-light: #4A4AFF;
+  --blue-sky: #7D7DFF;
+  --blue-soft: #E6E6FF;
+  --blue-bg: #F3F3FF;
+  --game-backdrop: #EBEBFE;
 
   /* Comic 2D Outlines & Shadows */
   --comic-black: #0F172A;
@@ -29,11 +29,11 @@
   --shadow-3d-btn: 0 5px 0 var(--comic-black);
   --shadow-3d-pressed: 0 1px 0 var(--comic-black);
 
-  /* Team A (Tia Chớp ⚡ - Cyan / Royal Blue) */
-  --team-a-cyan: #00D2FF;
-  --team-a-blue: #0072FF;
-  --team-a-glow: rgba(0, 210, 255, 0.4);
-  --team-a-gradient: linear-gradient(180deg, #00F0FF 0%, #0072FF 100%);
+  /* Team A (Tia Chớp ⚡ - HARMONY Blue #1A1AFF) */
+  --team-a-cyan: #7D7DFF;
+  --team-a-blue: #1A1AFF;
+  --team-a-glow: rgba(26, 26, 255, 0.35);
+  --team-a-gradient: linear-gradient(180deg, #4A4AFF 0%, #1A1AFF 100%);
 
   /* Team B (Ngọn Lửa 🔥 - Coral Flame / Fire Orange) */
   --team-b-orange: #FF5722;
@@ -55,8 +55,8 @@
   --color-steal: #EAB308;
 
   /* Topics */
-  --cat-it: #0284C7;
-  --cat-it-bg: #E0F2FE;
+  --cat-it: #1A1AFF;
+  --cat-it-bg: #E6E6FF;
   --cat-law: #7C3AED;
   --cat-law-bg: #EDE9FE;
 
@@ -407,7 +407,7 @@ html, body {
   line-height: 1;
   text-shadow: 1.5px 1.5px 0 var(--comic-black);
 }
-.score-display.team-a { color: #0284C7; }
+.score-display.team-a { color: var(--blue-primary); }
 .score-display.team-b { color: #EA580C; }
 
 .vs-pill {
@@ -549,7 +549,7 @@ html, body {
 }
 
 .notch-seg.active-a {
-  background: #0284C7;
+  background: var(--blue-primary);
   border-color: var(--comic-black);
   box-shadow: 0 1px 0 var(--comic-black);
 }
@@ -590,7 +590,7 @@ html, body {
   left: 0;
   right: 0;
   height: 5px;
-  background: linear-gradient(90deg, var(--blue-primary) 0%, #38BDF8 100%);
+  background: linear-gradient(90deg, var(--blue-primary) 0%, var(--blue-light) 100%);
 }
 
 .quiz-meta {
@@ -841,10 +841,10 @@ html, body {
 }
 
 .answer-btn.unlocked-self {
-  background: #EFF6FF;
-  border: 2.5px solid #0284C7;
+  background: var(--blue-bg);
+  border: 2.5px solid var(--blue-primary);
   color: var(--blue-deep);
-  box-shadow: 0 5px 0 #0284C7, 0 0 15px rgba(2, 132, 199, 0.3);
+  box-shadow: 0 5px 0 var(--blue-dark), 0 0 15px rgba(26, 26, 255, 0.3);
   animation: unlockPulse 1.2s infinite alternate ease-in-out;
 }
 
@@ -1055,7 +1055,7 @@ html, body {
   left: 0;
   right: 0;
   height: 8px;
-  background: linear-gradient(90deg, #191AFE, #FACC15, #FF5722);
+  background: linear-gradient(90deg, #1A1AFF, #FACC15, #FF5722);
 }
 
 .countdown-giant {

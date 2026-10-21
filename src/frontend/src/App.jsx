@@ -463,8 +463,8 @@ export default function App() {
                   fontFamily: 'var(--font-title)',
                   padding: isMobile ? '2px 6px' : '3px 8px',
                   borderRadius: 999,
-                  background: player.team === 'A' ? '#E0F2FE' : '#FFEDD5',
-                  color: player.team === 'A' ? '#0284C7' : '#EA580C',
+                  background: player.team === 'A' ? '#E6E6FF' : '#FFEDD5',
+                  color: player.team === 'A' ? '#1A1AFF' : '#EA580C',
                   border: '1.5px solid var(--comic-black)',
                   boxShadow: '0 2px 0 var(--comic-black)',
                   whiteSpace: 'nowrap',
@@ -508,10 +508,10 @@ export default function App() {
             <button
               onClick={() => setCurrentPage(currentPage === 'ADMIN' ? (player ? 'LOBBY' : 'REGISTER') : 'ADMIN')}
               style={{
-                background: currentPage === 'ADMIN' ? '#E4E5FF' : '#FEF08A',
+                background: currentPage === 'ADMIN' ? '#E6E6FF' : '#FEF08A',
                 border: '1.5px solid var(--comic-black)',
                 boxShadow: '0 2px 0 var(--comic-black)',
-                color: currentPage === 'ADMIN' ? '#1011B8' : '#713F12',
+                color: currentPage === 'ADMIN' ? '#1A1AFF' : '#713F12',
                 padding: isMobile ? '3px 6px' : '4px 8px',
                 borderRadius: 999,
                 cursor: 'pointer',

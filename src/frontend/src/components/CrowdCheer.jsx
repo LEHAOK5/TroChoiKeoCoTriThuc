@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 
 export default function CrowdCheer({ team = 'A', isCheering = false, isDismayed = false, isBuzzed = false }) {
   const isA = team === 'A';
-  const colorMain = isA ? '#0284C7' : '#EA580C';
-  const colorSub = isA ? '#38BDF8' : '#F97316';
+  const colorMain = isA ? '#1A1AFF' : '#EA580C';
+  const colorSub = isA ? '#4A4AFF' : '#F97316';
   const teamIcon = isA ? '⚡' : '🔥';
   const slogan = isA ? 'VHU TIA CHỚP CỐ LÊN!' : 'VHU NGỌN LỬA VÔ ĐỊCH!';
 
@@ -213,7 +213,7 @@ export default function CrowdCheer({ team = 'A', isCheering = false, isDismayed 
               <circle cx="9.5" cy="11" r="1.2" fill="#0F172A" />
               <circle cx="14.5" cy="11" r="1.2" fill="#0F172A" />
               {/* Teardrop */}
-              <circle cx="7" cy="13" r="1.2" fill="#38BDF8" />
+              <circle cx="7" cy="13" r="1.2" fill="#4A4AFF" />
             </>
           ) : (
             <>

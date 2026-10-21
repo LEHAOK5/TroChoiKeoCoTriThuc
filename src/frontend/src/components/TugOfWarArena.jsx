@@ -96,7 +96,7 @@ export default function TugOfWarArena({
                 <span>⚡</span>
               </div>
               <div>
-                <div className="team-title" style={{ color: '#0284C7', fontSize: isMobile ? '0.78rem' : '0.95rem' }}>
+                <div className="team-title" style={{ color: '#1A1AFF', fontSize: isMobile ? '0.78rem' : '0.95rem' }}>
                   {isMobile ? 'ĐỘI A' : 'ĐỘI A - VHU TIA CHỚP'}
                 </div>
               </div>
@@ -236,7 +236,7 @@ export default function TugOfWarArena({
                 position: 'absolute',
                 left: '20%',
                 bottom: '72px',
-                background: '#0284C7',
+                background: '#1A1AFF',
                 color: '#FFFFFF',
                 border: '2px solid #0F172A',
                 borderRadius: 8,

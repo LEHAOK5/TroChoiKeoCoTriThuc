@@ -20,7 +20,7 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
   const isWinnerA = winner === 'A';
   const winnerName = isWinnerA ? 'ĐỘI A - TIA CHỚP' : 'ĐỘI B - NGỌN LỬA';
   const loserName = isWinnerA ? 'ĐỘI B - NGỌN LỬA' : 'ĐỘI A - TIA CHỚP';
-  const winnerBadgeColor = isWinnerA ? '#0284C7' : '#EA580C';
+  const winnerBadgeColor = isWinnerA ? '#1A1AFF' : '#EA580C';
 
   useEffect(() => {
     // Initial sound & haptic
@@ -55,7 +55,7 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
           ticks: 60,
           origin: { x: Math.random() * 0.6 + 0.2, y: Math.random() * 0.4 + 0.1 },
           colors: isWinnerA
-            ? ['#0284C7', '#38BDF8', '#FACC15', '#FFFFFF', '#10B981']
+            ? ['#1A1AFF', '#4A4AFF', '#FACC15', '#FFFFFF', '#10B981']
             : ['#EA580C', '#FB923C', '#FACC15', '#FFFFFF', '#EF4444']
         });
       }, 350);
@@ -131,7 +131,7 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
           style={{
             background: phase === 'CELEBRATE'
               ? 'linear-gradient(90deg, #FACC15, #F59E0B)'
-              : (phase === 'FALL' ? '#EF4444' : '#0284C7'),
+              : (phase === 'FALL' ? '#EF4444' : '#1A1AFF'),
             borderBottom: '3px solid var(--comic-black)',
             padding: isMobile ? '8px 10px' : '12px 18px',
             textAlign: 'center',

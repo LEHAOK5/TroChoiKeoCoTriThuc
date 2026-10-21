@@ -19,16 +19,16 @@ export default function PullerCharacter({
   // Vị trí 4 (Khóa đuôi): Nam Chibi
   const isMale = gender ? gender === 'male' : (index % 2 === 0);
 
-  // Bảng màu tươi sáng, đáng yêu cho đồng phục VHU Chibi:
-  // Đội A: Xanh dương tươi sáng (#0284C7, highlight #38BDF8)
-  // Đội B: Cam đào nhiệt huyết (#EA580C, highlight #FB923C)
-  const jerseyColor = isA ? '#0284C7' : '#EA580C';
-  const jerseyLight = isA ? '#38BDF8' : '#FB923C';
-  const jerseyDark = isA ? '#0369A1' : '#C2410C';
-  const shoeColor = isA ? '#0284C7' : '#EA580C';
+  // Bảng màu đồng phục VHU Chibi chuẩn HARMONY (#1A1AFF):
+  // Đội A: Xanh HARMONY (#1A1AFF, highlight #4A4AFF, bóng #1010CC)
+  // Đội B: Cam Hổ Phách (#EA580C, highlight #FB923C, bóng #C2410C)
+  const jerseyColor = isA ? '#1A1AFF' : '#EA580C';
+  const jerseyLight = isA ? '#4A4AFF' : '#FB923C';
+  const jerseyDark = isA ? '#1010CC' : '#C2410C';
+  const shoeColor = isA ? '#1A1AFF' : '#EA580C';
   const hairColor = isMale ? '#1E293B' : '#78350F';
   const hairLight = isMale ? '#475569' : '#B45309';
-  const ribbonColor = isA ? '#0284C7' : '#EA580C';
+  const ribbonColor = isA ? '#1A1AFF' : '#EA580C';
 
   // Góc nghiêng ngả người kéo co chibi đáng yêu
   const baseLeans = [26, 22, 24, 28, 32];

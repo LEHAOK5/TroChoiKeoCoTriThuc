@@ -14,7 +14,7 @@ export default function RingTimer({
 
   const isCritical = seconds <= 3 && seconds > 0;
   // Progress color: Blue -> Yellow -> Red
-  const strokeColor = isCritical ? '#EF4444' : progress > 0.45 ? '#191AFE' : '#F59E0B';
+  const strokeColor = isCritical ? '#EF4444' : progress > 0.45 ? '#1A1AFF' : '#F59E0B';
 
   useEffect(() => {
     if (isCritical && typeof navigator !== 'undefined' && navigator.vibrate) {

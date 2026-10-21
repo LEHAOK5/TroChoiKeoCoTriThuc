@@ -78,10 +78,10 @@ export default function BuzzerControl({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: 8, padding: '0 4px' }}>
           <span
             style={{
-              color: '#0284C7',
+              color: '#1A1AFF',
               fontWeight: 900,
               fontSize: '0.98rem',
-              background: '#E0F2FE',
+              background: '#E6E6FF',
               padding: '4px 12px',
               borderRadius: 999,
               border: '2px solid var(--comic-black)',
@@ -90,7 +90,7 @@ export default function BuzzerControl({
           >
             ⚡ BẠN ĐÃ BẤM CHUÔNG! CHỌN 1 ĐÁP ÁN:
           </span>
-          <span className="timer-pill" style={{ background: '#E0F2FE', color: '#0369A1' }}>
+          <span className="timer-pill" style={{ background: '#E6E6FF', color: '#1010CC' }}>
             ⏱️ {secondsLeft}s
           </span>
         </div>
@@ -170,7 +170,7 @@ export default function BuzzerControl({
           }
 
           const badgeTheme = [
-            { bg: '#E0F2FE', text: '#0284C7' },
+            { bg: '#E6E6FF', text: '#1A1AFF' },
             { bg: '#EDE9FE', text: '#7C3AED' },
             { bg: '#FEF3C7', text: '#D97706' },
             { bg: '#FFE4E6', text: '#E11D48' }

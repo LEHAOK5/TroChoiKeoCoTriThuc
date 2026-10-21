@@ -19,14 +19,14 @@ export default function VictoryModal({ gameOverData, onRematch }) {
         angle: 60,
         spread: 55,
         origin: { x: 0 },
-        colors: isWinnerA ? ['#191AFE', '#00D2FF', '#FFFFFF', '#FACC15'] : ['#FF5722', '#F97316', '#FFFFFF', '#FACC15']
+        colors: isWinnerA ? ['#1A1AFF', '#4A4AFF', '#FFFFFF', '#FACC15'] : ['#FF5722', '#F97316', '#FFFFFF', '#FACC15']
       });
       confetti({
         particleCount: 6,
         angle: 120,
         spread: 55,
         origin: { x: 1 },
-        colors: isWinnerA ? ['#191AFE', '#00D2FF', '#FFFFFF', '#FACC15'] : ['#FF5722', '#F97316', '#FFFFFF', '#FACC15']
+        colors: isWinnerA ? ['#1A1AFF', '#4A4AFF', '#FFFFFF', '#FACC15'] : ['#FF5722', '#F97316', '#FFFFFF', '#FACC15']
       });
 
       if (Date.now() < end) {
@@ -49,7 +49,7 @@ export default function VictoryModal({ gameOverData, onRematch }) {
             fontFamily: 'var(--font-title)',
             fontSize: '1.75rem',
             fontWeight: 900,
-            color: isWinnerA ? '#0284C7' : (isWinnerB ? '#EA580C' : '#0F172A'),
+            color: isWinnerA ? '#1A1AFF' : (isWinnerB ? '#EA580C' : '#0F172A'),
             textTransform: 'uppercase',
             textShadow: '1.5px 1.5px 0 var(--comic-black)'
           }}
@@ -74,7 +74,7 @@ export default function VictoryModal({ gameOverData, onRematch }) {
           <span style={{ fontFamily: 'var(--font-title)', fontSize: '0.95rem', fontWeight: 900, color: 'var(--text-muted)' }}>
             TỶ SỐ CHUNG CUỘC:
           </span>
-          <span style={{ fontFamily: 'var(--font-title)', fontSize: '1.7rem', fontWeight: 900, color: '#0284C7' }}>
+          <span style={{ fontFamily: 'var(--font-title)', fontSize: '1.7rem', fontWeight: 900, color: '#1A1AFF' }}>
             {scoreA}
           </span>
           <span style={{ fontWeight: 900, color: 'var(--comic-black)' }}>-</span>
@@ -110,7 +110,7 @@ export default function VictoryModal({ gameOverData, onRematch }) {
           style={{
             width: '100%',
             padding: '16px',
-            background: 'linear-gradient(180deg, #4E4FFF 0%, #191AFE 100%)',
+            background: 'linear-gradient(180deg, #4A4AFF 0%, #1A1AFF 100%)',
             color: '#FFFFFF',
             fontSize: '1.15rem',
             fontWeight: 900,

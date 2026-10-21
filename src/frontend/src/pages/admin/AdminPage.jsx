@@ -236,7 +236,7 @@ export default function AdminPage({ onBackToGame }) {
             🏛️ BẢNG ĐIỀU KHIỂN BAN TỔ CHỨC
           </h1>
           {adminUser && (
-            <div style={{ fontSize: '0.82rem', color: '#0369A1', marginTop: 4, fontWeight: 700 }}>
+            <div style={{ fontSize: '0.82rem', color: '#1A1AFF', marginTop: 4, fontWeight: 700 }}>
               👤 Đăng nhập: <strong>{adminUser.full_name}</strong> ({adminUser.role})
             </div>
           )}
@@ -316,7 +316,7 @@ export default function AdminPage({ onBackToGame }) {
             🔐
           </div>
 
-          <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '1.4rem', color: '#1E3A8A', marginBottom: 22, fontWeight: 900 }}>
+          <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '1.4rem', color: '#1A1AFF', marginBottom: 22, fontWeight: 900 }}>
             ĐĂNG NHẬP BAN TỔ CHỨC
           </h2>
 
@@ -413,7 +413,7 @@ export default function AdminPage({ onBackToGame }) {
             style={{
               width: '100%',
               padding: '14px',
-              background: 'linear-gradient(180deg, #0284C7 0%, #0369A1 100%)',
+              background: 'linear-gradient(180deg, #4A4AFF 0%, #1A1AFF 100%)',
               border: '2px solid var(--comic-black)',
               boxShadow: '0 4px 0 var(--comic-black)',
               borderRadius: 14,
@@ -452,7 +452,7 @@ export default function AdminPage({ onBackToGame }) {
                 padding: isMobile ? '8px 12px' : '10px 18px',
                 borderRadius: 14,
                 border: '2px solid var(--comic-black)',
-                background: activeTab === 'ROOMS' ? '#0284C7' : '#FFFFFF',
+                background: activeTab === 'ROOMS' ? '#1A1AFF' : '#FFFFFF',
                 color: activeTab === 'ROOMS' ? '#FFFFFF' : '#0F172A',
                 fontWeight: 900,
                 fontSize: isMobile ? '0.82rem' : '0.92rem',
@@ -468,8 +468,8 @@ export default function AdminPage({ onBackToGame }) {
               <span>🎮</span>
               <span>QUẢN LÝ PHÒNG ĐẤU</span>
               <span style={{
-                background: activeTab === 'ROOMS' ? '#FFFFFF' : '#E0F2FE',
-                color: activeTab === 'ROOMS' ? '#0284C7' : '#0369A1',
+                background: activeTab === 'ROOMS' ? '#FFFFFF' : '#E6E6FF',
+                color: activeTab === 'ROOMS' ? '#1A1AFF' : '#1010CC',
                 padding: '1px 7px',
                 borderRadius: 999,
                 fontSize: '0.72rem',
@@ -486,7 +486,7 @@ export default function AdminPage({ onBackToGame }) {
                 padding: isMobile ? '8px 12px' : '10px 18px',
                 borderRadius: 14,
                 border: '2px solid var(--comic-black)',
-                background: activeTab === 'STUDENTS' ? '#0284C7' : '#FFFFFF',
+                background: activeTab === 'STUDENTS' ? '#1A1AFF' : '#FFFFFF',
                 color: activeTab === 'STUDENTS' ? '#FFFFFF' : '#0F172A',
                 fontWeight: 900,
                 fontSize: isMobile ? '0.82rem' : '0.92rem',
@@ -503,7 +503,7 @@ export default function AdminPage({ onBackToGame }) {
               <span>DANH SÁCH SINH VIÊN</span>
               <span style={{
                 background: activeTab === 'STUDENTS' ? '#FFFFFF' : '#FEF08A',
-                color: activeTab === 'STUDENTS' ? '#0284C7' : '#713F12',
+                color: activeTab === 'STUDENTS' ? '#1A1AFF' : '#713F12',
                 padding: '1px 7px',
                 borderRadius: 999,
                 fontSize: '0.72rem',
@@ -520,7 +520,7 @@ export default function AdminPage({ onBackToGame }) {
                 padding: isMobile ? '8px 12px' : '10px 18px',
                 borderRadius: 14,
                 border: '2px solid var(--comic-black)',
-                background: activeTab === 'MATCHES' ? '#0284C7' : '#FFFFFF',
+                background: activeTab === 'MATCHES' ? '#1A1AFF' : '#FFFFFF',
                 color: activeTab === 'MATCHES' ? '#FFFFFF' : '#0F172A',
                 fontWeight: 900,
                 fontSize: isMobile ? '0.82rem' : '0.92rem',
@@ -537,7 +537,7 @@ export default function AdminPage({ onBackToGame }) {
               <span>LỊCH SỬ TRẬN ĐẤU</span>
               <span style={{
                 background: activeTab === 'MATCHES' ? '#FFFFFF' : '#DCFCE7',
-                color: activeTab === 'MATCHES' ? '#0284C7' : '#15803D',
+                color: activeTab === 'MATCHES' ? '#1A1AFF' : '#15803D',
                 padding: '1px 7px',
                 borderRadius: 999,
                 fontSize: '0.72rem',
@@ -557,7 +557,7 @@ export default function AdminPage({ onBackToGame }) {
               <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fit, minmax(180px, 1fr))', gap: isMobile ? 8 : 12 }}>
                 <div style={{ background: '#FFFFFF', border: '2.5px solid var(--comic-black)', borderRadius: 14, padding: isMobile ? '12px 10px' : '16px 18px', boxShadow: '0 4px 0 var(--comic-black)' }}>
                   <div style={{ fontSize: isMobile ? '0.72rem' : '0.8rem', color: '#475569', fontWeight: 800 }}>👥 TỔNG ĐĂNG KÝ</div>
-                  <div style={{ fontFamily: 'var(--font-title)', fontSize: isMobile ? '1.6rem' : '2.2rem', fontWeight: 900, color: '#0284C7', lineHeight: 1.2 }}>
+                  <div style={{ fontFamily: 'var(--font-title)', fontSize: isMobile ? '1.6rem' : '2.2rem', fontWeight: 900, color: '#1A1AFF', lineHeight: 1.2 }}>
                     {stats?.totalRegistrations || 0}
                   </div>
                   <small style={{ color: '#64748B', fontWeight: 600, fontSize: isMobile ? '0.7rem' : '0.8rem' }}>Sinh viên gian hàng</small>
@@ -626,7 +626,7 @@ export default function AdminPage({ onBackToGame }) {
 
               {/* SECTION: TẠO PHÒNG ĐẤU MỚI (HIGH CONTRAST) */}
               <div style={{ background: '#FFFFFF', border: '2.5px solid var(--comic-black)', borderRadius: 20, padding: 24, boxShadow: '0 6px 0 var(--comic-black)' }}>
-                <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '1.25rem', color: '#1E3A8A', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8, fontWeight: 900 }}>
+                <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '1.25rem', color: '#1010CC', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8, fontWeight: 900 }}>
                   <span>➕</span> TẠO PHÒNG ĐẤU MỚI CHO GIAN HÀNG
                 </h2>
                 <p style={{ fontSize: '0.85rem', color: '#475569', marginBottom: 18, fontWeight: 600 }}>
@@ -650,16 +650,16 @@ export default function AdminPage({ onBackToGame }) {
                               padding: '12px 14px',
                               borderRadius: 14,
                               cursor: 'pointer',
-                              background: isSelected ? '#E0F2FE' : '#F8FAFC',
-                              border: isSelected ? '2.5px solid #0284C7' : '2px solid #CBD5E1',
-                              boxShadow: isSelected ? '0 3px 0 #0284C7' : '0 2px 0 rgba(0,0,0,0.06)',
+                              background: isSelected ? '#E6E6FF' : '#F8FAFC',
+                              border: isSelected ? '2.5px solid #1A1AFF' : '2px solid #CBD5E1',
+                              boxShadow: isSelected ? '0 3px 0 #1A1AFF' : '0 2px 0 rgba(0,0,0,0.06)',
                               transition: 'all 0.15s ease'
                             }}
                           >
-                            <div style={{ fontWeight: 900, fontSize: '1rem', color: isSelected ? '#0369A1' : '#0F172A', marginBottom: 4 }}>
+                            <div style={{ fontWeight: 900, fontSize: '1rem', color: isSelected ? '#1010CC' : '#0F172A', marginBottom: 4 }}>
                               {m.label}
                             </div>
-                            <div style={{ fontSize: '0.78rem', color: isSelected ? '#0284C7' : '#64748B', fontWeight: 600 }}>
+                            <div style={{ fontSize: '0.78rem', color: isSelected ? '#1A1AFF' : '#64748B', fontWeight: 600 }}>
                               {m.desc}
                             </div>
                           </div>
@@ -701,7 +701,7 @@ export default function AdminPage({ onBackToGame }) {
                       disabled={creatingRoom}
                       style={{
                         padding: '13px 26px',
-                        background: 'linear-gradient(180deg, #0284C7 0%, #0369A1 100%)',
+                        background: 'linear-gradient(180deg, #4A4AFF 0%, #1A1AFF 100%)',
                         border: '2px solid var(--comic-black)',
                         boxShadow: '0 4px 0 var(--comic-black)',
                         color: '#FFFFFF',
@@ -768,7 +768,7 @@ export default function AdminPage({ onBackToGame }) {
                                 fontFamily: 'var(--font-title)',
                                 fontSize: isMobile ? '1.4rem' : '1.8rem',
                                 fontWeight: 900,
-                                color: '#1E3A8A',
+                                color: '#1010CC',
                                 background: '#FEF08A',
                                 border: '2px solid var(--comic-black)',
                                 padding: isMobile ? '2px 10px' : '4px 14px',
@@ -780,9 +780,9 @@ export default function AdminPage({ onBackToGame }) {
                               </div>
                               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
                                 <span style={{
-                                  background: '#E0F2FE',
-                                  color: '#0369A1',
-                                  border: '1.5px solid #BAE6FD',
+                                  background: '#E6E6FF',
+                                  color: '#1010CC',
+                                  border: '1.5px solid #C4C4FF',
                                   padding: '4px 10px',
                                   borderRadius: 8,
                                   fontSize: '0.8rem',
@@ -916,7 +916,7 @@ export default function AdminPage({ onBackToGame }) {
                                 style={{ width: 130, height: 130, borderRadius: 10, background: '#FFF', padding: 6, border: '2px solid var(--comic-black)' }}
                               />
                               <div style={{ flex: 1, minWidth: 220 }}>
-                                <div style={{ fontSize: '1rem', fontWeight: 900, color: '#1E3A8A', marginBottom: 4 }}>
+                                <div style={{ fontSize: '1rem', fontWeight: 900, color: '#1010CC', marginBottom: 4 }}>
                                   📲 MÃ QR VÀO PHÒNG #{r.roomCode}
                                 </div>
                                 <p style={{ fontSize: '0.82rem', color: '#475569', marginBottom: 10, fontWeight: 600 }}>
@@ -961,12 +961,12 @@ export default function AdminPage({ onBackToGame }) {
                           {/* Teams Grid */}
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 14 }}>
                             {/* Team A */}
-                            <div style={{ background: '#F0F9FF', border: '2px solid #BAE6FD', borderRadius: 14, padding: 14 }}>
+                            <div style={{ background: '#F3F3FF', border: '2px solid #C4C4FF', borderRadius: 14, padding: 14 }}>
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-                                <div style={{ fontWeight: 900, color: '#0284C7', fontSize: '0.92rem' }}>
+                                <div style={{ fontWeight: 900, color: '#1A1AFF', fontSize: '0.92rem' }}>
                                   ⚡ ĐỘI A (TIA CHỚP)
                                 </div>
-                                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: r.teamACount >= max ? '#16A34A' : '#0369A1' }}>
+                                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: r.teamACount >= max ? '#16A34A' : '#1A1AFF' }}>
                                   {r.teamACount} / {max} người
                                 </span>
                               </div>
@@ -977,7 +977,7 @@ export default function AdminPage({ onBackToGame }) {
                               ) : (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                                   {r.teamAPlayers.map((p, idx) => (
-                                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FFFFFF', border: '1px solid #BAE6FD', padding: '6px 10px', borderRadius: 8, fontSize: '0.82rem' }}>
+                                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#FFFFFF', border: '1px solid #C4C4FF', padding: '6px 10px', borderRadius: 8, fontSize: '0.82rem' }}>
                                       <span style={{ color: '#0F172A' }}>👤 <strong>{p.name}</strong> <span style={{ color: '#64748B', fontSize: '0.75rem' }}>({p.studentId})</span></span>
                                       <span style={{ color: p.isReady ? '#16A34A' : '#D97706', fontWeight: 800, fontSize: '0.75rem' }}>
                                         {p.isReady ? '✅ SẴN SÀNG' : '⏳ CHỜ'}
@@ -1115,7 +1115,7 @@ export default function AdminPage({ onBackToGame }) {
                   Hiển thị <strong>{filteredStudents.length}</strong> / <strong>{registrations.length}</strong> sinh viên đã đăng ký
                 </span>
                 {searchStudent && (
-                  <span style={{ color: '#0284C7' }}>
+                  <span style={{ color: '#1A1AFF' }}>
                     Bộ lọc: "{searchStudent}"
                   </span>
                 )}
@@ -1173,8 +1173,8 @@ export default function AdminPage({ onBackToGame }) {
                                 <span>{s.full_name}</span>
                               </span>
                             </td>
-                            <td style={{ padding: '12px 14px', fontWeight: 800, color: '#0369A1' }}>
-                              <span style={{ background: '#E0F2FE', padding: '2px 8px', borderRadius: 6, border: '1px solid #BAE6FD' }}>
+                            <td style={{ padding: '12px 14px', fontWeight: 800, color: '#1010CC' }}>
+                              <span style={{ background: '#E6E6FF', padding: '2px 8px', borderRadius: 6, border: '1px solid #C4C4FF' }}>
                                 {s.student_id}
                               </span>
                             </td>
@@ -1204,12 +1204,12 @@ export default function AdminPage({ onBackToGame }) {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {/* Summary Win/Loss Ratio */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
-                <div style={{ background: '#F0F9FF', border: '2.5px solid var(--comic-black)', borderRadius: 16, padding: '16px 20px', boxShadow: '0 4px 0 var(--comic-black)' }}>
-                  <div style={{ fontSize: '0.85rem', color: '#0369A1', fontWeight: 900 }}>⚡ ĐỘI A THẮNG (TIA CHỚP)</div>
-                  <div style={{ fontFamily: 'var(--font-title)', fontSize: '2.4rem', fontWeight: 900, color: '#0284C7' }}>
+                <div style={{ background: '#F3F3FF', border: '2.5px solid var(--comic-black)', borderRadius: 16, padding: '16px 20px', boxShadow: '0 4px 0 var(--comic-black)' }}>
+                  <div style={{ fontSize: '0.85rem', color: '#1010CC', fontWeight: 900 }}>⚡ ĐỘI A THẮNG (TIA CHỚP)</div>
+                  <div style={{ fontFamily: 'var(--font-title)', fontSize: '2.4rem', fontWeight: 900, color: '#1A1AFF' }}>
                     {stats?.winsA || 0} trận
                   </div>
-                  <small style={{ color: '#0369A1', fontWeight: 700 }}>
+                  <small style={{ color: '#1010CC', fontWeight: 700 }}>
                     Chiếm {stats?.totalMatches ? Math.round(((stats.winsA || 0) / stats.totalMatches) * 100) : 0}% tổng trận
                   </small>
                 </div>
@@ -1302,19 +1302,19 @@ export default function AdminPage({ onBackToGame }) {
                             <td style={{ padding: '12px 14px', fontWeight: 800, color: '#64748B' }}>
                               #{idx + 1}
                             </td>
-                            <td style={{ padding: '12px 14px', fontWeight: 900, color: '#1E3A8A' }}>
+                            <td style={{ padding: '12px 14px', fontWeight: 900, color: '#1010CC' }}>
                               <span style={{ background: '#FEF08A', padding: '2px 8px', borderRadius: 6, border: '1px solid var(--comic-black)', fontSize: '0.8rem' }}>
                                 #{m.match_code || m.room_code || 'MATCH'}
                               </span>
                             </td>
                             <td style={{ padding: '12px 14px', fontWeight: 900, fontSize: '1.05rem' }}>
-                              <span style={{ color: '#0284C7' }}>{m.score_a ?? 0}</span>
+                              <span style={{ color: '#1A1AFF' }}>{m.score_a ?? 0}</span>
                               <span style={{ color: '#64748B', margin: '0 6px' }}>-</span>
                               <span style={{ color: '#EA580C' }}>{m.score_b ?? 0}</span>
                             </td>
                             <td style={{ padding: '12px 14px' }}>
                               {m.winner === 'A' ? (
-                                <span style={{ background: '#E0F2FE', color: '#0369A1', border: '1.5px solid #0284C7', padding: '3px 10px', borderRadius: 999, fontWeight: 900, fontSize: '0.78rem' }}>
+                                <span style={{ background: '#E6E6FF', color: '#1010CC', border: '1.5px solid #1A1AFF', padding: '3px 10px', borderRadius: 999, fontWeight: 900, fontSize: '0.78rem' }}>
                                   ⚡ ĐỘI A VÔ ĐỊCH
                                 </span>
                               ) : m.winner === 'B' ? (
