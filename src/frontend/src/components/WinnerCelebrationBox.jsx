@@ -67,23 +67,26 @@ export default function WinnerCelebrationBox({
               bottom: 0,
               left: '50%',
               transform: 'translateX(-50%)',
-              width: isCompact ? '80px' : '100px',
+              width: isCompact ? '106px' : '130px',
               height: isCompact ? '26px' : '32px',
               background: 'linear-gradient(180deg, #FDE047 0%, #EAB308 60%, #CA8A04 100%)',
               border: '2px solid #000',
+              borderTop: '2.5px solid #FEF08A',
               borderRadius: '6px 6px 0 0',
-              boxShadow: '0 -2px 6px rgba(250, 204, 21, 0.4)',
+              boxShadow: '0 -2px 6px rgba(250, 204, 21, 0.4), 0 3px 0 #000',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               fontFamily: 'var(--font-title)',
               fontWeight: 900,
-              fontSize: isCompact ? '0.9rem' : '1.1rem',
+              fontSize: isCompact ? '0.74rem' : '0.86rem',
               color: '#713F12',
+              whiteSpace: 'nowrap',
+              letterSpacing: '0.02em',
               zIndex: 1
             }}
           >
-            #1 VÔ ĐỊCH
+            🏆 #1 VÔ ĐỊCH
           </div>
 
           {/* NHÂN VẬT 1 (BÊN TRÁI): ĐEO HUY CHƯƠNG VÀNG */}
@@ -141,7 +144,7 @@ export default function WinnerCelebrationBox({
               alignItems: 'center',
               animation: 'winnerJump 1.2s infinite ease-in-out 0.2s',
               zIndex: 3,
-              marginBottom: isCompact ? 14 : 18
+              marginBottom: isCompact ? 25 : 31
             }}
           >
             <div

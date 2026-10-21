@@ -113,13 +113,13 @@ export default function VictoryModal({ gameOverData, onRematch, player }) {
               <WinnerCelebrationBox
                 winnerTeam={winner}
                 winnerName={isWinnerA ? 'ĐỘI A - TIA CHỚP' : 'ĐỘI B - NGỌN LỬA'}
-                isCompact={true}
+                isCompact={isMobile}
               />
             ) : (
               <JailCellMemeBox
                 loserTeam={isWinnerA ? 'B' : 'A'}
                 loserName={isWinnerA ? 'ĐỘI B - NGỌN LỬA' : 'ĐỘI A - TIA CHỚP'}
-                isCompact={true}
+                isCompact={isMobile}
               />
             )}
           </div>

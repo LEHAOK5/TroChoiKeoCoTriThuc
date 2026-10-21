@@ -25,7 +25,7 @@ export default function JailCellMemeBox({ loserTeam = 'B', loserName = 'ĐỘI B
         width: '100%',
         maxWidth: isCompact ? '420px' : '560px',
         margin: '0 auto',
-        background: 'linear-gradient(180deg, #0A0A58 0%, #151590 55%, #0B0B50 100%)',
+        background: 'linear-gradient(180deg, #101077 0%, #1A1AFF 50%, #0D0D99 100%)',
         border: '2.5px solid var(--comic-black)',
         borderRadius: 16,
         padding: isCompact ? '8px 10px' : '12px 14px',
@@ -38,8 +38,8 @@ export default function JailCellMemeBox({ loserTeam = 'B', loserName = 'ĐỘI B
       {/* KHÔNG GIAN NHÀ TÙ: SONG SẮT & BỘ 3 NHÂN VẬT ĐỘI THUA & CHÚ CÔNG AN */}
       <div
         style={{
-          background: 'linear-gradient(180deg, #101046 0%, #080826 100%)',
-          border: '2px solid #334155',
+          background: 'linear-gradient(180deg, #1E1B4B 0%, #0F172A 100%)',
+          border: '2px solid #6366F1',
           borderRadius: 12,
           padding: isCompact ? '8px 6px' : '10px 10px',
           display: 'flex',
@@ -47,7 +47,8 @@ export default function JailCellMemeBox({ loserTeam = 'B', loserName = 'ĐỘI B
           justifyContent: 'space-between',
           gap: 6,
           position: 'relative',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          boxShadow: '0 2px 8px rgba(26, 26, 255, 0.3)'
         }}
       >
         {/* KHU VỰC TRONG NHÀ TÙ (Phía sau song sắt) */}
@@ -56,9 +57,9 @@ export default function JailCellMemeBox({ loserTeam = 'B', loserName = 'ĐỘI B
             flex: 1,
             position: 'relative',
             height: isCompact ? 104 : 122,
-            background: '#090A1A',
+            background: 'linear-gradient(180deg, #172554 0%, #0F172A 100%)',
             borderRadius: 8,
-            border: '2px solid #4338CA',
+            border: '2px solid #4F46E5',
             overflow: 'hidden',
             display: 'flex',
             alignItems: 'flex-end',
@@ -67,12 +68,25 @@ export default function JailCellMemeBox({ loserTeam = 'B', loserName = 'ĐỘI B
             paddingBottom: 2
           }}
         >
+          {/* Đèn spotlight rọi phòng giam từ trần */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: '5%',
+              right: '5%',
+              height: '70%',
+              background: 'radial-gradient(ellipse at top, rgba(99, 102, 241, 0.38) 0%, transparent 80%)',
+              pointerEvents: 'none'
+            }}
+          />
+
           {/* Hậu cảnh tường gạch nhà tù ánh xanh */}
           <div
             style={{
               position: 'absolute',
               inset: 0,
-              opacity: 0.15,
+              opacity: 0.18,
               backgroundImage: 'linear-gradient(#6366F1 1px, transparent 1px), linear-gradient(90deg, #6366F1 1px, transparent 1px)',
               backgroundSize: '14px 14px'
             }}
