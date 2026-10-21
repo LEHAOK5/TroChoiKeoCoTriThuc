@@ -130,10 +130,10 @@ html, body {
   flex-direction: column;
   position: relative;
   background: 
-    radial-gradient(circle at 10% 10%, rgba(37, 99, 235, 0.12) 0%, transparent 45%),
+    radial-gradient(circle at 10% 10%, rgba(26, 26, 255, 0.14) 0%, transparent 45%),
     radial-gradient(circle at 90% 10%, rgba(255, 87, 34, 0.10) 0%, transparent 45%),
     radial-gradient(circle at 50% 90%, rgba(250, 204, 21, 0.12) 0%, transparent 50%),
-    linear-gradient(180deg, #E6F0FA 0%, #EFF6FF 40%, #E2EDFC 100%);
+    linear-gradient(180deg, #EEF1FF 0%, #F5F7FF 40%, #E8ECFF 100%);
   background-attachment: fixed;
 }
 
@@ -1047,8 +1047,8 @@ html, body {
 .overlay-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.65);
-  backdrop-filter: blur(8px);
+  background: radial-gradient(circle at center, rgba(26, 26, 255, 0.28) 0%, rgba(10, 10, 70, 0.78) 100%);
+  backdrop-filter: blur(10px) saturate(130%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1098,7 +1098,7 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at center, rgba(25, 26, 254, 0.32) 0%, rgba(9, 10, 46, 0.94) 70%, #06071C 100%);
+  background: radial-gradient(circle at 50% 45%, #2A2AFF 0%, #1A1AFF 48%, #0D0D99 82%, #08085E 100%);
   backdrop-filter: blur(12px);
   padding: 16px;
   overflow: hidden;

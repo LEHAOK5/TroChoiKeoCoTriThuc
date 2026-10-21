@@ -86,7 +86,7 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
         position: 'fixed',
         inset: 0,
         zIndex: 9999,
-        background: 'radial-gradient(circle at center, #1E3A8A 0%, #0F172A 100%)',
+        background: 'radial-gradient(circle at center, #2626FF 0%, #1A1AFF 52%, #0C0C8F 85%, #08085C 100%)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -103,7 +103,7 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
           position: 'absolute',
           width: '180vw',
           height: '180vh',
-          background: 'repeating-conic-gradient(from 0deg, rgba(254, 240, 138, 0.08) 0deg 15deg, transparent 15deg 30deg)',
+          background: 'repeating-conic-gradient(from 0deg, rgba(254, 240, 138, 0.18) 0deg 15deg, rgba(255, 255, 255, 0.08) 15deg 30deg)',
           animation: 'starSpin 30s infinite linear',
           pointerEvents: 'none',
           zIndex: 1
