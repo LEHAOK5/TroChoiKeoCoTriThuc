@@ -196,7 +196,7 @@ export default function TugOfWarArena({
                 fontSize: isMobile ? '9px' : '10px',
                 fontWeight: 900,
                 fontFamily: 'var(--font-title)',
-                color: '#1E40AF',
+                color: '#1A1AFF',
                 boxShadow: '0 2px 0 #0F172A',
                 letterSpacing: '0.3px',
                 whiteSpace: 'nowrap',
@@ -213,7 +213,7 @@ export default function TugOfWarArena({
                 alt="VHU Logo"
                 style={{ width: isMobile ? 13 : 16, height: isMobile ? 13 : 16, objectFit: 'contain' }}
               />
-              <span>{isMobile ? 'VHU 2D' : 'HỘI THAO SINH VIÊN VĂN HIẾN'}</span>
+              <span>{isMobile ? 'NGÀY HỘI SINH VIÊN' : 'NGÀY HỘI SINH VIÊN VĂN HIẾN'}</span>
             </div>
 
             {/* Team B Cheering Audience (Right Stand) */}
