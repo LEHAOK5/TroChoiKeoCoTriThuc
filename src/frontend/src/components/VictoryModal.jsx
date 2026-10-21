@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { playVictory } from '../utils/audio';
+import JailCellMemeBox from './JailCellMemeBox';
 
 export default function VictoryModal({ gameOverData, onRematch }) {
   if (!gameOverData) return null;
@@ -40,18 +41,19 @@ export default function VictoryModal({ gameOverData, onRematch }) {
     <div className="overlay-backdrop">
       <div className="overlay-card">
         {/* Big 2D Cartoon Trophy */}
-        <div style={{ fontSize: '5rem', marginBottom: 4, filter: 'drop-shadow(0 6px 0 rgba(15, 23, 42, 0.2))' }}>
+        <div style={{ fontSize: '4.5rem', marginBottom: 2, filter: 'drop-shadow(0 6px 0 rgba(15, 23, 42, 0.2))' }}>
           🏆
         </div>
 
         <h2
           style={{
             fontFamily: 'var(--font-title)',
-            fontSize: '1.75rem',
+            fontSize: '1.6rem',
             fontWeight: 900,
             color: isWinnerA ? '#1A1AFF' : (isWinnerB ? '#EA580C' : '#0F172A'),
             textTransform: 'uppercase',
-            textShadow: '1.5px 1.5px 0 var(--comic-black)'
+            textShadow: '1.5px 1.5px 0 var(--comic-black)',
+            margin: '0 0 10px 0'
           }}
         >
           {isWinnerA ? 'ĐỘI A - TIA CHỚP VÔ ĐỊCH!' : isWinnerB ? 'ĐỘI B - NGỌN LỬA VÔ ĐỊCH!' : 'TRẬN ĐẤU BẤT PHÂN THẮNG BẠI!'}
@@ -60,28 +62,39 @@ export default function VictoryModal({ gameOverData, onRematch }) {
         {/* Score Display Card */}
         <div
           style={{
-            margin: '14px 0',
+            margin: '4px 0 14px 0',
             background: '#F1F5F9',
             border: '2.5px solid var(--comic-black)',
             borderRadius: 16,
-            padding: '10px 16px',
+            padding: '8px 16px',
             boxShadow: '0 3px 0 var(--comic-black)',
             display: 'inline-flex',
             alignItems: 'center',
             gap: 12
           }}
         >
-          <span style={{ fontFamily: 'var(--font-title)', fontSize: '0.95rem', fontWeight: 900, color: 'var(--text-muted)' }}>
+          <span style={{ fontFamily: 'var(--font-title)', fontSize: '0.92rem', fontWeight: 900, color: 'var(--text-muted)' }}>
             TỶ SỐ CHUNG CUỘC:
           </span>
-          <span style={{ fontFamily: 'var(--font-title)', fontSize: '1.7rem', fontWeight: 900, color: '#1A1AFF' }}>
+          <span style={{ fontFamily: 'var(--font-title)', fontSize: '1.6rem', fontWeight: 900, color: '#1A1AFF' }}>
             {scoreA}
           </span>
           <span style={{ fontWeight: 900, color: 'var(--comic-black)' }}>-</span>
-          <span style={{ fontFamily: 'var(--font-title)', fontSize: '1.7rem', fontWeight: 900, color: '#EA580C' }}>
+          <span style={{ fontFamily: 'var(--font-title)', fontSize: '1.6rem', fontWeight: 900, color: '#EA580C' }}>
             {scoreB}
           </span>
         </div>
+
+        {/* Khung hình meme hài hước: Đội thua bị tống giam vào tù */}
+        {(isWinnerA || isWinnerB) && (
+          <div style={{ marginBottom: 14 }}>
+            <JailCellMemeBox
+              loserTeam={isWinnerA ? 'B' : 'A'}
+              loserName={isWinnerA ? 'ĐỘI B - NGỌN LỬA' : 'ĐỘI A - TIA CHỚP'}
+              isCompact={true}
+            />
+          </div>
+        )}
 
         {/* Booth Instruction Card */}
         <div
@@ -89,10 +102,10 @@ export default function VictoryModal({ gameOverData, onRematch }) {
             background: '#FEF08A',
             border: '2px solid var(--comic-black)',
             borderRadius: 16,
-            padding: '12px 14px',
-            fontSize: '0.9rem',
+            padding: '10px 14px',
+            fontSize: '0.88rem',
             color: '#713F12',
-            marginBottom: 20,
+            marginBottom: 16,
             boxShadow: '0 3px 0 var(--comic-black)',
             textAlign: 'left'
           }}
@@ -109,10 +122,10 @@ export default function VictoryModal({ gameOverData, onRematch }) {
           className="btn-tactile"
           style={{
             width: '100%',
-            padding: '16px',
+            padding: '14px',
             background: 'linear-gradient(180deg, #4A4AFF 0%, #1A1AFF 100%)',
             color: '#FFFFFF',
-            fontSize: '1.15rem',
+            fontSize: '1.1rem',
             fontWeight: 900,
             textTransform: 'uppercase',
             letterSpacing: '0.04em'
