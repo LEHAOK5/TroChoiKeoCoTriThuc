@@ -1,13 +1,13 @@
 import React from 'react';
 
 export default function RefereeCharacter({ ropeOffset = 0, lastResult = null, isBuzzed = false, winner = null }) {
-  // Mắt trọng tài dõi theo độ lệch dây (-10 đến 10)
+  // Mắt thẩm phán dõi theo độ lệch dây (-10 đến 10)
   const eyeOffset = Math.max(-2.5, Math.min(2.5, ropeOffset * 0.28));
 
-  // Thổi còi khi có chuông, có điểm hoặc có kết quả thắng
+  // Thẩm phán gõ búa phán quyết khi có chuông, có điểm hoặc có kết quả thắng
   const isWhistling = Boolean(lastResult?.isCorrect || isBuzzed || winner);
 
-  // Xác định hướng phất cờ: Đội A bên trái (isPointingLeft = true), Đội B bên phải (isPointingLeft = false)
+  // Xác định hướng phán quyết: Đội A bên trái (isPointingLeft = true), Đội B bên phải (isPointingLeft = false)
   const isPointingLeft = winner === 'A'
     ? true
     : winner === 'B'
@@ -18,22 +18,22 @@ export default function RefereeCharacter({ ropeOffset = 0, lastResult = null, is
     ? false
     : ropeOffset < 0;
 
-  // Nội dung khung thoại (Speech Bubble)
+  // Nội dung khung thoại phán quyết (Speech Bubble)
   let bubbleText = '';
   if (winner === 'A') {
-    bubbleText = '🏆 ĐỘI A CHIẾN THẮNG!';
+    bubbleText = '🏆 TUYÊN ÁN: ĐỘI A VÔ ĐỊCH!';
   } else if (winner === 'B') {
-    bubbleText = '🏆 ĐỘI B CHIẾN THẮNG!';
+    bubbleText = '🏆 TUYÊN ÁN: ĐỘI B VÔ ĐỊCH!';
   } else if (winner === 'DRAW') {
-    bubbleText = '⚖️ HÒA NHAU!';
+    bubbleText = '⚖️ PHÁN QUYẾT: HÒA NHAU!';
   } else if (isBuzzed) {
-    bubbleText = '🎺 CÓ CHUÔNG!';
+    bubbleText = '⚖️ PHÁN QUYẾT: CÓ CHUÔNG!';
   } else if (lastResult?.isCorrect) {
     bubbleText = lastResult.answeringTeam === 'A'
-      ? '🚩 ĐỘI A +1 Điểm!'
+      ? '⚖️ ĐỘI A ĐÚNG! +1 ĐIỂM'
       : lastResult.answeringTeam === 'B'
-      ? '🚩 ĐỘI B +1 Điểm!'
-      : '🎺 TUÝT TUÝT! +1Đ';
+      ? '⚖️ ĐỘI B ĐÚNG! +1 ĐIỂM'
+      : '⚖️ CHÍNH XÁC! +1 ĐIỂM';
   }
 
   return (
@@ -49,9 +49,9 @@ export default function RefereeCharacter({ ropeOffset = 0, lastResult = null, is
         alignItems: 'center',
         pointerEvents: 'none'
       }}
-      title="Trọng tài điều khiển trận đấu"
+      title="Vị Thẩm Phán Tri Thức điều khiển trận đấu"
     >
-      {/* Khung thoại thông báo của trọng tài */}
+      {/* Khung thoại thông báo phán quyết của Thẩm phán */}
       {bubbleText && (
         <div
           style={{
@@ -60,7 +60,7 @@ export default function RefereeCharacter({ ropeOffset = 0, lastResult = null, is
             background: '#FEF08A',
             border: '2px solid #0F172A',
             borderRadius: 999,
-            padding: '2px 9px',
+            padding: '2px 10px',
             fontSize: '11px',
             fontWeight: 900,
             fontFamily: 'var(--font-title)',
@@ -75,7 +75,7 @@ export default function RefereeCharacter({ ropeOffset = 0, lastResult = null, is
         </div>
       )}
 
-      {/* Khung xoay hướng trọng tài về đội thắng */}
+      {/* Khung xoay hướng Thẩm phán về đội được phán quyết */}
       <div
         style={{
           transform: isPointingLeft ? 'scaleX(-1)' : 'scaleX(1)',
@@ -85,103 +85,133 @@ export default function RefereeCharacter({ ropeOffset = 0, lastResult = null, is
           justifyContent: 'center'
         }}
       >
-        {/* SVG TRỌNG TÀI CHIBI SIÊU DỄ THƯƠNG */}
+        {/* SVG VỊ THẨM PHÁN TRI THỨC CHIBI 2D */}
         <svg
-          viewBox="0 0 56 72"
-          width="54"
-          height="68"
+          viewBox="0 0 58 74"
+          width="56"
+          height="70"
           style={{
             filter: 'drop-shadow(0 3px 0 rgba(15, 23, 42, 0.25))',
             animation: isWhistling ? 'refereeJump 0.4s infinite alternate ease-in-out' : 'refereeIdle 2.2s infinite ease-in-out'
           }}
         >
-        {/* Bóng chân */}
-        <ellipse cx="28" cy="68" rx="15" ry="3.5" fill="rgba(15, 23, 42, 0.25)" />
+          {/* Bóng chân */}
+          <ellipse cx="29" cy="70" rx="16" ry="3.5" fill="rgba(15, 23, 42, 0.25)" />
 
-        {/* Chân trọng tài chibi */}
-        <line x1="22" y1="48" x2="20" y2="62" stroke="#0F172A" strokeWidth="6" strokeLinecap="round" />
-        <line x1="34" y1="48" x2="36" y2="62" stroke="#0F172A" strokeWidth="6" strokeLinecap="round" />
-        {/* Giày da đen */}
-        <rect x="15" y="60" width="11" height="6" rx="2.5" fill="#0F172A" stroke="#0F172A" strokeWidth="1" />
-        <rect x="30" y="60" width="11" height="6" rx="2.5" fill="#0F172A" stroke="#0F172A" strokeWidth="1" />
-        <circle cx="24" cy="62" r="1.5" fill="#FFFFFF" />
-        <circle cx="32" cy="62" r="1.5" fill="#FFFFFF" />
+          {/* Chân & Giày da đen */}
+          <line x1="23" y1="56" x2="21" y2="64" stroke="#0F172A" strokeWidth="5.5" strokeLinecap="round" />
+          <line x1="35" y1="56" x2="37" y2="64" stroke="#0F172A" strokeWidth="5.5" strokeLinecap="round" />
+          <rect x="16" y="62" width="11" height="6.5" rx="2.5" fill="#0F172A" stroke="#0F172A" strokeWidth="1" />
+          <rect x="31" y="62" width="11" height="6.5" rx="2.5" fill="#0F172A" stroke="#0F172A" strokeWidth="1" />
+          <circle cx="21.5" cy="64.5" r="1.3" fill="#FFFFFF" />
+          <circle cx="36.5" cy="64.5" r="1.3" fill="#FFFFFF" />
 
-        {/* Thân áo Chibi sọc trắng đen */}
-        <path
-          d="M 17 30 C 16 30, 15 44, 18 48 C 23 50, 33 50, 38 48 C 41 44, 40 30, 39 30 Z"
-          fill="#FFFFFF"
-          stroke="#0F172A"
-          strokeWidth="2.4"
-        />
-        <line x1="22" y1="30" x2="22" y2="49" stroke="#0F172A" strokeWidth="2.5" />
-        <line x1="28" y1="30" x2="28" y2="49" stroke="#0F172A" strokeWidth="2.5" />
-        <line x1="34" y1="30" x2="34" y2="49" stroke="#0F172A" strokeWidth="2.5" />
+          {/* Áo choàng Thẩm phán (Judicial Robe) đen tuyền viền vàng */}
+          <path
+            d="M 16 32 C 14 32, 13 46, 17 58 C 22 60, 36 60, 41 58 C 45 46, 44 32, 42 32 Z"
+            fill="#0F172A"
+            stroke="#0F172A"
+            strokeWidth="2.4"
+          />
+          {/* Dải viền áo vàng kim dọc thân */}
+          <line x1="29" y1="46" x2="29" y2="59" stroke="#FACC15" strokeWidth="2.2" strokeLinecap="round" />
 
-        {/* Dây đeo còi đỏ */}
-        <path d="M 24 30 Q 28 36 32 30" stroke="#EF4444" strokeWidth="1.5" fill="none" />
-        <rect x="26" y="35" width="5" height="4" rx="1.2" fill="#FACC15" stroke="#0F172A" strokeWidth="1" />
+          {/* Cổ áo nơ đăng-ten trắng xếp tầng thẩm phán (Jabot) */}
+          <polygon points="29,31 23,37 35,37" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1.2" />
+          <polygon points="29,35 21,43 37,43" fill="#F8FAFC" stroke="#0F172A" strokeWidth="1.2" />
+          <polygon points="29,41 24,47 34,47" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1" />
 
-        {/* Tay phải cầm cờ đỏ */}
-        <path
-          d={isWhistling ? "M 38 34 Q 48 22 46 16" : "M 38 34 Q 46 40 42 46"}
-          fill="none"
-          stroke="#0F172A"
-          strokeWidth="6"
-          strokeLinecap="round"
-        />
-        <path
-          d={isWhistling ? "M 38 34 Q 48 22 46 16" : "M 38 34 Q 46 40 42 46"}
-          fill="none"
-          stroke="#FED7AA"
-          strokeWidth="3.5"
-          strokeLinecap="round"
-        />
-        <circle cx={isWhistling ? "46" : "42"} cy={isWhistling ? "16" : "46"} r="3.5" fill="#FED7AA" stroke="#0F172A" strokeWidth="1.5" />
-        {isWhistling && (
+          {/* Tay trái Thẩm phán cầm Sách Tri Thức / Bộ Luật bìa đỏ */}
           <g>
-            <line x1="46" y1="16" x2="50" y2="4" stroke="#713F12" strokeWidth="2" strokeLinecap="round" />
-            <polygon points="50,4 56,8 50,12" fill="#EF4444" stroke="#0F172A" strokeWidth="1.2" />
+            <path d="M 18 34 Q 10 39 14 47" fill="none" stroke="#0F172A" strokeWidth="6.5" strokeLinecap="round" />
+            <path d="M 18 34 Q 10 39 14 47" fill="none" stroke="#1E293B" strokeWidth="4" strokeLinecap="round" />
+            <circle cx="14" cy="48" r="3.2" fill="#FED7AA" stroke="#0F172A" strokeWidth="1.4" />
+            {/* Cuốn sách luật bìa đỏ huy hiệu vàng */}
+            <rect x="7" y="44" width="7" height="9.5" rx="1.5" fill="#DC2626" stroke="#0F172A" strokeWidth="1.2" transform="rotate(-15 10 48)" />
+            <line x1="9" y1="45" x2="13" y2="46" stroke="#FACC15" strokeWidth="1.2" transform="rotate(-15 10 48)" />
           </g>
-        )}
 
-        {/* Tay trái chống hông */}
-        <path d="M 18 34 Q 10 38 16 44" fill="none" stroke="#0F172A" strokeWidth="6" strokeLinecap="round" />
-        <path d="M 18 34 Q 10 38 16 44" fill="none" stroke="#FED7AA" strokeWidth="3.5" strokeLinecap="round" />
+          {/* Tay phải Thẩm phán cầm BÚA GỖ CÔNG LÝ (Gavel) */}
+          {isWhistling ? (
+            /* Khi gõ búa phán quyết: Giơ cao búa kèm tia sấm chớp vàng */
+            <g>
+              {/* Cánh tay áo thụng giơ cao */}
+              <path d="M 40 34 Q 50 24 47 16" fill="none" stroke="#0F172A" strokeWidth="6.5" strokeLinecap="round" />
+              <path d="M 40 34 Q 50 24 47 16" fill="none" stroke="#1E293B" strokeWidth="4" strokeLinecap="round" />
+              {/* Bàn tay nắm cán búa */}
+              <circle cx="47" cy="16" r="3.2" fill="#FED7AA" stroke="#0F172A" strokeWidth="1.4" />
+              {/* Cán búa gỗ */}
+              <line x1="47" y1="16" x2="52" y2="6" stroke="#78350F" strokeWidth="2.6" strokeLinecap="round" />
+              {/* Đầu búa gỗ công lý viền vàng kim */}
+              <rect x="47" y="3" width="11" height="6" rx="1.5" fill="#92400E" stroke="#0F172A" strokeWidth="1.4" transform="rotate(-20 52 6)" />
+              <rect x="50" y="3.5" width="5" height="5" fill="#FBBF24" stroke="#0F172A" strokeWidth="0.8" transform="rotate(-20 52 6)" />
+              {/* Tia hào quang phán quyết vàng rực */}
+              <line x1="53" y1="0" x2="56" y2="-4" stroke="#FACC15" strokeWidth="2" strokeLinecap="round" />
+              <line x1="59" y1="4" x2="64" y2="3" stroke="#FACC15" strokeWidth="2" strokeLinecap="round" />
+              <line x1="44" y1="1" x2="40" y2="-1" stroke="#FACC15" strokeWidth="1.8" strokeLinecap="round" />
+            </g>
+          ) : (
+            /* Khi bình thường: Cầm búa gỗ sẵn sàng ngang ngực */
+            <g>
+              <path d="M 40 34 Q 48 40 43 47" fill="none" stroke="#0F172A" strokeWidth="6.5" strokeLinecap="round" />
+              <path d="M 40 34 Q 48 40 43 47" fill="none" stroke="#1E293B" strokeWidth="4" strokeLinecap="round" />
+              <circle cx="43" cy="48" r="3.2" fill="#FED7AA" stroke="#0F172A" strokeWidth="1.4" />
+              {/* Cán búa gỗ */}
+              <line x1="43" y1="48" x2="48" y2="38" stroke="#78350F" strokeWidth="2.6" strokeLinecap="round" />
+              {/* Đầu búa gỗ */}
+              <rect x="44" y="35" width="10" height="5.5" rx="1.5" fill="#92400E" stroke="#0F172A" strokeWidth="1.2" transform="rotate(25 49 37)" />
+              <rect x="47" y="35.5" width="4" height="4.5" fill="#FBBF24" stroke="#0F172A" strokeWidth="0.8" transform="rotate(25 49 37)" />
+            </g>
+          )}
 
-        {/* Đầu tròn Chibi dễ thương */}
-        <circle cx="28" cy="19" r="13.5" fill="#FED7AA" stroke="#0F172A" strokeWidth="2.4" />
+          {/* Đầu tròn chibi thẩm phán */}
+          <circle cx="29" cy="20" r="13" fill="#FED7AA" stroke="#0F172A" strokeWidth="2.4" />
 
-        {/* Mũ lưỡi trai đen */}
-        <path d="M 16 16 Q 28 10 40 16 L 39 19 Q 28 14 17 19 Z" fill="#0F172A" stroke="#0F172A" strokeWidth="1.5" />
-        <ellipse cx="28" cy="13" rx="10.5" ry="4.5" fill="#0F172A" />
-        <path d="M 28 15 Q 39 14 42 18 Q 35 20 28 19 Z" fill="#1E293B" stroke="#0F172A" strokeWidth="1" />
+          {/* BỘ TÓC GIẢ THẨM PHÁN (JUDICIAL WIG) UỐN LỌN BẠCH KIM */}
+          {/* Lọn tóc đỉnh đầu */}
+          <ellipse cx="29" cy="10" rx="11.5" ry="4.5" fill="#F8FAFC" stroke="#0F172A" strokeWidth="1.8" />
+          <path d="M 17 15 C 20 9, 38 9, 41 15 C 38 12, 20 12, 17 15 Z" fill="#F1F5F9" stroke="#0F172A" strokeWidth="1.8" />
+          {/* Lọn tóc uốn tròn 3 tầng bên trái */}
+          <circle cx="16" cy="16" r="4.2" fill="#F1F5F9" stroke="#0F172A" strokeWidth="1.8" />
+          <circle cx="15" cy="22" r="4.2" fill="#F1F5F9" stroke="#0F172A" strokeWidth="1.8" />
+          <circle cx="16.5" cy="28" r="3.8" fill="#E2E8F0" stroke="#0F172A" strokeWidth="1.8" />
+          {/* Lọn tóc uốn tròn 3 tầng bên phải */}
+          <circle cx="42" cy="16" r="4.2" fill="#F1F5F9" stroke="#0F172A" strokeWidth="1.8" />
+          <circle cx="43" cy="22" r="4.2" fill="#F1F5F9" stroke="#0F172A" strokeWidth="1.8" />
+          <circle cx="41.5" cy="28" r="3.8" fill="#E2E8F0" stroke="#0F172A" strokeWidth="1.8" />
 
-        {/* Mắt to tròn dõi theo dây thừng */}
-        <ellipse cx="24" cy="20" rx="3" ry="3.8" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1.4" />
-        <circle cx={24 + eyeOffset} cy="20" r="1.8" fill="#0F172A" />
-        <circle cx={24 + eyeOffset + 0.6} cy="19.2" r="0.7" fill="#FFFFFF" />
+          {/* KÍNH CẬN TRÒN GỌNG VÀNG TRI THỨC */}
+          <circle cx="24" cy="21" r="4.5" fill="none" stroke="#EAB308" strokeWidth="1.8" />
+          <circle cx="34" cy="21" r="4.5" fill="none" stroke="#EAB308" strokeWidth="1.8" />
+          <path d="M 28.5 21 Q 29 19.5 29.5 21" fill="none" stroke="#EAB308" strokeWidth="1.8" strokeLinecap="round" />
 
-        <ellipse cx="32" cy="20" rx="3" ry="3.8" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1.4" />
-        <circle cx={32 + eyeOffset} cy="20" r="1.8" fill="#0F172A" />
-        <circle cx={32 + eyeOffset + 0.6} cy="19.2" r="0.7" fill="#FFFFFF" />
+          {/* MẮT TO TRÒN DÕI THEO DÂY KÉO CO */}
+          {/* Mắt trái */}
+          <ellipse cx="24" cy="21" rx="2.8" ry="3.4" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1.3" />
+          <circle cx={24 + eyeOffset} cy="21" r="1.8" fill="#0F172A" />
+          <circle cx={24 + eyeOffset + 0.6} cy="20.2" r="0.7" fill="#FFFFFF" />
 
-        {/* Má hồng phúng phính */}
-        <ellipse cx="19" cy="24" rx="2.5" ry="1.4" fill="rgba(244, 63, 94, 0.4)" />
-        <ellipse cx="37" cy="24" rx="2.5" ry="1.4" fill="rgba(244, 63, 94, 0.4)" />
+          {/* Mắt phải */}
+          <ellipse cx="34" cy="21" rx="2.8" ry="3.4" fill="#FFFFFF" stroke="#0F172A" strokeWidth="1.3" />
+          <circle cx={34 + eyeOffset} cy="21" r="1.8" fill="#0F172A" />
+          <circle cx={34 + eyeOffset + 0.6} cy="20.2" r="0.7" fill="#FFFFFF" />
 
-        {/* Còi ngậm ở miệng khi thổi */}
-        {isWhistling ? (
-          <g>
-            <rect x="25" y="23" width="7" height="4" rx="1.5" fill="#FACC15" stroke="#0F172A" strokeWidth="1" />
-            <circle cx="32" cy="25" r="1.5" fill="#EAB308" />
-            <line x1="34" y1="23" x2="38" y2="21" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" />
-            <line x1="35" y1="26" x2="40" y2="26" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" />
-          </g>
-        ) : (
-          <path d="M 25 25 Q 28 28 31 25" fill="none" stroke="#0F172A" strokeWidth="1.6" strokeLinecap="round" />
-        )}
-      </svg>
+          {/* Má hồng phúng phính */}
+          <ellipse cx="19" cy="26" rx="2.4" ry="1.4" fill="rgba(244, 63, 94, 0.4)" />
+          <ellipse cx="39" cy="26" rx="2.4" ry="1.4" fill="rgba(244, 63, 94, 0.4)" />
+
+          {/* Miệng Thẩm phán */}
+          {isWhistling ? (
+            /* Há miệng dõng dạc tuyên bố */
+            <g>
+              <ellipse cx="29" cy="27" rx="3.4" ry="2.8" fill="#DC2626" stroke="#0F172A" strokeWidth="1.4" />
+              <path d="M 26.5 26 Q 29 25 31.5 26" stroke="#FFFFFF" strokeWidth="1.2" fill="none" />
+            </g>
+          ) : (
+            /* Nụ cười mỉm thông thái, nghiêm minh */
+            <path d="M 26.5 26.5 Q 29 28.8 31.5 26.5" fill="none" stroke="#0F172A" strokeWidth="1.6" strokeLinecap="round" />
+          )}
+        </svg>
       </div>
     </div>
   );
