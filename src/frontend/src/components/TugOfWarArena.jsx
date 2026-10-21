@@ -16,7 +16,6 @@ export default function TugOfWarArena({
   isBuzzed = false
 }) {
   // ropeOffset ranges from -10 (Team A pull max) to +10 (Team B pull max)
-  const ribbonPercent = 50 + (ropeOffset / 10) * 35;
   const isMatchPoint = (scoreA === 9 || scoreB === 9) && !winner;
   const matchPointTeam = scoreA === 9 ? 'A' : scoreB === 9 ? 'B' : null;
 
@@ -74,8 +73,16 @@ export default function TugOfWarArena({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const pullerShift = (ropeOffset / 10) * (isMobile ? 18 : 35);
-  const pullerOverlap = isMobile ? -22 : -16;
+  // Đồng bộ độ dịch chuyển vật lý duy nhất cho: Sợi dây, Nơ cờ đỏ, Đội A và Đội B
+  // Mobile: Giới hạn tối đa 14px (khi ropeOffset = ±10) để chống tràn lề sân đấu
+  // Desktop: Giới hạn 38px
+  const maxShiftPx = isMobile ? 14 : 38;
+  const currentShiftPx = (ropeOffset / 10) * maxShiftPx;
+
+  // Khoảng cách từ vạch giữa (50%) đến người Tiên phong (#1) của mỗi đội
+  const leaderGap = isMobile ? 22 : 36;
+  const pullerOverlap = isMobile ? -23 : -16;
+  const pullerScale = isMobile ? 0.68 : 1;
 
   return (
     <div className="arena-tier">
@@ -282,7 +289,7 @@ export default function TugOfWarArena({
           <div
             className="rope-line"
             style={{
-              transform: `translateX(${(ropeOffset / 10) * 45}px)`
+              transform: `translateX(${currentShiftPx}px)`
             }}
           />
 
@@ -290,7 +297,7 @@ export default function TugOfWarArena({
           <div
             className="ribbon-knot"
             style={{
-              left: `${ribbonPercent}%`
+              left: `calc(50% + ${currentShiftPx}px)`
             }}
           />
 
@@ -299,13 +306,13 @@ export default function TugOfWarArena({
             className="team-pullers-container team-a-pullers"
             style={{
               position: 'absolute',
-              left: isMobile ? '1%' : '2%',
+              right: `calc(50% + ${leaderGap}px)`,
               bottom: 6,
               display: 'flex',
               alignItems: 'flex-end',
               zIndex: 8,
-              transform: `translateX(${pullerShift}px) ${isMobile ? 'scale(0.68)' : 'scale(1)'}`,
-              transformOrigin: 'bottom left',
+              transform: `translateX(${currentShiftPx}px) scale(${pullerScale})`,
+              transformOrigin: 'bottom right',
               transition: 'transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)'
             }}
           >
@@ -345,13 +352,13 @@ export default function TugOfWarArena({
             className="team-pullers-container team-b-pullers"
             style={{
               position: 'absolute',
-              right: isMobile ? '1%' : '2%',
+              left: `calc(50% + ${leaderGap}px)`,
               bottom: 6,
               display: 'flex',
               alignItems: 'flex-end',
               zIndex: 8,
-              transform: `translateX(${pullerShift}px) ${isMobile ? 'scale(0.68)' : 'scale(1)'}`,
-              transformOrigin: 'bottom right',
+              transform: `translateX(${currentShiftPx}px) scale(${pullerScale})`,
+              transformOrigin: 'bottom left',
               transition: 'transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)'
             }}
           >
