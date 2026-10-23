@@ -5,6 +5,7 @@ const ReboundLaw = require('./ReboundLaw');
 const RopeCalculator = require('./RopeCalculator');
 const { getRandomQuestions } = require('../repositories/question.repository');
 const { saveMatch } = require('../repositories/match.repository');
+const { recordParticipantJoin, updateParticipantsResult } = require('../repositories/participant.repository');
 const { generateMatchCode } = require('../utils/matchCode');
 const logger = require('../utils/logger');
 
@@ -126,6 +127,26 @@ class GameRoom {
 
     logger.info('GameRoom', `Player joined [${this.roomCode}]: ${player.name} (${player.studentId}) -> Team ${team}`);
     this.broadcastRoomState();
+
+    if (player.studentId && !player.isBot) {
+      recordParticipantJoin({
+        matchCode: this.currentMatchCode || `ROOM-${this.roomCode}`,
+        roomCode: this.roomCode,
+        studentId: player.studentId,
+        studentName: player.name,
+        faculty: player.faculty,
+        team
+      }).catch(err => logger.error('GameRoom', `recordParticipantJoin error: ${err.message}`));
+
+      this.io.emit('adminParticipantJoined', {
+        studentId: player.studentId,
+        studentName: player.name,
+        faculty: player.faculty,
+        team,
+        roomCode: this.roomCode,
+        joinedAt: new Date()
+      });
+    }
 
     // If match is active, sync question & state immediately to reconnecting client
     if (this.state === ROOM_STATES.ROUND_BUZZ || this.state === ROOM_STATES.ROUND_ANSWER || this.state === ROOM_STATES.ROUND_REBOUND) {
@@ -314,6 +335,21 @@ class GameRoom {
     this.ropeOffset = 0;
     this.roundCount = 0;
     this.startedAt = new Date();
+    this.currentMatchCode = generateMatchCode();
+
+    // Đồng bộ mã trận cho toàn bộ sinh viên đang có mặt trong phòng
+    for (const player of this.players.values()) {
+      if (player.studentId && !player.isBot) {
+        recordParticipantJoin({
+          matchCode: this.currentMatchCode,
+          roomCode: this.roomCode,
+          studentId: player.studentId,
+          studentName: player.name,
+          faculty: player.faculty,
+          team: player.team
+        }).catch(err => logger.error('GameRoom', `recordParticipantJoin startMatch error: ${err.message}`));
+      }
+    }
 
     // Preload 35 balanced questions from DB, excluding questions already used across matches
     const excludeIds = this.roomManager 
@@ -645,7 +681,8 @@ class GameRoom {
     
     this.state = ROOM_STATES.FINISHED;
     this.finishedAt = new Date();
-    const matchCode = generateMatchCode();
+    const matchCode = this.currentMatchCode || generateMatchCode();
+    this.currentMatchCode = matchCode;
 
     const teamAPlayers = this.getTeamPlayers(TEAMS.A).map(p => ({ name: p.name, studentId: p.studentId }));
     const teamBPlayers = this.getTeamPlayers(TEAMS.B).map(p => ({ name: p.name, studentId: p.studentId }));
@@ -666,6 +703,25 @@ class GameRoom {
       endReason: reason,
       totalQuestions: this.roundCount,
       startedAt: this.startedAt,
+      finishedAt: this.finishedAt
+    });
+
+    // Cập nhật kết quả thắng / thua cho từng thí sinh trong match_participants
+    await updateParticipantsResult({
+      matchCode,
+      roomCode: this.roomCode,
+      winner
+    }).catch(err => logger.error('GameRoom', `updateParticipantsResult error: ${err.message}`));
+
+    // Phát socket realtime về Admin Dashboard
+    this.io.emit('adminMatchFinished', {
+      matchCode,
+      roomCode: this.roomCode,
+      winner,
+      scoreA: this.scoreA,
+      scoreB: this.scoreB,
+      teamAPlayers,
+      teamBPlayers,
       finishedAt: this.finishedAt
     });
 

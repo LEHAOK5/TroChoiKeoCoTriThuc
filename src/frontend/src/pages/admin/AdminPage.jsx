@@ -8,8 +8,12 @@ import {
   adminResetRoom,
   adminCloseRoom,
   getAdminRegistrations,
-  getAdminMatches
+  getAdminMatches,
+  getAdminStudents,
+  getStudentHistory,
+  claimParticipantReward
 } from '../../services/api';
+import { socket } from '../../services/socket';
 import { API_URL } from '../../config/env';
 
 const MODES = [
@@ -54,6 +58,14 @@ export default function AdminPage({ onBackToGame }) {
   const [registrations, setRegistrations] = useState([]);
   const [loadingRegistrations, setLoadingRegistrations] = useState(false);
   const [searchStudent, setSearchStudent] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL'); // 'ALL' | 'PLAYING' | 'WIN' | 'LOSE' | 'NOT_PLAYED'
+
+  // Student Match History Modal State
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [studentHistory, setStudentHistory] = useState([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [historyModalOpen, setHistoryModalOpen] = useState(false);
+  const [claimingId, setClaimingId] = useState(null);
 
   const [matches, setMatches] = useState([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
@@ -74,6 +86,51 @@ export default function AdminPage({ onBackToGame }) {
       const interval = setInterval(loadRoomsOnly, 2500);
       return () => clearInterval(interval);
     }
+  }, [isAuthenticated, token]);
+
+  // Socket.io Realtime Listener for Admin Dashboard
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    if (!socket.connected) {
+      socket.connect();
+    }
+
+    const handleParticipantJoined = (data) => {
+      console.log('⚡ [Admin Realtime] Participant Joined:', data);
+      setRegistrations(prev => prev.map(s => {
+        const isMatched = (data.studentId && s.student_id === data.studentId) ||
+          (data.studentInfo && s.student_id === data.studentInfo.studentId);
+        if (isMatched) {
+          return {
+            ...s,
+            last_result: 'PLAYING',
+            last_team: data.team,
+            last_room_code: data.roomCode,
+            last_match_code: data.matchCode || s.last_match_code,
+            last_participant_id: data.participantId || s.last_participant_id,
+            total_matches: (Number(s.total_matches) || 0) + 1,
+            reward_claimed: false
+          };
+        }
+        return s;
+      }));
+    };
+
+    const handleMatchFinished = (data) => {
+      console.log('🏆 [Admin Realtime] Match Finished:', data);
+      // Automatically refresh students and match history
+      loadRegistrations();
+      loadMatches();
+      loadData();
+    };
+
+    socket.on('adminParticipantJoined', handleParticipantJoined);
+    socket.on('adminMatchFinished', handleMatchFinished);
+
+    return () => {
+      socket.off('adminParticipantJoined', handleParticipantJoined);
+      socket.off('adminMatchFinished', handleMatchFinished);
+    };
   }, [isAuthenticated, token]);
 
   const loadData = async () => {
@@ -104,10 +161,16 @@ export default function AdminPage({ onBackToGame }) {
   const loadRegistrations = async () => {
     setLoadingRegistrations(true);
     try {
-      const res = await getAdminRegistrations(token);
-      setRegistrations(res.data || []);
+      const res = await getAdminStudents(token);
+      setRegistrations(res.students || res.data || []);
     } catch (err) {
-      console.error(err);
+      console.error('getAdminStudents error, fallback to registrations:', err);
+      try {
+        const fbRes = await getAdminRegistrations(token);
+        setRegistrations(fbRes.data || []);
+      } catch (fbErr) {
+        console.error(fbErr);
+      }
     } finally {
       setLoadingRegistrations(false);
     }
@@ -215,17 +278,98 @@ export default function AdminPage({ onBackToGame }) {
     window.open(`${API_URL}/api/admin/registrations?format=csv&token=${token}`, '_blank');
   };
 
-  // Filtered Students List
+  const handleClaimReward = async (participantId, studentName) => {
+    if (!participantId) {
+      alert('Chưa có thông tin lượt đấu để trao quà');
+      return;
+    }
+    if (!window.confirm(`Xác nhận đã trao quà lưu niệm cho sinh viên "${studentName}"?`)) return;
+    setClaimingId(participantId);
+    try {
+      await claimParticipantReward(token, participantId);
+      setSuccessMsg(`Đã xác nhận trao quà cho sinh viên "${studentName}" thành công!`);
+      // Cập nhật trạng thái ngay trong danh sách sinh viên
+      setRegistrations(prev => prev.map(s => {
+        if (s.last_participant_id === participantId) {
+          return { ...s, reward_claimed: true, claimed_at: new Date().toISOString() };
+        }
+        return s;
+      }));
+      // Cập nhật trong popup lịch sử nếu đang mở
+      setStudentHistory(prev => prev.map(h => {
+        if (h.id === participantId) {
+          return { ...h, reward_claimed: true, claimed_at: new Date().toISOString() };
+        }
+        return h;
+      }));
+    } catch (err) {
+      alert(err.message || 'Lỗi khi cập nhật trạng thái trao quà');
+    } finally {
+      setClaimingId(null);
+    }
+  };
+
+  const handleOpenStudentHistory = async (student) => {
+    setSelectedStudent(student);
+    setHistoryModalOpen(true);
+    setLoadingHistory(true);
+    try {
+      const res = await getStudentHistory(token, student.student_id);
+      setStudentHistory(res.history || []);
+    } catch (err) {
+      console.error(err);
+      alert('Không thể tải lịch sử trận đấu của sinh viên: ' + err.message);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  // Thống kê số lượng theo trạng thái
+  const statusCounts = useMemo(() => {
+    let playing = 0;
+    let win = 0;
+    let lose = 0;
+    let notPlayed = 0;
+    registrations.forEach(s => {
+      const res = s.last_result;
+      const totalMatches = Number(s.total_matches) || 0;
+      if (res === 'PLAYING') playing++;
+      else if (res === 'WIN') win++;
+      else if (res === 'LOSE') lose++;
+      else if (totalMatches === 0 || !res || res === 'NOT_PLAYED') notPlayed++;
+    });
+    return {
+      all: registrations.length,
+      playing,
+      win,
+      lose,
+      notPlayed
+    };
+  }, [registrations]);
+
+  // Filtered Students List theo tìm kiếm và trạng thái
   const filteredStudents = useMemo(() => {
-    if (!searchStudent.trim()) return registrations;
-    const q = searchStudent.toLowerCase().trim();
-    return registrations.filter(s =>
-      (s.full_name && s.full_name.toLowerCase().includes(q)) ||
-      (s.student_id && s.student_id.toLowerCase().includes(q)) ||
-      (s.faculty && s.faculty.toLowerCase().includes(q)) ||
-      (s.phone && s.phone.includes(q))
-    );
-  }, [registrations, searchStudent]);
+    return registrations.filter(s => {
+      // 1. Lọc theo trạng thái kết quả
+      if (statusFilter === 'PLAYING' && s.last_result !== 'PLAYING') return false;
+      if (statusFilter === 'WIN' && s.last_result !== 'WIN') return false;
+      if (statusFilter === 'LOSE' && s.last_result !== 'LOSE') return false;
+      if (statusFilter === 'NOT_PLAYED') {
+        const total = Number(s.total_matches) || 0;
+        if (s.last_result === 'PLAYING' || s.last_result === 'WIN' || s.last_result === 'LOSE' || total > 0) return false;
+      }
+
+      // 2. Tìm kiếm theo từ khóa
+      if (!searchStudent.trim()) return true;
+      const q = searchStudent.toLowerCase().trim();
+      return (
+        (s.full_name && s.full_name.toLowerCase().includes(q)) ||
+        (s.student_id && s.student_id.toLowerCase().includes(q)) ||
+        (s.faculty && s.faculty.toLowerCase().includes(q)) ||
+        (s.phone && s.phone.includes(q))
+      );
+    });
+  }, [registrations, searchStudent, statusFilter]);
 
   return (
     <div style={{ maxWidth: 1060, margin: isMobile ? '12px auto' : '20px auto', padding: isMobile ? '0 10px' : '0 16px', width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
@@ -1026,7 +1170,7 @@ export default function AdminPage({ onBackToGame }) {
           )}
 
           {/* ======================================================== */}
-          {/* TAB 2: DANH SÁCH SINH VIÊN ĐĂNG KÝ (STUDENT REGISTRY)    */}
+          {/* TAB 2: DANH SÁCH SINH VIÊN & KẾT QUẢ THI ĐẤU             */}
           {/* ======================================================== */}
           {activeTab === 'STUDENTS' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -1071,7 +1215,7 @@ export default function AdminPage({ onBackToGame }) {
                   )}
                 </div>
 
-                <div style={{ display: 'flex', gap: 10 }}>
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                   <button
                     onClick={loadRegistrations}
                     disabled={loadingRegistrations}
@@ -1104,15 +1248,118 @@ export default function AdminPage({ onBackToGame }) {
                       cursor: 'pointer'
                     }}
                   >
-                    📥 Xuất Excel/CSV
+                    📥 Xuất Excel/CSV (Kèm Kết Quả)
                   </button>
                 </div>
+              </div>
+
+              {/* Status Filter Badges (2D Comic Pills) */}
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#475569', marginRight: 4 }}>
+                  Lọc trạng thái:
+                </span>
+
+                <button
+                  onClick={() => setStatusFilter('ALL')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 999,
+                    border: '2px solid var(--comic-black)',
+                    background: statusFilter === 'ALL' ? '#0F172A' : '#FFFFFF',
+                    color: statusFilter === 'ALL' ? '#FFFFFF' : '#0F172A',
+                    fontWeight: 800,
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    boxShadow: statusFilter === 'ALL' ? '0 3px 0 var(--comic-black)' : '0 1px 0 var(--comic-black)'
+                  }}
+                >
+                  Tất cả ({statusCounts.all})
+                </button>
+
+                <button
+                  onClick={() => setStatusFilter('PLAYING')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 999,
+                    border: '2px solid var(--comic-black)',
+                    background: statusFilter === 'PLAYING' ? '#FEF08A' : '#FFFFFF',
+                    color: statusFilter === 'PLAYING' ? '#713F12' : '#854D0E',
+                    fontWeight: 800,
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    boxShadow: statusFilter === 'PLAYING' ? '0 3px 0 var(--comic-black)' : '0 1px 0 var(--comic-black)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 6
+                  }}
+                >
+                  <span style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: '50%',
+                    background: '#EAB308',
+                    display: 'inline-block',
+                    animation: statusCounts.playing > 0 ? 'pulse 1.2s infinite' : 'none'
+                  }} />
+                  ⏳ Đang đấu ({statusCounts.playing})
+                </button>
+
+                <button
+                  onClick={() => setStatusFilter('WIN')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 999,
+                    border: '2px solid var(--comic-black)',
+                    background: statusFilter === 'WIN' ? '#DCFCE7' : '#FFFFFF',
+                    color: statusFilter === 'WIN' ? '#15803D' : '#166534',
+                    fontWeight: 800,
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    boxShadow: statusFilter === 'WIN' ? '0 3px 0 var(--comic-black)' : '0 1px 0 var(--comic-black)'
+                  }}
+                >
+                  🏆 Chiến thắng ({statusCounts.win})
+                </button>
+
+                <button
+                  onClick={() => setStatusFilter('LOSE')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 999,
+                    border: '2px solid var(--comic-black)',
+                    background: statusFilter === 'LOSE' ? '#FFEDD5' : '#FFFFFF',
+                    color: statusFilter === 'LOSE' ? '#C2410C' : '#9A3412',
+                    fontWeight: 800,
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    boxShadow: statusFilter === 'LOSE' ? '0 3px 0 var(--comic-black)' : '0 1px 0 var(--comic-black)'
+                  }}
+                >
+                  👮 Bị bắt tù ({statusCounts.lose})
+                </button>
+
+                <button
+                  onClick={() => setStatusFilter('NOT_PLAYED')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: 999,
+                    border: '2px solid var(--comic-black)',
+                    background: statusFilter === 'NOT_PLAYED' ? '#F1F5F9' : '#FFFFFF',
+                    color: statusFilter === 'NOT_PLAYED' ? '#334155' : '#64748B',
+                    fontWeight: 800,
+                    fontSize: '0.8rem',
+                    cursor: 'pointer',
+                    boxShadow: statusFilter === 'NOT_PLAYED' ? '0 3px 0 var(--comic-black)' : '0 1px 0 var(--comic-black)'
+                  }}
+                >
+                  ⚪ Chưa thi đấu ({statusCounts.notPlayed})
+                </button>
               </div>
 
               {/* Status Indicator */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', color: '#475569', fontWeight: 700 }}>
                 <span>
-                  Hiển thị <strong>{filteredStudents.length}</strong> / <strong>{registrations.length}</strong> sinh viên đã đăng ký
+                  Hiển thị <strong>{filteredStudents.length}</strong> / <strong>{registrations.length}</strong> sinh viên
                 </span>
                 {searchStudent && (
                   <span style={{ color: '#1A1AFF' }}>
@@ -1121,7 +1368,7 @@ export default function AdminPage({ onBackToGame }) {
                 )}
               </div>
 
-              {/* Students Data Table (2D Neo-brutalism Table) */}
+              {/* Students Data Table (2D Neo-brutalism Table with Match Result) */}
               <div style={{
                 background: '#FFFFFF',
                 border: '2.5px solid var(--comic-black)',
@@ -1133,62 +1380,229 @@ export default function AdminPage({ onBackToGame }) {
                   <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem' }}>
                     <thead>
                       <tr style={{ background: '#F1F5F9', borderBottom: '2px solid var(--comic-black)' }}>
-                        <th style={{ padding: '12px 14px', fontWeight: 900, color: '#0F172A', width: 50 }}>STT</th>
-                        <th style={{ padding: '12px 14px', fontWeight: 900, color: '#0F172A' }}>HỌ VÀ TÊN</th>
-                        <th style={{ padding: '12px 14px', fontWeight: 900, color: '#0F172A' }}>MSSV</th>
+                        <th style={{ padding: '12px 14px', fontWeight: 900, color: '#0F172A', width: 45 }}>STT</th>
+                        <th style={{ padding: '12px 14px', fontWeight: 900, color: '#0F172A' }}>SINH VIÊN & MSSV</th>
                         <th style={{ padding: '12px 14px', fontWeight: 900, color: '#0F172A' }}>KHOA / NGÀNH</th>
-                        <th style={{ padding: '12px 14px', fontWeight: 900, color: '#0F172A' }}>SỐ ĐIỆN THOẠI</th>
-                        <th style={{ padding: '12px 14px', fontWeight: 900, color: '#0F172A' }}>NGÀY ĐĂNG KÝ</th>
+                        <th style={{ padding: '12px 14px', fontWeight: 900, color: '#0F172A' }}>TRẠNG THÁI HIỆN TẠI</th>
+                        <th style={{ padding: '12px 14px', fontWeight: 900, color: '#0F172A' }}>THỐNG KÊ TRẬN</th>
+                        <th style={{ padding: '12px 14px', fontWeight: 900, color: '#0F172A', textAlign: 'center' }}>TRAO QUÀ</th>
+                        <th style={{ padding: '12px 14px', fontWeight: 900, color: '#0F172A', textAlign: 'center' }}>CHI TIẾT</th>
                       </tr>
                     </thead>
                     <tbody>
                       {loadingRegistrations ? (
                         <tr>
-                          <td colSpan={6} style={{ padding: 40, textAlign: 'center', color: '#64748B', fontWeight: 700 }}>
-                            Đang tải danh sách sinh viên...
+                          <td colSpan={7} style={{ padding: 40, textAlign: 'center', color: '#64748B', fontWeight: 700 }}>
+                            Đang tải danh sách sinh viên & kết quả trận đấu...
                           </td>
                         </tr>
                       ) : filteredStudents.length === 0 ? (
                         <tr>
-                          <td colSpan={6} style={{ padding: 40, textAlign: 'center', color: '#64748B', fontWeight: 700 }}>
-                            {searchStudent ? 'Không tìm thấy sinh viên nào khớp với từ khóa tìm kiếm.' : 'Chưa có sinh viên nào điền form đăng ký.'}
+                          <td colSpan={7} style={{ padding: 40, textAlign: 'center', color: '#64748B', fontWeight: 700 }}>
+                            {searchStudent ? 'Không tìm thấy sinh viên nào khớp với từ khóa tìm kiếm.' : 'Chưa có sinh viên nào trong danh mục này.'}
                           </td>
                         </tr>
                       ) : (
-                        filteredStudents.map((s, idx) => (
-                          <tr
-                            key={s.id || idx}
-                            style={{
-                              borderBottom: '1px solid #E2E8F0',
-                              background: idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC',
-                              transition: 'background 0.15s ease'
-                            }}
-                          >
-                            <td style={{ padding: '12px 14px', fontWeight: 800, color: '#64748B' }}>
-                              #{idx + 1}
-                            </td>
-                            <td style={{ padding: '12px 14px', fontWeight: 800, color: '#0F172A' }}>
-                              <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                <span>🎓</span>
-                                <span>{s.full_name}</span>
-                              </span>
-                            </td>
-                            <td style={{ padding: '12px 14px', fontWeight: 800, color: '#1010CC' }}>
-                              <span style={{ background: '#E6E6FF', padding: '2px 8px', borderRadius: 6, border: '1px solid #C4C4FF' }}>
-                                {s.student_id}
-                              </span>
-                            </td>
-                            <td style={{ padding: '12px 14px', color: '#334155', fontWeight: 600 }}>
-                              {s.faculty || 'ĐH Văn Hiến'}
-                            </td>
-                            <td style={{ padding: '12px 14px', color: '#0F172A', fontWeight: 700, fontFamily: 'monospace' }}>
-                              {s.phone || '---'}
-                            </td>
-                            <td style={{ padding: '12px 14px', color: '#64748B', fontSize: '0.8rem', fontWeight: 600 }}>
-                              {s.registered_at ? new Date(s.registered_at).toLocaleString('vi-VN') : '---'}
-                            </td>
-                          </tr>
-                        ))
+                        filteredStudents.map((s, idx) => {
+                          const totalMatches = Number(s.total_matches) || 0;
+                          const wins = Number(s.total_wins) || 0;
+                          const losses = Number(s.total_losses) || 0;
+                          const isPlaying = s.last_result === 'PLAYING';
+                          const isWin = s.last_result === 'WIN';
+                          const isLose = s.last_result === 'LOSE';
+                          const isClaimed = Boolean(s.reward_claimed);
+
+                          return (
+                            <tr
+                              key={s.id || s.student_id || idx}
+                              style={{
+                                borderBottom: '1px solid #E2E8F0',
+                                background: isPlaying ? '#FEFCE8' : (idx % 2 === 0 ? '#FFFFFF' : '#F8FAFC'),
+                                transition: 'background 0.15s ease'
+                              }}
+                            >
+                              {/* STT */}
+                              <td style={{ padding: '12px 14px', fontWeight: 800, color: '#64748B' }}>
+                                #{idx + 1}
+                              </td>
+
+                              {/* Họ tên & MSSV */}
+                              <td style={{ padding: '12px 14px', fontWeight: 800, color: '#0F172A' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                                  <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 900, fontSize: '0.94rem' }}>
+                                    <span>👤</span>
+                                    <span>{s.full_name}</span>
+                                  </span>
+                                  <span style={{ display: 'inline-flex', width: 'fit-content', background: '#E6E6FF', color: '#1010CC', padding: '1px 7px', borderRadius: 6, border: '1px solid #C4C4FF', fontSize: '0.75rem', fontWeight: 800 }}>
+                                    {s.student_id}
+                                  </span>
+                                </div>
+                              </td>
+
+                              {/* Khoa & SĐT */}
+                              <td style={{ padding: '12px 14px', color: '#334155' }}>
+                                <div style={{ fontWeight: 700, fontSize: '0.85rem' }}>{s.faculty || 'ĐH Văn Hiến'}</div>
+                                <div style={{ color: '#64748B', fontSize: '0.78rem', fontFamily: 'monospace', marginTop: 2 }}>
+                                  📞 {s.phone || '---'}
+                                </div>
+                              </td>
+
+                              {/* Trạng thái hiện tại (Realtime Badges) */}
+                              <td style={{ padding: '12px 14px' }}>
+                                {isPlaying ? (
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'flex-start' }}>
+                                    <span style={{
+                                      background: '#FEF08A',
+                                      color: '#713F12',
+                                      border: '1.5px solid #EAB308',
+                                      padding: '3px 9px',
+                                      borderRadius: 999,
+                                      fontWeight: 900,
+                                      fontSize: '0.78rem',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: 5
+                                    }}>
+                                      <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#CA8A04' }} />
+                                      ⏳ ĐANG THI ĐẤU
+                                    </span>
+                                    <span style={{ fontSize: '0.73rem', color: '#854D0E', fontWeight: 700 }}>
+                                      Phòng #{s.last_room_code || '---'} ({s.last_team === 'A' ? '⚡ Đội A' : '🔥 Đội B'})
+                                    </span>
+                                  </div>
+                                ) : isWin ? (
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'flex-start' }}>
+                                    <span style={{
+                                      background: '#DCFCE7',
+                                      color: '#15803D',
+                                      border: '1.5px solid #16A34A',
+                                      padding: '3px 10px',
+                                      borderRadius: 999,
+                                      fontWeight: 900,
+                                      fontSize: '0.78rem',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: 5
+                                    }}>
+                                      🏆 CHIẾN THẮNG
+                                    </span>
+                                    {s.last_room_code && (
+                                      <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600 }}>
+                                        Phòng #{s.last_room_code} ({s.last_team === 'A' ? '⚡ Đội A' : '🔥 Đội B'})
+                                      </span>
+                                    )}
+                                  </div>
+                                ) : isLose ? (
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: 'flex-start' }}>
+                                    <span style={{
+                                      background: '#FFEDD5',
+                                      color: '#C2410C',
+                                      border: '1.5px solid #EA580C',
+                                      padding: '3px 10px',
+                                      borderRadius: 999,
+                                      fontWeight: 900,
+                                      fontSize: '0.78rem',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: 5
+                                    }}>
+                                      👮 BỊ BẮT TÙ
+                                    </span>
+                                    {s.last_room_code && (
+                                      <span style={{ fontSize: '0.72rem', color: '#64748B', fontWeight: 600 }}>
+                                        Phòng #{s.last_room_code} ({s.last_team === 'A' ? '⚡ Đội A' : '🔥 Đội B'})
+                                      </span>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span style={{
+                                    background: '#F1F5F9',
+                                    color: '#64748B',
+                                    border: '1px solid #CBD5E1',
+                                    padding: '3px 8px',
+                                    borderRadius: 999,
+                                    fontSize: '0.75rem',
+                                    fontWeight: 700
+                                  }}>
+                                    ⚪ Chưa thi đấu
+                                  </span>
+                                )}
+                              </td>
+
+                              {/* Thống kê trận */}
+                              <td style={{ padding: '12px 14px' }}>
+                                <div style={{ fontWeight: 800, fontSize: '0.85rem', color: '#0F172A' }}>
+                                  {totalMatches > 0 ? `${totalMatches} trận` : '0 trận'}
+                                </div>
+                                {totalMatches > 0 && (
+                                  <div style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: 700, marginTop: 2 }}>
+                                    <span style={{ color: '#16A34A' }}>{wins}W</span> - <span style={{ color: '#DC2626' }}>{losses}L</span>
+                                  </div>
+                                )}
+                              </td>
+
+                              {/* Trao quà lưu niệm */}
+                              <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                                {isClaimed ? (
+                                  <span style={{
+                                    background: '#DCFCE7',
+                                    color: '#15803D',
+                                    border: '1.5px solid #16A34A',
+                                    padding: '4px 10px',
+                                    borderRadius: 999,
+                                    fontWeight: 800,
+                                    fontSize: '0.75rem',
+                                    display: 'inline-block'
+                                  }}>
+                                    ✅ ĐÃ NHẬN
+                                  </span>
+                                ) : (s.last_participant_id && (isWin || isLose || totalMatches > 0)) ? (
+                                  <button
+                                    onClick={() => handleClaimReward(s.last_participant_id, s.full_name)}
+                                    disabled={claimingId === s.last_participant_id}
+                                    style={{
+                                      padding: '6px 12px',
+                                      background: '#FEF08A',
+                                      border: '2px solid var(--comic-black)',
+                                      boxShadow: '0 2px 0 var(--comic-black)',
+                                      color: '#713F12',
+                                      borderRadius: 10,
+                                      fontWeight: 900,
+                                      fontSize: '0.78rem',
+                                      cursor: 'pointer',
+                                      whiteSpace: 'nowrap'
+                                    }}
+                                  >
+                                    {claimingId === s.last_participant_id ? 'Đang lưu...' : '🎁 Trao quà'}
+                                  </button>
+                                ) : (
+                                  <span style={{ color: '#94A3B8', fontSize: '0.8rem' }}>---</span>
+                                )}
+                              </td>
+
+                              {/* Thao tác Chi tiết */}
+                              <td style={{ padding: '12px 14px', textAlign: 'center' }}>
+                                <button
+                                  onClick={() => handleOpenStudentHistory(s)}
+                                  style={{
+                                    padding: '6px 12px',
+                                    background: '#FFFFFF',
+                                    border: '2px solid var(--comic-black)',
+                                    boxShadow: '0 2px 0 var(--comic-black)',
+                                    color: '#1010CC',
+                                    borderRadius: 10,
+                                    fontWeight: 800,
+                                    fontSize: '0.78rem',
+                                    cursor: 'pointer',
+                                    whiteSpace: 'nowrap'
+                                  }}
+                                >
+                                  📜 Lịch sử
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })
                       )}
                     </tbody>
                   </table>
@@ -1342,6 +1756,256 @@ export default function AdminPage({ onBackToGame }) {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ======================================================== */}
+      {/* POPUP MODAL: LỊCH SỬ THI ĐẤU SINH VIÊN                   */}
+      {/* ======================================================== */}
+      {historyModalOpen && selectedStudent && (
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setHistoryModalOpen(false);
+          }}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(15, 23, 42, 0.7)',
+            backdropFilter: 'blur(4px)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: isMobile ? 10 : 20
+          }}
+        >
+          <div
+            style={{
+              background: '#FFFFFF',
+              border: '3px solid var(--comic-black)',
+              borderRadius: 20,
+              boxShadow: '0 8px 0 var(--comic-black)',
+              maxWidth: 780,
+              width: '100%',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden'
+            }}
+          >
+            {/* Modal Header */}
+            <div style={{
+              background: '#1A1AFF',
+              color: '#FFFFFF',
+              padding: isMobile ? '14px 16px' : '18px 24px',
+              borderBottom: '3px solid var(--comic-black)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div>
+                <h3 style={{ margin: 0, fontFamily: 'var(--font-title)', fontSize: isMobile ? '1.1rem' : '1.3rem', fontWeight: 900 }}>
+                  📜 LỊCH SỬ THI ĐẤU & TRAO QUÀ
+                </h3>
+                <div style={{ fontSize: '0.85rem', color: '#FEF08A', fontWeight: 800, marginTop: 4 }}>
+                  Sinh viên: {selectedStudent.full_name} ({selectedStudent.student_id}) - {selectedStudent.faculty || 'ĐH Văn Hiến'}
+                </div>
+              </div>
+              <button
+                onClick={() => setHistoryModalOpen(false)}
+                style={{
+                  background: '#FFFFFF',
+                  border: '2px solid var(--comic-black)',
+                  boxShadow: '0 2px 0 var(--comic-black)',
+                  borderRadius: '50%',
+                  width: 36,
+                  height: 36,
+                  cursor: 'pointer',
+                  fontWeight: 900,
+                  fontSize: '1.1rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#0F172A'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: isMobile ? 14 : 20, overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* Quick Summary Strip */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: 10 }}>
+                <div style={{ background: '#F8FAFC', border: '2px solid var(--comic-black)', borderRadius: 12, padding: '10px 14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748B' }}>TỔNG SỐ TRẬN</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0F172A' }}>{studentHistory.length}</div>
+                </div>
+                <div style={{ background: '#DCFCE7', border: '2px solid var(--comic-black)', borderRadius: 12, padding: '10px 14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#166534' }}>CHIẾN THẮNG</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#15803D' }}>
+                    {studentHistory.filter(h => h.result === 'WIN').length}
+                  </div>
+                </div>
+                <div style={{ background: '#FFEDD5', border: '2px solid var(--comic-black)', borderRadius: 12, padding: '10px 14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#9A3412' }}>BỊ BẮT TÙ</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#C2410C' }}>
+                    {studentHistory.filter(h => h.result === 'LOSE').length}
+                  </div>
+                </div>
+                <div style={{ background: '#FEF08A', border: '2px solid var(--comic-black)', borderRadius: 12, padding: '10px 14px', textAlign: 'center' }}>
+                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#854D0E' }}>TỈ LỆ THẮNG</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 900, color: '#713F12' }}>
+                    {studentHistory.length > 0
+                      ? `${Math.round((studentHistory.filter(h => h.result === 'WIN').length / studentHistory.length) * 100)}%`
+                      : '0%'}
+                  </div>
+                </div>
+              </div>
+
+              {/* History Table */}
+              <div style={{
+                background: '#FFFFFF',
+                border: '2px solid var(--comic-black)',
+                borderRadius: 14,
+                overflow: 'hidden'
+              }}>
+                <div style={{ overflowX: 'auto' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.84rem' }}>
+                    <thead>
+                      <tr style={{ background: '#F1F5F9', borderBottom: '2px solid var(--comic-black)' }}>
+                        <th style={{ padding: '10px 12px', fontWeight: 900, color: '#0F172A' }}>MÃ TRẬN / PHÒNG</th>
+                        <th style={{ padding: '10px 12px', fontWeight: 900, color: '#0F172A' }}>ĐỘI</th>
+                        <th style={{ padding: '10px 12px', fontWeight: 900, color: '#0F172A' }}>TỈ SỐ (A - B)</th>
+                        <th style={{ padding: '10px 12px', fontWeight: 900, color: '#0F172A' }}>KẾT QUẢ</th>
+                        <th style={{ padding: '10px 12px', fontWeight: 900, color: '#0F172A' }}>THỜI GIAN</th>
+                        <th style={{ padding: '10px 12px', fontWeight: 900, color: '#0F172A', textAlign: 'center' }}>TRAO QUÀ</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {loadingHistory ? (
+                        <tr>
+                          <td colSpan={6} style={{ padding: 30, textAlign: 'center', color: '#64748B', fontWeight: 700 }}>
+                            Đang tải lịch sử thi đấu của sinh viên...
+                          </td>
+                        </tr>
+                      ) : studentHistory.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} style={{ padding: 30, textAlign: 'center', color: '#64748B', fontWeight: 700 }}>
+                            Sinh viên này chưa tham gia trận kéo co nào.
+                          </td>
+                        </tr>
+                      ) : (
+                        studentHistory.map((h, hIdx) => {
+                          const isWin = h.result === 'WIN';
+                          const isPlaying = h.result === 'PLAYING';
+                          const isClaimed = Boolean(h.reward_claimed);
+
+                          return (
+                            <tr
+                              key={h.id || hIdx}
+                              style={{
+                                borderBottom: '1px solid #E2E8F0',
+                                background: isPlaying ? '#FEFCE8' : (hIdx % 2 === 0 ? '#FFFFFF' : '#F8FAFC')
+                              }}
+                            >
+                              <td style={{ padding: '10px 12px', fontWeight: 800 }}>
+                                <span style={{ background: '#FEF08A', padding: '2px 7px', borderRadius: 6, border: '1px solid var(--comic-black)', fontSize: '0.78rem' }}>
+                                  #{h.match_code || h.room_code || 'MATCH'}
+                                </span>
+                              </td>
+                              <td style={{ padding: '10px 12px', fontWeight: 800 }}>
+                                {h.team === 'A' ? (
+                                  <span style={{ color: '#1A1AFF' }}>⚡ Đội A</span>
+                                ) : (
+                                  <span style={{ color: '#EA580C' }}>🔥 Đội B</span>
+                                )}
+                              </td>
+                              <td style={{ padding: '10px 12px', fontWeight: 900 }}>
+                                {h.score_a != null ? `${h.score_a} - ${h.score_b}` : '---'}
+                              </td>
+                              <td style={{ padding: '10px 12px' }}>
+                                {isPlaying ? (
+                                  <span style={{ background: '#FEF08A', color: '#713F12', border: '1px solid #EAB308', padding: '2px 8px', borderRadius: 999, fontWeight: 900, fontSize: '0.75rem' }}>
+                                    ⏳ Đang đấu
+                                  </span>
+                                ) : isWin ? (
+                                  <span style={{ background: '#DCFCE7', color: '#15803D', border: '1px solid #16A34A', padding: '2px 8px', borderRadius: 999, fontWeight: 900, fontSize: '0.75rem' }}>
+                                    🏆 Thắng
+                                  </span>
+                                ) : (
+                                  <span style={{ background: '#FFEDD5', color: '#C2410C', border: '1px solid #EA580C', padding: '2px 8px', borderRadius: 999, fontWeight: 900, fontSize: '0.75rem' }}>
+                                    👮 Bị bắt tù
+                                  </span>
+                                )}
+                              </td>
+                              <td style={{ padding: '10px 12px', color: '#64748B', fontSize: '0.78rem' }}>
+                                {h.finished_at ? new Date(h.finished_at).toLocaleTimeString('vi-VN') : '---'}
+                              </td>
+                              <td style={{ padding: '10px 12px', textAlign: 'center' }}>
+                                {isClaimed ? (
+                                  <span style={{ background: '#DCFCE7', color: '#15803D', border: '1px solid #16A34A', padding: '2px 8px', borderRadius: 999, fontWeight: 800, fontSize: '0.75rem' }}>
+                                    ✅ ĐÃ NHẬN
+                                  </span>
+                                ) : (
+                                  <button
+                                    onClick={() => handleClaimReward(h.id, selectedStudent.full_name)}
+                                    disabled={claimingId === h.id}
+                                    style={{
+                                      background: '#FEF08A',
+                                      color: '#713F12',
+                                      border: '1.5px solid var(--comic-black)',
+                                      boxShadow: '0 2px 0 var(--comic-black)',
+                                      borderRadius: 8,
+                                      padding: '3px 9px',
+                                      fontSize: '0.75rem',
+                                      fontWeight: 900,
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    {claimingId === h.id ? 'Đang lưu...' : '🎁 Trao quà'}
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div style={{
+              padding: '12px 20px',
+              borderTop: '2px solid var(--comic-black)',
+              background: '#F8FAFC',
+              display: 'flex',
+              justifyContent: 'flex-end'
+            }}>
+              <button
+                onClick={() => setHistoryModalOpen(false)}
+                style={{
+                  background: '#FFFFFF',
+                  border: '2px solid var(--comic-black)',
+                  boxShadow: '0 2px 0 var(--comic-black)',
+                  color: '#0F172A',
+                  padding: '8px 20px',
+                  borderRadius: 10,
+                  cursor: 'pointer',
+                  fontWeight: 900,
+                  fontSize: '0.85rem'
+                }}
+              >
+                Đóng ✕
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

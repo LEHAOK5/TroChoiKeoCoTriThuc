@@ -157,3 +157,30 @@ export async function getAdminMatches(token, limit = 100) {
   return res.json();
 }
 
+export async function getAdminStudents(token, { search = '', limit = 200, offset = 0 } = {}) {
+  const query = new URLSearchParams({ search, limit, offset }).toString();
+  const res = await fetch(`${API_URL}/api/admin/students?${query}`, {
+    headers: getAdminHeaders(token)
+  });
+  if (!res.ok) throw new Error('Không thể tải danh sách sinh viên');
+  return res.json();
+}
+
+export async function getStudentHistory(token, studentId) {
+  const res = await fetch(`${API_URL}/api/admin/students/${encodeURIComponent(studentId)}/history`, {
+    headers: getAdminHeaders(token)
+  });
+  if (!res.ok) throw new Error('Không thể tải lịch sử đấu của sinh viên');
+  return res.json();
+}
+
+export async function claimParticipantReward(token, participantId) {
+  const res = await fetch(`${API_URL}/api/admin/participants/${participantId}/claim`, {
+    method: 'PATCH',
+    headers: getAdminHeaders(token)
+  });
+  if (!res.ok) throw new Error('Không thể xác nhận trao quà');
+  return res.json();
+}
+
+

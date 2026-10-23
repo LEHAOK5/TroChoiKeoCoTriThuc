@@ -63,6 +63,32 @@ Tài liệu này liệt kê chi tiết từng tính năng đã hoàn thiện tro
 
 ---
 
-## 6. Trang Quản Trị Gian Hàng (`AdminPage.jsx`)
+## 6. Trang Quản Trị Gian Hàng Ban Tổ Chức (`AdminPage.jsx`)
 - **Tập tin:** [`src/frontend/src/pages/admin/AdminPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/admin/AdminPage.jsx)
-- Quản lý kho 600 câu hỏi, tạo phòng nhanh, reset trận, xem danh sách thí sinh và xuất file CSV tổng kết giải thưởng.
+- **Hệ thống 3 Tab Quản trị chuyên nghiệp (Neo-Brutalism):**
+  - **Tab 1: Quản lý phòng đấu & Trận đấu trực tiếp (`ROOMS`):** Tạo phòng nhanh các chế độ 1vs1 đến 5vs5, sinh mã QR để thí sinh quét vào phòng tức thì, phát lệnh bắt đầu trận và reset phòng đón lượt mới.
+  - **Tab 2: Danh sách sinh viên & Kết quả thi đấu (`STUDENTS`):** Đồng bộ dữ liệu real-time kết quả thắng/thua, trạng thái thi đấu và trao quà lưu niệm.
+  - **Tab 3: Lịch sử các trận đấu (`MATCHES`):** Thống kê tỉ lệ thắng Đội A (Tia chớp) vs Đội B (Ngọn lửa), danh sách điểm số và thời gian kết thúc từng trận.
+
+---
+
+## 7. Hệ Thống Quản Lý Kết Quả Thi Đấu & Trao Quà Sinh Viên Thời Gian Thực
+- **Mã nguồn Backend:**
+  - [`src/backend/database/supabase_init.sql`](file:///d:/KEOCOTRITHUC/src/backend/database/supabase_init.sql): Bảng `match_participants` lưu chi tiết mỗi lượt chơi của sinh viên (`student_id`, `room_code`, `match_code`, `team`, `result: PLAYING | WIN | LOSE | DRAW`, `reward_claimed`, `claimed_at`).
+  - [`src/backend/src/repositories/participant.repository.js`](file:///d:/KEOCOTRITHUC/src/backend/src/repositories/participant.repository.js): Tự động tạo bảng nếu chưa có, ghi nhận sinh viên vào trận, cập nhật kết quả tự động khi kết thúc trận, truy vấn kèm thống kê W/L và cập nhật trao quà.
+  - [`src/backend/src/game/GameRoom.js`](file:///d:/KEOCOTRITHUC/src/backend/src/game/GameRoom.js):
+    - Khi sinh viên vào phòng: Ghi nhận trạng thái `PLAYING` và phát sóng `adminParticipantJoined`.
+    - Khi trận đấu kết thúc: Tự động chốt `WIN` / `LOSE` cho toàn bộ sinh viên trong phòng và phát sóng `adminMatchFinished`.
+  - [`src/backend/src/routes/admin.routes.js`](file:///d:/KEOCOTRITHUC/src/backend/src/routes/admin.routes.js):
+    - `GET /api/admin/students`: Lấy danh sách sinh viên kèm trạng thái thi đấu gần nhất, số trận, số lần thắng/thua, tình trạng nhận quà.
+    - `GET /api/admin/students/:studentId/history`: Lấy toàn bộ lịch sử đấu của từng sinh viên.
+    - `PATCH /api/admin/participants/:participantId/claim`: Xác nhận đã trao quà lưu niệm.
+    - `GET /api/admin/registrations?format=csv`: Xuất file CSV đã bổ sung các cột Tổng trận, Số trận thắng, Số trận thua, Kết quả gần nhất và Tình trạng nhận quà.
+
+- **Giao diện Frontend (`AdminPage.jsx` & `api.js`):**
+  - **Bộ lọc trạng thái 5 chế độ (2D Comic Pills):** `Tất cả`, `⏳ Đang đấu (chấm vàng nhấp nháy)`, `🏆 Chiến thắng (xanh lá)`, `👮 Bị bắt tù (cam đỏ)`, `⚪ Chưa thi đấu (xám)`.
+  - **Cập nhật Live 0-reload (Socket.io):** Khi có sinh viên quét mã vào phòng hoặc trận đấu phân định thắng bại, giao diện BTC tự động đổi màu trạng thái ngay lập tức mà không cần F5.
+  - **Nút Trao quà lưu niệm (`[ 🎁 Trao quà ]`):** Thao tác 1-chạm xác nhận đã phát quà tại gian hàng, chuyển sang badge `✅ ĐÃ NHẬN`.
+  - **Popup Lịch Sử Đấu Chi Tiết (`StudentHistoryModal`):** Bấm `[ 📜 Lịch sử ]` trên bất kỳ sinh viên nào để xem:
+    - Thẻ tóm tắt: Tổng trận, Số trận thắng, Số trận thua, Tỉ lệ thắng (%).
+    - Bảng chi tiết từng trận: Mã trận, Đội tham gia (⚡ Đội A / 🔥 Đội B), Tỉ số chung cuộc, Kết quả cá nhân, Thời gian kết thúc, Nút trao quà từng trận.

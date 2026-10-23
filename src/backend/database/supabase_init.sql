@@ -73,3 +73,28 @@ ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow anonymous read admin_users" ON admin_users FOR SELECT USING (true);
 CREATE POLICY "Allow anonymous insert admin_users" ON admin_users FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow anonymous update admin_users" ON admin_users FOR UPDATE USING (true);
+
+-- 5. Bảng chi tiết kết quả từng sinh viên tham gia từng ván đấu
+CREATE TABLE IF NOT EXISTS match_participants (
+  id SERIAL PRIMARY KEY,
+  match_code TEXT NOT NULL,
+  room_code TEXT NOT NULL,
+  student_id TEXT NOT NULL,
+  student_name TEXT NOT NULL,
+  faculty TEXT DEFAULT '',
+  team TEXT NOT NULL CHECK (team IN ('A', 'B')),
+  result TEXT NOT NULL DEFAULT 'PLAYING' CHECK (result IN ('PLAYING', 'WIN', 'LOSE', 'DRAW')),
+  reward_claimed BOOLEAN DEFAULT FALSE,
+  claimed_at TIMESTAMPTZ,
+  joined_at TIMESTAMPTZ DEFAULT NOW(),
+  finished_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_match_participants_student_id ON match_participants(student_id);
+CREATE INDEX IF NOT EXISTS idx_match_participants_match_code ON match_participants(match_code);
+
+ALTER TABLE match_participants ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow anonymous read match_participants" ON match_participants FOR SELECT USING (true);
+CREATE POLICY "Allow anonymous insert match_participants" ON match_participants FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow anonymous update match_participants" ON match_participants FOR UPDATE USING (true);
+

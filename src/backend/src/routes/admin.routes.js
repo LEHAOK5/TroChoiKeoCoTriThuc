@@ -7,6 +7,11 @@ const { findAdminByUsername, updateLastLogin } = require('../repositories/admin.
 const { countRegistrations, getAllRegistrations } = require('../repositories/registration.repository');
 const { countQuestions, getAllQuestions, createQuestion, updateQuestion, deleteQuestion } = require('../repositories/question.repository');
 const { getMatchStats, getRecentMatches } = require('../repositories/match.repository');
+const {
+  getStudentsWithMatchStatus,
+  getStudentMatchHistory,
+  claimParticipantReward
+} = require('../repositories/participant.repository');
 const { ROOM_STATES } = require('../config/constants');
 
 function createAdminRouter(roomManager) {
@@ -190,19 +195,61 @@ function createAdminRouter(roomManager) {
   router.get('/registrations', async (req, res, next) => {
     try {
       const format = req.query.format;
-      const list = await getAllRegistrations({ limit: 1000 });
-
       if (format === 'csv') {
-        let csv = 'ID,Họ và Tên,MSSV,Khoa,Số Điện Thoại,Thời Gian Đăng Ký\n';
-        for (const row of list) {
-          csv += `"${row.id}","${row.full_name}","${row.student_id}","${row.faculty || ''}","${row.phone || ''}","${row.registered_at}"\n`;
+        const fullList = await getStudentsWithMatchStatus({ limit: 2000 });
+        let csv = '\uFEFFID,Họ và Tên,MSSV,Khoa,Số Điện Thoại,Ngày Đăng Ký,Tổng Trận Đấu,Trận Thắng,Trận Thua,Trạng Thái Gần Nhất,Nhận Quà\n';
+        for (const row of fullList) {
+          const statusText = row.current_status === 'WIN' ? 'CHIẾN THẮNG' :
+                             row.current_status === 'LOSE' ? 'BỊ BẮT TÙ' :
+                             row.current_status === 'PLAYING' ? 'ĐANG THI ĐẤU' : 'CHƯA ĐẤU';
+          const rewardText = row.reward_claimed ? 'ĐÃ NHẬN QUÀ' : 'CHƯA NHẬN';
+          csv += `"${row.id}","${row.full_name}","${row.student_id}","${row.faculty || ''}","${row.phone || ''}","${row.registered_at || ''}","${row.total_matches}","${row.wins}","${row.losses}","${statusText}","${rewardText}"\n`;
         }
         res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-        res.setHeader('Content-Disposition', 'attachment; filename="sinh_vien_dang_ky_gian_hang.csv"');
+        res.setHeader('Content-Disposition', 'attachment; filename="danh_sach_sinh_vien_ket_qua.csv"');
         return res.send(csv);
       }
 
+      const list = await getAllRegistrations({ limit: 1000 });
       res.json({ success: true, count: list.length, data: list });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // 4a. Danh sách sinh viên kèm kết quả thi đấu & trạng thái nhận quà
+  router.get('/students', async (req, res, next) => {
+    try {
+      const search = req.query.search || '';
+      const limit = parseInt(req.query.limit, 10) || 200;
+      const offset = parseInt(req.query.offset, 10) || 0;
+      const list = await getStudentsWithMatchStatus({ search, limit, offset });
+      res.json({ success: true, count: list.length, data: list });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // 4b. Lịch sử chi tiết các ván đấu của 1 sinh viên theo MSSV
+  router.get('/students/:studentId/history', async (req, res, next) => {
+    try {
+      const { studentId } = req.params;
+      const history = await getStudentMatchHistory(studentId.trim());
+      res.json({ success: true, studentId: studentId.trim(), count: history.length, history });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // 4c. Xác nhận đã phát quà cho một lượt thi đấu
+  router.patch('/participants/:participantId/claim', async (req, res, next) => {
+    try {
+      const participantId = parseInt(req.params.participantId, 10);
+      const updated = await claimParticipantReward(participantId);
+      if (!updated) {
+        return res.status(404).json({ error: { message: 'Không tìm thấy lượt thi đấu để trao quà' } });
+      }
+      res.json({ success: true, participant: updated });
     } catch (err) {
       next(err);
     }
