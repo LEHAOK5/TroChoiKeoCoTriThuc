@@ -59,7 +59,7 @@ MAX_PLAYERS_PER_TEAM=5
   ```
 - **Chạy production:**
   ```env
-  VITE_API_URL=https://keo-co-tri-thuc-backend.onrender.com
+  VITE_API_URL=https://keoco-backend.onrender.com
   ```
 
 ---

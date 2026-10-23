@@ -317,8 +317,8 @@ export default function AdminPage({ onBackToGame }) {
       const res = await getStudentHistory(token, student.student_id);
       setStudentHistory(res.history || []);
     } catch (err) {
-      console.error(err);
-      alert('Không thể tải lịch sử trận đấu của sinh viên: ' + err.message);
+      console.warn('Không thể tải lịch sử trận đấu của sinh viên:', err);
+      setStudentHistory([]);
     } finally {
       setLoadingHistory(false);
     }

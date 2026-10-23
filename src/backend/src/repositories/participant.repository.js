@@ -211,9 +211,13 @@ async function getStudentsWithMatchStatus({ search = '', limit = 200, offset = 0
  */
 async function getStudentMatchHistory(studentId) {
   await ensureTableExists();
+  const cleanId = (studentId || '').trim();
+  if (!cleanId) return [];
+
   try {
     const sql = `
       SELECT 
+        p.id,
         p.id AS participant_id,
         p.match_code,
         p.room_code,
@@ -221,22 +225,59 @@ async function getStudentMatchHistory(studentId) {
         p.student_name,
         p.team,
         p.result,
-        p.reward_claimed,
+        COALESCE(p.reward_claimed, false) AS reward_claimed,
         p.claimed_at,
         p.joined_at,
-        p.finished_at,
-        m.score_a,
-        m.score_b,
-        m.winner,
-        m.team_a_name,
-        m.team_b_name
+        COALESCE(p.finished_at, m.finished_at, p.joined_at) AS finished_at,
+        COALESCE(m.score_a, 0) AS score_a,
+        COALESCE(m.score_b, 0) AS score_b,
+        COALESCE(m.winner, 'DRAW') AS winner,
+        COALESCE(m.team_a_name, 'Đội A') AS team_a_name,
+        COALESCE(m.team_b_name, 'Đội B') AS team_b_name
       FROM match_participants p
-      LEFT JOIN match_history m ON p.match_code = m.match_code
+      LEFT JOIN match_history m ON (p.match_code = m.match_code OR p.room_code = m.match_code)
       WHERE p.student_id = $1
       ORDER BY p.id DESC;
     `;
-    const res = await query(sql, [studentId]);
-    return res.rows;
+    const res = await query(sql, [cleanId]);
+    if (res.rows.length > 0) {
+      return res.rows;
+    }
+
+    // Fallback: Tìm trong match_history nếu trận đấu được lưu trước đó
+    const legacySql = `
+      SELECT 
+        m.id,
+        m.id AS participant_id,
+        m.match_code,
+        m.match_code AS room_code,
+        $1 AS student_id,
+        $1 AS student_name,
+        CASE 
+          WHEN m.team_a_players::text ILIKE '%' || $1 || '%' THEN 'A'
+          ELSE 'B'
+        END AS team,
+        CASE 
+          WHEN (m.team_a_players::text ILIKE '%' || $1 || '%' AND m.winner = 'A') OR
+               (m.team_b_players::text ILIKE '%' || $1 || '%' AND m.winner = 'B') THEN 'WIN'
+          WHEN m.winner = 'DRAW' THEN 'DRAW'
+          ELSE 'LOSE'
+        END AS result,
+        FALSE AS reward_claimed,
+        NULL AS claimed_at,
+        m.started_at AS joined_at,
+        m.finished_at,
+        COALESCE(m.score_a, 0) AS score_a,
+        COALESCE(m.score_b, 0) AS score_b,
+        m.winner,
+        m.team_a_name,
+        m.team_b_name
+      FROM match_history m
+      WHERE m.team_a_players::text ILIKE '%' || $1 || '%' OR m.team_b_players::text ILIKE '%' || $1 || '%'
+      ORDER BY m.id DESC;
+    `;
+    const legacyRes = await query(legacySql, [cleanId]);
+    return legacyRes.rows;
   } catch (err) {
     logger.error('ParticipantRepo', `Lỗi getStudentMatchHistory: ${err.message}`);
     return [];

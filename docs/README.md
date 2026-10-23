@@ -13,7 +13,8 @@
 | [**`02_THIET_KE_VA_BRANDING.md`**](./02_THIET_KE_VA_BRANDING.md) | Màu chủ đạo **HARMONY (`#1A1AFF`)**, phong cách 2D Manga Neo-Brutalism, quy tắc responsive. | Khi thiết kế hoặc chỉnh sửa giao diện (UI/UX). |
 | [**`03_CAC_TINH_NANG_DA_HOAN_THANH.md`**](./03_CAC_TINH_NANG_DA_HOAN_THANH.md) | Chi tiết các component: 5vs5 Chibi, Thẩm phán, nơ dây động, bục #1, nhà tù meme... | Khi muốn nắm rõ code nào đã làm để tránh viết đè. |
 | [**`04_KE_HOACH_PHAT_TRIEN_TIEP_THEO.md`**](./04_KE_HOACH_PHAT_TRIEN_TIEP_THEO.md) | Kế hoạch mở rộng Trạm 2, QR Code quà tặng, bảng xếp hạng realtime. | Khi bắt đầu phát triển tính năng mới. |
-| [**`05_HUONG_DAN_CAI_DAT_VA_DEPLOY.md`**](./05_HUONG_DAN_CAI_DAT_VA_DEPLOY.md) | Lệnh chạy dev, cấu hình `.env`, deploy Vercel & Render. | Khi cài đặt môi trường, debug hoặc deploy. |
+| [**`05_LOI_DA_FIX.md`**](./05_LOI_DA_FIX.md) | Phân tích chi tiết các lỗi phát sinh, nguyên nhân gốc rễ và cách khắc phục. | Khi gặp lỗi hệ thống hoặc cần đối chiếu lịch sử fix bug. |
+| [**`06_HUONG_DAN_CAI_DAT_VA_DEPLOY.md`**](./06_HUONG_DAN_CAI_DAT_VA_DEPLOY.md) | Lệnh chạy dev, cấu hình `.env`, deploy Vercel & Render. | Khi cài đặt môi trường, debug hoặc deploy. |
 
 ---
 
