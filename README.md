@@ -9,8 +9,7 @@
 
 ```text
 KEOCOTRITHUC/
-├── docs/                                   # Tài liệu dự án (kehoach.docx, Thể lệ cuộc thi, Sơ đồ luồng)
-├── references/                             # Repo mã nguồn mở tham khảo (ttalkkakthon-tug-of-war, kahoot-clone)
+├── docs/                                   # Tài liệu dự án (Kiến trúc, Thiết kế, Tính năng, Hướng dẫn)
 ├── README.md                               # Hướng dẫn khởi chạy và vận hành
 └── src/
     ├── backend/                            # ===== BACKEND (Node.js + Express + Socket.io) =====
