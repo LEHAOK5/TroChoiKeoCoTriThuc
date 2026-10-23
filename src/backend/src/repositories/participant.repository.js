@@ -120,10 +120,60 @@ async function updateParticipantsResult({ matchCode, roomCode, winner }) {
 }
 
 /**
+ * Tự động đồng bộ các trận đấu từ match_history vào match_participants
+ * Giúp đảm bảo dữ liệu luôn đầy đủ ngay cả khi các trận trước đó được lưu bởi phiên bản cũ
+ */
+async function syncLegacyMatchesToParticipants() {
+  try {
+    const matchesRes = await query(`
+      SELECT match_code, score_a, score_b, winner, team_a_players, team_b_players, started_at, finished_at
+      FROM match_history
+      ORDER BY id ASC;
+    `);
+
+    for (const m of matchesRes.rows) {
+      const matchCode = m.match_code;
+      const winner = m.winner;
+      const pA = Array.isArray(m.team_a_players) ? m.team_a_players : (typeof m.team_a_players === 'string' ? JSON.parse(m.team_a_players || '[]') : []);
+      const pB = Array.isArray(m.team_b_players) ? m.team_b_players : (typeof m.team_b_players === 'string' ? JSON.parse(m.team_b_players || '[]') : []);
+
+      for (const p of pA) {
+        if (!p.studentId) continue;
+        const resA = winner === 'A' ? 'WIN' : (winner === 'B' ? 'LOSE' : 'DRAW');
+        const insertSql = `
+          INSERT INTO match_participants (match_code, room_code, student_id, student_name, team, result, finished_at)
+          SELECT $1, $1, $2, $3, 'A', $4, COALESCE($5, NOW())
+          WHERE NOT EXISTS (
+            SELECT 1 FROM match_participants WHERE match_code = $1 AND student_id = $2
+          );
+        `;
+        await query(insertSql, [matchCode, p.studentId, p.name || p.studentId, resA, m.finished_at]);
+      }
+
+      for (const p of pB) {
+        if (!p.studentId) continue;
+        const resB = winner === 'B' ? 'WIN' : (winner === 'A' ? 'LOSE' : 'DRAW');
+        const insertSql = `
+          INSERT INTO match_participants (match_code, room_code, student_id, student_name, team, result, finished_at)
+          SELECT $1, $1, $2, $3, 'B', $4, COALESCE($5, NOW())
+          WHERE NOT EXISTS (
+            SELECT 1 FROM match_participants WHERE match_code = $1 AND student_id = $2
+          );
+        `;
+        await query(insertSql, [matchCode, p.studentId, p.name || p.studentId, resB, m.finished_at]);
+      }
+    }
+  } catch (err) {
+    logger.warn('ParticipantRepo', `syncLegacyMatchesToParticipants warning: ${err.message}`);
+  }
+}
+
+/**
  * Lấy danh sách sinh viên kết hợp thông tin đăng ký + kết quả thi đấu thời gian thực
  */
 async function getStudentsWithMatchStatus({ search = '', limit = 200, offset = 0 } = {}) {
   await ensureTableExists();
+  await syncLegacyMatchesToParticipants();
   try {
     // Truy vấn danh sách sinh viên kèm thống kê trận đấu & kết quả trận mới nhất
     const sql = `

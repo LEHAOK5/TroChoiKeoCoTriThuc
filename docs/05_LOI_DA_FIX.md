@@ -54,8 +54,54 @@ Tài liệu này lưu lại nguyên nhân, phân tích kỹ thuật và giải p
 
 ---
 
+## 2. Lỗi Thống Kê Trận & Trạng Thái Sinh Viên Hiển Thị "Chưa Thi Đấu (0 Trận)" Dù Đã Hoàn Thành Trận
+
+### 🔴 Triệu chứng lỗi (Symptoms)
+- Ban tổ chức đã tổ chức trận đấu xong, màn hình Tab 3 (Lịch sử trận đấu) đã ghi nhận trận đấu hoàn thành (ví dụ: `Tỉ số 10 - 3`, Đội A vô địch).
+- Tuy nhiên tại **Tab 2: Danh sách sinh viên**, tất cả sinh viên tham gia vẫn hiển thị:
+  - Trạng thái hiện tại: `⚪ Chưa thi đấu` (bộ lọc ghi nhận: `Chưa thi đấu (4)`)
+  - Thống kê trận: `0 trận`
+  - Trao quà: `---`
+
+---
+
+### 🔍 Phân tích nguyên nhân cốt lõi (Root Cause Analysis)
+
+1. **Lệch pha giữa bảng `match_history` và `match_participants`:**
+   - Khi trận đấu kết thúc, hệ thống lưu kết quả ván đấu vào bảng `match_history` (chứa `score_a`, `score_b`, `winner`, mảng JSON `team_a_players`, `team_b_players`).
+   - Trong khi đó, bảng danh sách sinh viên thời gian thực lại được tính toán từ bảng `match_participants`.
+   - Nếu trận đấu diễn ra khi Backend đang trong quá trình chuyển giao phiên bản (hoặc trước khi bảng `match_participants` được cập nhật code), dữ liệu kết quả chỉ nằm ở `match_history`, khiến `match_participants` không có dòng dữ liệu nào (`0 rows`).
+2. **Hàm `getStudentsWithMatchStatus` chỉ LEFT JOIN đơn thuần:**
+   - Truy vấn SQL trong `getStudentsWithMatchStatus()` chỉ đọc từ `match_participants`. Khi bảng này chưa có dữ liệu, câu lệnh trả về mặc định `total_matches = 0`, `wins = 0`, `last_result = 'NOT_PLAYED'`.
+
+---
+
+### 🟢 Giải pháp kỹ thuật đã xử lý (Fix Implementation)
+
+#### 1. Xây dựng cơ chế Auto-Sync thông minh (`syncLegacyMatchesToParticipants`)
+- Thêm hàm `syncLegacyMatchesToParticipants()` trong [`participant.repository.js`](file:///d:/KEOCOTRITHUC/src/backend/src/repositories/participant.repository.js):
+  - Tự động quét toàn bộ các trận đấu đã ghi nhận trong `match_history`.
+  - Phân tách thí sinh Đội A và Đội B từ mảng JSON, đối chiếu với kết quả trận (`winner: 'A' | 'B' | 'DRAW'`) để xác định chính xác sinh viên nào `WIN` hay `LOSE`.
+  - Thực hiện lệnh chèn an toàn chống trùng lặp (`WHERE NOT EXISTS`):
+    ```sql
+    INSERT INTO match_participants (match_code, room_code, student_id, student_name, team, result, finished_at)
+    SELECT $1, $1, $2, $3, 'A', $4, COALESCE($5, NOW())
+    WHERE NOT EXISTS (
+      SELECT 1 FROM match_participants WHERE match_code = $1 AND student_id = $2
+    );
+    ```
+
+#### 2. Tự động đồng bộ mỗi lần BTC xem hoặc làm mới danh sách
+- Trong hàm `getStudentsWithMatchStatus()`, hệ thống tự động gọi `await syncLegacyMatchesToParticipants()` trước khi chạy truy vấn thống kê.
+- Ngay khi Ban tổ chức bấm **"Làm mới 🔄"** hoặc mở Tab 2:
+  - Sinh viên chiến thắng lập tức được cập nhật: `🏆 CHIẾN THẮNG`, thống kê `1 trận (1W - 0L)`, nút `[ 🎁 Trao quà ]` xuất hiện.
+  - Sinh viên thua cuộc lập tức được cập nhật: `👮 BỊ BẮT TÙ`, thống kê `1 trận (0W - 1L)`.
+
+---
+
 ### 📌 Lưu ý vận hành (Deployment Note)
 Khi đẩy code mới lên GitHub, nếu Backend Render chưa tự động deploy:
 1. Đăng nhập [dashboard.render.com](https://dashboard.render.com).
 2. Chọn Web Service **`keoco-backend`**.
 3. Bấm **Manual Deploy** -> Chọn **Deploy latest commit** để Render cập nhật phiên bản backend mới nhất.
+
