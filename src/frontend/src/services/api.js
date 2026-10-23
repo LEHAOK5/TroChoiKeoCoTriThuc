@@ -242,12 +242,38 @@ export async function getStudentHistory(token, studentId) {
 }
 
 export async function claimParticipantReward(token, participantId) {
-  const res = await fetch(`${API_URL}/api/admin/participants/${participantId}/claim`, {
-    method: 'PATCH',
-    headers: getAdminHeaders(token)
-  });
-  if (!res.ok) throw new Error('Không thể xác nhận trao quà');
-  return res.json();
+  const cleanId = encodeURIComponent(String(participantId).trim());
+  
+  // Thử gửi POST trước để tránh lỗi CORS preflight với một số CDN/Proxy
+  try {
+    const postRes = await fetch(`${API_URL}/api/admin/participants/${cleanId}/claim`, {
+      method: 'POST',
+      headers: getAdminHeaders(token)
+    });
+    if (postRes.ok) {
+      return await postRes.json();
+    }
+  } catch (postErr) {
+    console.warn('POST claim failed, falling back to PATCH...', postErr);
+  }
+
+  // Fallback sang PATCH
+  try {
+    const patchRes = await fetch(`${API_URL}/api/admin/participants/${cleanId}/claim`, {
+      method: 'PATCH',
+      headers: getAdminHeaders(token)
+    });
+    if (patchRes.ok) {
+      return await patchRes.json();
+    }
+    const errData = await patchRes.json().catch(() => ({}));
+    throw new Error(errData.error?.message || errData.message || 'Không thể xác nhận trao quà');
+  } catch (err) {
+    if (err.message === 'Failed to fetch') {
+      throw new Error('Không thể kết nối đến máy chủ backend (Failed to fetch). Vui lòng thử lại sau giây lát khi backend Render hoàn tất cập nhật.');
+    }
+    throw err;
+  }
 }
 
 

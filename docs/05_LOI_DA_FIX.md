@@ -99,9 +99,64 @@ Tài liệu này lưu lại nguyên nhân, phân tích kỹ thuật và giải p
 
 ---
 
+## 3. Lỗi "Failed to fetch" Khi Bấm Nút `[ 🎁 Trao quà ]` (CORS Preflight & HTTP Method)
+
+### 🔴 Triệu chứng lỗi (Symptoms)
+- Khi Ban tổ chức ở trang Admin trên Vercel (`keo-co-tri-thuc.vercel.app`), tại **Tab 2: Danh sách sinh viên**, bấm nút **`[ 🎁 Trao quà ]`** để đánh dấu đã trao quà lưu niệm cho sinh viên hoàn thành trận đấu:
+  - Trình duyệt bật hộp thoại popup alert: **`keo-co-tri-thuc.vercel.app says: Failed to fetch`**
+  - Nút bấm bị kẹt ở nhãn trạng thái **`Đang lưu...`** và quà chưa được xác nhận `✅ ĐÃ NHẬN`.
+
+---
+
+### 🔍 Phân tích nguyên nhân cốt lõi (Root Cause Analysis)
+
+1. **Thiếu HTTP Method `PATCH` trong cấu hình CORS Backend (`src/backend/src/config/cors.js`):**
+   - Cấu hình CORS ban đầu:
+     ```javascript
+     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+     ```
+   - Phương thức **`PATCH` hoàn toàn không có trong danh sách được phép**.
+2. **Cơ chế CORS Preflight (`OPTIONS`) của trình duyệt giữa Vercel và Render:**
+   - Frontend chạy tại domain `keo-co-tri-thuc.vercel.app`, gọi API Cross-Origin sang backend `keoco-backend.onrender.com`.
+   - Hàm `claimParticipantReward()` trong [`api.js`](file:///d:/KEOCOTRITHUC/src/frontend/src/services/api.js) thực hiện gửi HTTP Request với method `PATCH`.
+   - Khi gặp HTTP method `PATCH`, trình duyệt bắt buộc kích hoạt gửi một request kiểm tra quyền trước (CORS Preflight `OPTIONS`) kèm header:
+     `Access-Control-Request-Method: PATCH`
+   - Do cấu hình CORS trên backend Render thiếu `PATCH`, server Express-CORS từ chối preflight request. Trình duyệt ngay lập tức chặn đứng request và ném ra ngoại lệ JavaScript: `TypeError: Failed to fetch`.
+3. **Route Backend chỉ mở phương thức `PATCH`:**
+   - Trong [`admin.routes.js`](file:///d:/KEOCOTRITHUC/src/backend/src/routes/admin.routes.js), route xác nhận trao quà chỉ khai báo `router.patch(...)`, không có `router.post(...)`.
+
+---
+
+### 🟢 Giải pháp kỹ thuật đã xử lý (Fix Implementation)
+
+#### 1. Bổ sung `PATCH` vào CORS Whitelist ([`src/backend/src/config/cors.js`](file:///d:/KEOCOTRITHUC/src/backend/src/config/cors.js))
+- Đã thêm `'PATCH'` vào mảng `methods`:
+  ```javascript
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+  ```
+
+#### 2. Mở song song cả 2 Route `POST` và `PATCH` ([`src/backend/src/routes/admin.routes.js`](file:///d:/KEOCOTRITHUC/src/backend/src/routes/admin.routes.js))
+- Khai báo đồng thời để đáp ứng mọi client và proxy:
+  ```javascript
+  router.patch('/participants/:participantId/claim', handleClaimReward);
+  router.post('/participants/:participantId/claim', handleClaimReward);
+  ```
+
+#### 3. Tối ưu Frontend Service với cơ chế chịu lỗi kép ([`src/frontend/src/services/api.js`](file:///d:/KEOCOTRITHUC/src/frontend/src/services/api.js))
+- `claimParticipantReward()` ưu tiên gửi `POST` (phương thức chuẩn nhất của HTTP tránh bị chặn preflight), đồng thời tự động fallback sang `PATCH` nếu kết nối backend cũ.
+- Bọc bắt lỗi chu đáo, hiển thị thông báo rõ ràng bằng tiếng Việt nếu backend Render đang khởi động lại thay vì văng chữ `Failed to fetch`.
+
+#### 4. Đồng bộ tức thời giao diện Admin ([`src/frontend/src/pages/admin/AdminPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/admin/AdminPage.jsx))
+- Hàm `handleClaimReward(participantId, studentName, studentId)` cập nhật trạng thái `reward_claimed: true` đồng loạt cho tất cả các dòng có cùng `student_id` và `last_participant_id`.
+- Thao tác chuyển ngay lập tức sang `✅ ĐÃ NHẬN` mà không cần Ban tổ chức phải tải lại toàn bộ trang.
+
+---
+
 ### 📌 Lưu ý vận hành (Deployment Note)
-Khi đẩy code mới lên GitHub, nếu Backend Render chưa tự động deploy:
-1. Đăng nhập [dashboard.render.com](https://dashboard.render.com).
-2. Chọn Web Service **`keoco-backend`**.
-3. Bấm **Manual Deploy** -> Chọn **Deploy latest commit** để Render cập nhật phiên bản backend mới nhất.
+Sau khi push commit lên GitHub:
+1. **Frontend Vercel:** Tự động build và cập nhật sau khoảng 1 - 2 phút.
+2. **Backend Render:** Nếu dịch vụ Render đang tắt tính năng Auto-Deploy:
+   - Truy cập [dashboard.render.com](https://dashboard.render.com).
+   - Chọn service **`keoco-backend`**.
+   - Bấm **Manual Deploy** -> Chọn **Deploy latest commit** để nạp cấu hình CORS mới.
 

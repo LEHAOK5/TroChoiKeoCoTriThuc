@@ -241,8 +241,8 @@ function createAdminRouter(roomManager) {
     }
   });
 
-  // 4c. Xác nhận đã phát quà cho một lượt thi đấu
-  router.patch('/participants/:participantId/claim', async (req, res, next) => {
+  // 4c. Xác nhận đã phát quà cho một lượt thi đấu (Hỗ trợ cả POST và PATCH)
+  const handleClaimReward = async (req, res, next) => {
     try {
       const participantId = parseInt(req.params.participantId, 10);
       const updated = await claimParticipantReward(participantId);
@@ -253,7 +253,9 @@ function createAdminRouter(roomManager) {
     } catch (err) {
       next(err);
     }
-  });
+  };
+  router.patch('/participants/:participantId/claim', handleClaimReward);
+  router.post('/participants/:participantId/claim', handleClaimReward);
 
   // 4b. Match history list
   router.get('/matches', async (req, res, next) => {

@@ -278,7 +278,7 @@ export default function AdminPage({ onBackToGame }) {
     window.open(`${API_URL}/api/admin/registrations?format=csv&token=${token}`, '_blank');
   };
 
-  const handleClaimReward = async (participantId, studentName) => {
+  const handleClaimReward = async (participantId, studentName, studentId = null) => {
     if (!participantId) {
       alert('Chưa có thông tin lượt đấu để trao quà');
       return;
@@ -290,14 +290,14 @@ export default function AdminPage({ onBackToGame }) {
       setSuccessMsg(`Đã xác nhận trao quà cho sinh viên "${studentName}" thành công!`);
       // Cập nhật trạng thái ngay trong danh sách sinh viên
       setRegistrations(prev => prev.map(s => {
-        if (s.last_participant_id === participantId) {
+        if (s.last_participant_id === participantId || (studentId && s.student_id === studentId)) {
           return { ...s, reward_claimed: true, claimed_at: new Date().toISOString() };
         }
         return s;
       }));
       // Cập nhật trong popup lịch sử nếu đang mở
       setStudentHistory(prev => prev.map(h => {
-        if (h.id === participantId) {
+        if (h.id === participantId || h.participant_id === participantId || (studentId && h.student_id === studentId)) {
           return { ...h, reward_claimed: true, claimed_at: new Date().toISOString() };
         }
         return h;
@@ -1558,7 +1558,7 @@ export default function AdminPage({ onBackToGame }) {
                                   </span>
                                 ) : (s.last_participant_id && (isWin || isLose || totalMatches > 0)) ? (
                                   <button
-                                    onClick={() => handleClaimReward(s.last_participant_id, s.full_name)}
+                                    onClick={() => handleClaimReward(s.last_participant_id, s.full_name, s.student_id)}
                                     disabled={claimingId === s.last_participant_id}
                                     style={{
                                       padding: '6px 12px',
@@ -1952,8 +1952,8 @@ export default function AdminPage({ onBackToGame }) {
                                   </span>
                                 ) : (
                                   <button
-                                    onClick={() => handleClaimReward(h.id, selectedStudent.full_name)}
-                                    disabled={claimingId === h.id}
+                                    onClick={() => handleClaimReward(h.participant_id || h.id, selectedStudent?.full_name || h.student_name, selectedStudent?.student_id || h.student_id)}
+                                    disabled={claimingId === (h.participant_id || h.id)}
                                     style={{
                                       background: '#FEF08A',
                                       color: '#713F12',
