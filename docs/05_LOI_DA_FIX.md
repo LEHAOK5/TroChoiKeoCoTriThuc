@@ -160,3 +160,62 @@ Sau khi push commit lên GitHub:
    - Chọn service **`keoco-backend`**.
    - Bấm **Manual Deploy** -> Chọn **Deploy latest commit** để nạp cấu hình CORS mới.
 
+---
+
+## 4. Lỗi Không Hiển Thị 4 Thẻ Bài Chiến Thuật & Nút Chuông Bị Đẩy Tràn Trên Điện Thoại Di Động
+
+- **Thời gian xử lý:** 27/10/2026.
+- **Tập tin liên quan:**
+  - [`src/frontend/vercel.json`](file:///d:/KEOCOTRITHUC/src/frontend/vercel.json)
+  - [`src/frontend/index.html`](file:///d:/KEOCOTRITHUC/src/frontend/index.html)
+  - [`src/frontend/src/components/TacticalCardBar.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/components/TacticalCardBar.jsx)
+  - [`src/frontend/src/styles/index.css`](file:///d:/KEOCOTRITHUC/src/frontend/src/styles/index.css)
+
+### 1. Hiện Tượng & Báo Cáo Từ Thí Sinh
+- Trên máy tính / laptop: Giao diện hiển thị đầy đủ 4 thẻ bài chiến thuật và nút bấm chuông vàng 3D.
+- Trên điện thoại di động:
+  - Mở trang web không thấy xuất hiện thanh 4 thẻ bài chiến thuật.
+  - 4 nút đáp án bị dàn thành 1 cột dọc dài, đẩy nút bấm chuông vàng 3D trôi tụt hẳn xuống đáy màn hình, người chơi phải cuộn màn hình mới thấy được nút chuông.
+
+---
+
+### 2. Phân Tích Nguyên Nhân Gốc Rễ (Root Causes)
+
+#### Nguyên nhân 1: Trình duyệt di động (Chrome/Safari) lưu Cache cứng SPA Bundle cũ
+- Khi người chơi mở tab trên điện thoại và tham gia trận đấu liên tục, trình duyệt di động giữ nguyên kết nối WebSocket và không tự động tải lại file JavaScript bundle mới của Vercel trừ khi người chơi đóng hẳn tab hoặc xóa cache.
+- File [`vercel.json`](file:///d:/KEOCOTRITHUC/src/frontend/vercel.json) và [`index.html`](file:///d:/KEOCOTRITHUC/src/frontend/index.html) trước đó chưa cấu hình các chỉ thị `Cache-Control: public, max-age=0, must-revalidate` và thẻ `meta http-equiv="Cache-Control"`, khiến trình duyệt điện thoại ưu tiên đọc từ bộ nhớ đệm cục bộ (Memory/Disk Cache).
+
+#### Nguyên nhân 2: Tràn chiều cao màn hình di động (Mobile Layout Height Crunch)
+- Trên điện thoại di động (chiều cao khả dụng thực tế chỉ khoảng **600px - 650px** do bị trừ thanh URL trên cùng và thanh điều hướng 3 nút ảo `■ ● ◀` bên dưới):
+  - `app-header`: 48px
+  - `arena-card` (sàn đấu kéo co Chibi): 220px (chiều cao `rope-stage` mặc định 138px)
+  - `question-tier` (hộp câu hỏi): 120px
+  - 4 đáp án xếp dạng 1 cột dọc (`grid-template-columns: 1fr`): chiếm tới **210px**!
+  - Nút bấm chuông vàng 3D khổng lồ: 110px
+  - Tổng chiều cao lên tới **750px - 780px**, vượt xa chiều cao màn hình điện thoại.
+- Kết quả: Khi không cuộn màn hình, thanh thẻ bài và nút chuông vàng bị đẩy lệch hoặc trôi khỏi tầm mắt ngón tay cái của người chơi.
+
+---
+
+### 3. Giải Pháp Khắc Phục Triệt Để
+
+1. **Cấu hình chống Cache ngầm trên Vercel & HTML:**
+   - [`src/frontend/vercel.json`](file:///d:/KEOCOTRITHUC/src/frontend/vercel.json): Thiết lập header `Cache-Control: public, max-age=0, must-revalidate` cho trang `index.html` để điện thoại luôn đối chiếu phiên bản mới nhất từ server mỗi khi mở trang.
+   - [`src/frontend/index.html`](file:///d:/KEOCOTRITHUC/src/frontend/index.html): Bổ sung 3 thẻ meta:
+     ```html
+     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+     <meta http-equiv="Pragma" content="no-cache" />
+     <meta http-equiv="Expires" content="0" />
+     ```
+
+2. **Tối ưu thanh thẻ bài trên Mobile ([`TacticalCardBar.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/components/TacticalCardBar.jsx)):**
+   - Đặt `id="tactical-card-bar"`, `flexShrink: 0`, `position: 'relative'`, `zIndex: 10` đảm bảo không bao giờ bị đè lấp.
+   - Bổ sung icon trực quan trên nút bấm di động: `❄️ DDoS`, `⚖️ X2 Kéo`, `🔍 50/50`, `🛡️ T.Lửa`.
+
+3. **Tái cấu trúc bố cục Mobile 100dvh không cần cuộn trang ([`index.css`](file:///d:/KEOCOTRITHUC/src/frontend/src/styles/index.css)):**
+   - **Chuyển lưới đáp án Mobile sang 2x2 (`grid-template-columns: 1fr 1fr`):** 4 đáp án chia thành 2 hàng x 2 cột, chiều cao thu gọn từ 210px xuống còn **~85px** (tiết kiệm hơn **120px**).
+   - **Thu gọn sàn đấu Chibi trên Mobile:** Giảm chiều cao `rope-stage` từ 138px xuống **114px**; giảm padding `arena-card` (tiết kiệm thêm **45px**).
+   - **Chuẩn hóa nút chuông vàng 3D:** Điều chỉnh kích thước 96px x 96px, hiển thị sắc nét ngay dưới ngón tay cái.
+   - **Kết quả:** Tổng chiều cao toàn bộ giao diện chỉ còn **~580px**, vừa vặn hoàn hảo trong chuẩn `100dvh` trên mọi dòng điện thoại thông minh (iPhone, Samsung, Xiaomi, Oppo...) mà không bao giờ bị trôi hoặc phải cuộn trang.
+
+

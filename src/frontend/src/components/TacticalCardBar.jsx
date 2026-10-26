@@ -24,7 +24,7 @@ export default function TacticalCardBar({
   const CARDS = [
     {
       id: 'DDOS',
-      name: isMobile ? 'DDoS' : '❄️ DDoS',
+      name: isMobile ? '❄️ DDoS' : '❄️ DDoS',
       fullName: 'Tấn Công DDoS',
       icon: '❄️',
       canUse: canUseDDoS,
@@ -36,7 +36,7 @@ export default function TacticalCardBar({
     },
     {
       id: 'DOUBLE_PULL',
-      name: isMobile ? 'X2 Kéo' : '⚖️ X2 Kéo',
+      name: isMobile ? '⚖️ X2 Kéo' : '⚖️ X2 Kéo',
       fullName: 'Kháng Cáo Tối Cao',
       icon: '⚖️',
       canUse: canUseDoublePull,
@@ -48,7 +48,7 @@ export default function TacticalCardBar({
     },
     {
       id: 'FIFTY_FIFTY',
-      name: isMobile ? '50/50' : '🔍 50/50',
+      name: isMobile ? '🔍 50/50' : '🔍 50/50',
       fullName: 'Luật Sư Tư Vấn',
       icon: '🔍',
       canUse: canUse5050,
@@ -60,7 +60,7 @@ export default function TacticalCardBar({
     },
     {
       id: 'FIREWALL',
-      name: isMobile ? 'T.Lửa' : '🛡️ Tường Lửa',
+      name: isMobile ? '🛡️ T.Lửa' : '🛡️ Tường Lửa',
       fullName: 'Tường Lửa',
       icon: '🛡️',
       canUse: canUseFirewall,
@@ -80,6 +80,7 @@ export default function TacticalCardBar({
 
   return (
     <div
+      id="tactical-card-bar"
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -87,13 +88,16 @@ export default function TacticalCardBar({
         gap: isMobile ? 4 : 8,
         width: '100%',
         padding: isMobile ? '3px 4px' : '5px 8px',
-        background: 'rgba(255, 255, 255, 0.85)',
+        background: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(8px)',
         borderRadius: 12,
         border: '2px solid var(--comic-black)',
         boxShadow: '0 2px 0 var(--comic-black)',
         marginBottom: isMobile ? 4 : 8,
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        flexShrink: 0,
+        position: 'relative',
+        zIndex: 10
       }}
     >
       <div style={{
