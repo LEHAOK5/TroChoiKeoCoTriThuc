@@ -212,10 +212,53 @@ Sau khi push commit lên GitHub:
    - Đặt `id="tactical-card-bar"`, `flexShrink: 0`, `position: 'relative'`, `zIndex: 10` đảm bảo không bao giờ bị đè lấp.
    - Bổ sung icon trực quan trên nút bấm di động: `❄️ DDoS`, `⚖️ X2 Kéo`, `🔍 50/50`, `🛡️ T.Lửa`.
 
-3. **Tái cấu trúc bố cục Mobile 100dvh không cần cuộn trang ([`index.css`](file:///d:/KEOCOTRITHUC/src/frontend/src/styles/index.css)):**
-   - **Chuyển lưới đáp án Mobile sang 2x2 (`grid-template-columns: 1fr 1fr`):** 4 đáp án chia thành 2 hàng x 2 cột, chiều cao thu gọn từ 210px xuống còn **~85px** (tiết kiệm hơn **120px**).
-   - **Thu gọn sàn đấu Chibi trên Mobile:** Giảm chiều cao `rope-stage` từ 138px xuống **114px**; giảm padding `arena-card` (tiết kiệm thêm **45px**).
-   - **Chuẩn hóa nút chuông vàng 3D:** Điều chỉnh kích thước 96px x 96px, hiển thị sắc nét ngay dưới ngón tay cái.
-   - **Kết quả:** Tổng chiều cao toàn bộ giao diện chỉ còn **~580px**, vừa vặn hoàn hảo trong chuẩn `100dvh` trên mọi dòng điện thoại thông minh (iPhone, Samsung, Xiaomi, Oppo...) mà không bao giờ bị trôi hoặc phải cuộn trang.
+---
+
+## 5. Lỗi Hiển Thị Kích Thước Ô Đáp Án Bị Lệch Bất Thường & Bẻ Gãy Từ Ngữ Trên Điện Thoại Di Động
+
+- **Thời gian xử lý:** 27/10/2026.
+- **Tập tin liên quan:**
+  - [`src/frontend/src/components/BuzzerControl.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/components/BuzzerControl.jsx)
+  - [`src/frontend/src/styles/index.css`](file:///d:/KEOCOTRITHUC/src/frontend/src/styles/index.css)
+
+### 1. Hiện Tượng & Báo Cáo
+- Khi câu hỏi có đáp án chứa cụm từ dài hoặc thuật ngữ chuyên ngành (ví dụ: `.ipa (iOS App Store Package)`):
+  - Ô đáp án B bị co hẹp theo chiều ngang, chữ bị bẻ gãy vụn thành 6 dòng cụt lủn và ngắt đôi chữ cái giữa chừng: `Packa` xuống dòng `ge)`.
+  - Ô đáp án A bên cạnh chỉ chứa chữ ngắn `.apk` nhưng lại bị kéo dãn cao chót vót (~120px) thành một khối hộp trống hoác để bằng chiều cao ô B.
+  - Hàng 2 (ô C và D) lại ngắn bình thường (~40px), gây ra hiện tượng mất cân đối thị giác nghiêm trọng (ô trên khổng lồ, ô dưới lép kẹp).
+
+---
+
+### 2. Phân Tích Nguyên Nhân Gốc Rễ (Root Causes)
+
+1. **Bề ngang bị chia đôi trong lưới 2x2 trên màn hình hẹp:**
+   - Khi áp dụng `grid-template-columns: 1fr 1fr` trên điện thoại di động (chiều rộng màn hình chỉ từ **360px - 390px**), bề ngang mỗi ô bị giảm xuống còn khoảng **160px**.
+   - Sau khi trừ đi huy hiệu chữ `A/B/C/D` (24px), biểu tượng hình học `⚪/🔺/⏹️/🔶` (20px), icon ổ khóa `🔒` (20px) và padding biên, **chiều rộng thực tế dành cho văn bản đáp án chỉ còn ~80px**.
+   - Không gian 80px là quá hẹp đối với các đáp án câu hỏi kiến thức IT và Pháp luật, khiến chữ bị dồn ứ ngắt dòng liên tục.
+
+2. **Thuộc tính CSS bẻ gãy từ ngữ tùy tiện (`overflowWrap: anywhere`):**
+   - Trong `BuzzerControl.jsx`, thuộc tính `overflowWrap: 'anywhere'` và `wordBreak: 'break-word'` buộc trình duyệt phải ngắt dòng tại bất kỳ ký tự nào khi vượt quá 80px, dẫn đến các từ như `Package)` bị xé đôi thành `Packa` và `ge)`.
+
+3. **Cơ chế kéo dãn đồng đều hàng của CSS Grid:**
+   - Trong CSS Grid 2 cột, 2 ô nằm trên cùng một hàng (hàng 1 gồm ô A và ô B) luôn tự động kéo dãn chiều cao bằng nhau (`align-items: stretch`). Khi ô B dài và phình to lên 120px, ô A bắt buộc phải phình theo, tạo ra các ô đáp án to nhỏ không đồng đều.
+
+---
+
+### 3. Giải Pháp Khắc Phục Triệt Để
+
+1. **Chuẩn hóa lưới đáp án Mobile sang 1 cột dọc toàn chiều ngang ([`index.css`](file:///d:/KEOCOTRITHUC/src/frontend/src/styles/index.css)):**
+   - Đặt lại `.answer-grid` trên mobile về `grid-template-columns: 1fr; gap: 5px; width: 100%;`.
+   - Mỗi ô đáp án sở hữu trọn vẹn toàn bộ bề ngang màn hình (~350px), mang lại vùng đệm văn bản rộng rãi **~260px** (gấp 3.2 lần so với 80px trước đó).
+   - Đáp án dài `.ipa (iOS App Store Package)` hiển thị gọn gàng trên đúng 1 dòng duy nhất mà không bị xuống dòng.
+
+2. **Loại bỏ thuộc tính cắt vụn từ ngữ ([`BuzzerControl.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/components/BuzzerControl.jsx)):**
+   - Chuyển `wordBreak: 'normal'` và `overflowWrap: 'break-word'`.
+   - Đảm bảo các từ ngữ, thuật ngữ tiếng Việt và tiếng Anh luôn giữ nguyên khối, chỉ xuống dòng khi hết từ tự nhiên.
+
+3. **Tối ưu kích thước ô đồng nhất ([`index.css`](file:///d:/KEOCOTRITHUC/src/frontend/src/styles/index.css)):**
+   - Thiết lập `min-height: 38px`, `padding: 5px 10px`, `font-size: 0.84rem`, `border-radius: 12px`.
+   - Nút chuông vàng 3D điều chỉnh kích thước `88px x 88px` để cân đối hoàn hảo trong viewport `100dvh`.
+   - Cả 4 ô đáp án A, B, C, D đều có kích thước hài hòa, đều đặn, không còn tình trạng ô khổng lồ ô tí hon.
+
 
 

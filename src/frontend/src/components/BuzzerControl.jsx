@@ -254,11 +254,11 @@ export default function BuzzerControl({
                   minWidth: 0,
                   lineHeight: 1.35,
                   fontWeight: 800,
-                  fontSize: isMobile ? '0.86rem' : '0.98rem',
+                  fontSize: isMobile ? '0.84rem' : '0.98rem',
                   color: is5050Eliminated ? '#94A3B8' : '#0F172A',
                   textAlign: 'left',
-                  wordBreak: 'break-word',
-                  overflowWrap: 'anywhere',
+                  wordBreak: 'normal',
+                  overflowWrap: 'break-word',
                   whiteSpace: 'normal',
                   textDecoration: is5050Eliminated ? 'line-through' : 'none'
                 }}
