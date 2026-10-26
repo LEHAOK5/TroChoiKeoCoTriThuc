@@ -37,6 +37,7 @@ module.exports = {
     RESUME_SESSION: 'resumeSession',
     ADD_BOT: 'addBot',
     PONG: 'pong',
+    USE_TACTICAL_CARD: 'useTacticalCard',
 
     // Server -> Client
     ROOM_STATE_UPDATE: 'roomStateUpdate',
@@ -49,6 +50,15 @@ module.exports = {
     GAME_OVER: 'gameOver',
     PING: 'ping',
     PLAYER_STATUS: 'playerStatus',
-    ERROR_MESSAGE: 'errorMessage'
+    ERROR_MESSAGE: 'errorMessage',
+    TACTICAL_CARD_ACTIVATED: 'tacticalCardActivated',
+    CARD_EFFECT_APPLIED: 'cardEffectApplied',
+    FIFTY_FIFTY_RESULT: 'fiftyFiftyResult'
+  },
+  TACTICAL_CARDS: {
+    FIREWALL: 'FIREWALL',
+    DDOS: 'DDOS',
+    DOUBLE_PULL: 'DOUBLE_PULL',
+    FIFTY_FIFTY: 'FIFTY_FIFTY'
   }
 };

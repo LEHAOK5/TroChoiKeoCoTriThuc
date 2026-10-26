@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { triggerHaptic } from '../utils/haptics';
+import TacticalCardBar from './TacticalCardBar';
 
 const GLYPHS = ['⚪', '🔺', '⏹️', '🔶'];
 const LETTERS = ['A', 'B', 'C', 'D'];
@@ -12,7 +13,14 @@ export default function BuzzerControl({
   reboundData,
   lastResult,
   onPressBuzzer,
-  onSubmitAnswer
+  onSubmitAnswer,
+  tacticalCards = {},
+  roundActiveCard = null,
+  playerTeam = 'A',
+  isFrozen = false,
+  frozenSecondsLeft = 0,
+  fiftyFiftyEliminated = [],
+  onUseCard = () => {}
 }) {
   const [selectedIdx, setSelectedIdx] = useState(null);
   const [secondsLeft, setSecondsLeft] = useState(10);
@@ -40,6 +48,7 @@ export default function BuzzerControl({
   }, [deadline, uiState]);
 
   const handleBuzzClick = () => {
+    if (isFrozen) return;
     triggerHaptic(50);
     onPressBuzzer();
   };
@@ -60,6 +69,18 @@ export default function BuzzerControl({
 
   return (
     <div className="interaction-tier" style={{ width: '100%', maxWidth: 740, margin: '0 auto' }}>
+      {/* 🃏 Thanh Thẻ Bài Chiến Thuật (Tactical Cards) */}
+      <TacticalCardBar
+        teamCards={tacticalCards[playerTeam] || {}}
+        roundActiveCard={roundActiveCard}
+        uiState={uiState}
+        playerTeam={playerTeam}
+        buzzerData={buzzerData}
+        reboundData={reboundData}
+        onUseCard={onUseCard}
+        isMobile={isMobile}
+      />
+
       {/* Top Banner Status Bar based on UI State */}
       {isWaiting && (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: isMobile ? 4 : 8, padding: '0 4px' }}>
@@ -149,6 +170,7 @@ export default function BuzzerControl({
           const glyph = GLYPHS[idx];
           const isSelected = selectedIdx === idx;
           const isWrongEliminated = reboundData?.wrongOptionIndex === idx;
+          const is5050Eliminated = Array.isArray(fiftyFiftyEliminated) && fiftyFiftyEliminated.includes(idx);
           const isRevealedCorrect = isLocked && lastResult && Number(lastResult.correctIndex) === idx;
           const isRevealedWrong = isLocked && lastResult && isSelected && !lastResult.isCorrect;
 
@@ -161,7 +183,7 @@ export default function BuzzerControl({
             btnClass += ' unlocked-steal';
           }
 
-          if (isWrongEliminated) {
+          if (isWrongEliminated || is5050Eliminated) {
             btnClass += ' eliminated';
           }
 
@@ -189,20 +211,26 @@ export default function BuzzerControl({
             btnBg = '#FEE2E2';
             btnBorder = '2.5px solid #DC2626';
             btnShadow = '0 4px 0 #991B1B';
+          } else if (is5050Eliminated) {
+            btnBg = '#F1F5F9';
+            btnBorder = '2px dashed #94A3B8';
+            btnShadow = 'none';
           }
 
           return (
             <button
               key={idx}
               className={btnClass}
-              disabled={!canClickAnswers || isWrongEliminated || selectedIdx !== null}
+              disabled={!canClickAnswers || isWrongEliminated || is5050Eliminated || selectedIdx !== null}
               onClick={() => handleSelectOption(idx)}
               id={`answer-btn-${letter}`}
               style={{
                 background: btnBg,
                 border: btnBorder,
                 boxShadow: btnShadow,
-                color: '#0F172A',
+                color: is5050Eliminated ? '#94A3B8' : '#0F172A',
+                opacity: is5050Eliminated ? 0.35 : 1,
+                position: 'relative',
                 transition: 'all 0.15s ease'
               }}
             >
@@ -227,11 +255,12 @@ export default function BuzzerControl({
                   lineHeight: 1.35,
                   fontWeight: 800,
                   fontSize: isMobile ? '0.86rem' : '0.98rem',
-                  color: '#0F172A',
+                  color: is5050Eliminated ? '#94A3B8' : '#0F172A',
                   textAlign: 'left',
                   wordBreak: 'break-word',
                   overflowWrap: 'anywhere',
-                  whiteSpace: 'normal'
+                  whiteSpace: 'normal',
+                  textDecoration: is5050Eliminated ? 'line-through' : 'none'
                 }}
               >
                 {opt}
@@ -248,7 +277,24 @@ export default function BuzzerControl({
                   ❌
                 </span>
               )}
-              {!isRevealedCorrect && !isRevealedWrong && (isWaiting || isOpponent || isLocked) && !isWrongEliminated && (
+              {is5050Eliminated && (
+                <span style={{
+                  position: 'absolute',
+                  right: 8,
+                  top: '50%',
+                  transform: 'translateY(-50%) rotate(-12deg)',
+                  fontSize: '0.72rem',
+                  color: '#DC2626',
+                  fontWeight: 900,
+                  border: '1.5px solid #DC2626',
+                  padding: '1px 5px',
+                  borderRadius: 4,
+                  background: 'rgba(254, 226, 226, 0.95)'
+                }}>
+                  BÁC BỎ ❌
+                </span>
+              )}
+              {!isRevealedCorrect && !isRevealedWrong && !is5050Eliminated && (isWaiting || isOpponent || isLocked) && !isWrongEliminated && (
                 <span
                   style={{
                     fontSize: '1.05rem',
@@ -261,7 +307,7 @@ export default function BuzzerControl({
                   🔒
                 </span>
               )}
-              {isWrongEliminated && !isRevealedCorrect && (
+              {isWrongEliminated && !isRevealedCorrect && !is5050Eliminated && (
                 <span style={{ fontSize: '1.1rem', color: '#EF4444', marginLeft: 'auto', flexShrink: 0 }}>
                   ❌
                 </span>
@@ -273,18 +319,29 @@ export default function BuzzerControl({
 
       {/* GIANT 3D GOLDEN BELL BUZZER (Shown when waiting for players to buzz) */}
       {isWaiting && (
-        <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ marginTop: isMobile ? 8 : 14, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <button
-            className="buzzer-tactile"
-            onClick={handleBuzzClick}
+            className={`buzzer-tactile ${isFrozen ? 'buzzer-frozen' : ''}`}
+            onClick={isFrozen ? undefined : handleBuzzClick}
+            disabled={isFrozen}
             id="buzzer-giant-btn"
-            title="Đập chuông thật nhanh để giành quyền trả lời"
+            style={isFrozen ? {
+              background: 'linear-gradient(180deg, #BAE6FD 0%, #38BDF8 50%, #0284C7 100%)',
+              borderColor: '#0369A1',
+              color: '#0C4A6E',
+              boxShadow: '0 4px 0 #075985, 0 0 16px rgba(56, 189, 248, 0.6)',
+              cursor: 'not-allowed',
+              transform: 'none'
+            } : undefined}
+            title={isFrozen ? `Đang bị đóng băng bởi DDoS! (${frozenSecondsLeft}s)` : "Đập chuông thật nhanh để giành quyền trả lời"}
           >
-            <span className="buzzer-icon">🔔</span>
-            <span className="buzzer-label">BẤM CHUÔNG!</span>
+            <span className="buzzer-icon">{isFrozen ? '❄️' : '🔔'}</span>
+            <span className="buzzer-label">
+              {isFrozen ? `ĐÓNG BĂNG (${frozenSecondsLeft}s)` : 'BẤM CHUÔNG!'}
+            </span>
           </button>
-          <small style={{ marginTop: 6, color: 'var(--text-muted)', fontWeight: 800, fontSize: '0.78rem' }}>
-            ⚡ Đập chuông nhanh để mở khóa 4 đáp án trên!
+          <small style={{ marginTop: 6, color: isFrozen ? '#0284C7' : 'var(--text-muted)', fontWeight: 800, fontSize: '0.78rem' }}>
+            {isFrozen ? '🥶 Đang bị đối thủ DDoS đóng băng chuông!' : '⚡ Đập chuông nhanh để mở khóa 4 đáp án trên!'}
           </small>
         </div>
       )}

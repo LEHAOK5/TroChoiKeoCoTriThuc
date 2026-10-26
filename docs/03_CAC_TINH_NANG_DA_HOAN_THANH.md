@@ -92,3 +92,38 @@ Tài liệu này liệt kê chi tiết từng tính năng đã hoàn thiện tro
   - **Popup Lịch Sử Đấu Chi Tiết (`StudentHistoryModal`):** Bấm `[ 📜 Lịch sử ]` trên bất kỳ sinh viên nào để xem:
     - Thẻ tóm tắt: Tổng trận, Số trận thắng, Số trận thua, Tỉ lệ thắng (%).
     - Bảng chi tiết từng trận: Mã trận, Đội tham gia (⚡ Đội A / 🔥 Đội B), Tỉ số chung cuộc, Kết quả cá nhân, Thời gian kết thúc, Nút trao quà từng trận.
+
+---
+
+## 8. Hệ Thống 4 Thẻ Bài Chiến Thuật (Tactical Cards & Power-Ups)
+- **Tập tin Backend:**
+  - [`src/backend/src/config/constants.js`](file:///d:/KEOCOTRITHUC/src/backend/src/config/constants.js): Định nghĩa hằng số `TACTICAL_CARDS` (`FIREWALL`, `DDOS`, `DOUBLE_PULL`, `FIFTY_FIFTY`) và các sự kiện Socket.io thời gian thực (`useTacticalCard`, `tacticalCardActivated`, `cardEffectApplied`, `fiftyFiftyResult`).
+  - [`src/backend/src/game/RopeCalculator.js`](file:///d:/KEOCOTRITHUC/src/backend/src/game/RopeCalculator.js): Hỗ trợ cộng $+2$ điểm và kéo 2 nấc dây khi dùng thẻ Kháng Cáo (Double Pull); hỗ trợ phạt lùi dây 1 nấc về phía đối phương (`applyPenalty`) khi trả lời sai.
+  - [`src/backend/src/game/GameRoom.js`](file:///d:/KEOCOTRITHUC/src/backend/src/game/GameRoom.js): Quản lý In-Memory State trên RAM (`tacticalCards`, `roundActiveCard`, `frozenUntil`), kiểm tra tính hợp lệ của từng pha đấu, từ chối bấm chuông khi dính DDoS, loại trừ 2 đáp án sai cho 50/50 và khóa pha cướp điểm Rebound khi có Tường Lửa.
+  - [`src/backend/src/sockets/gameHandlers.js`](file:///d:/KEOCOTRITHUC/src/backend/src/sockets/gameHandlers.js): Lắng nghe sự kiện `useTacticalCard` và kết nối trực tiếp vào `handleUseTacticalCard()`.
+  - [`src/backend/tests/unit_test_tactical_cards.js`](file:///d:/KEOCOTRITHUC/src/backend/tests/unit_test_tactical_cards.js): Bộ kiểm thử tự động toàn diện kiểm chứng chính xác 100% logic của cả 4 thẻ bài.
+
+- **Tập tin Frontend:**
+  - [`src/frontend/src/components/TacticalCardBar.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/components/TacticalCardBar.jsx): Thanh ngang 4 thẻ bài phong cách truyện tranh Neo-Brutalism (chiều cao $< 42\text{px}$ trên Mobile, viền đen dày $2.5\text{px}$, đổ bóng cứng 3D). Tự động bật/tắt khả năng bấm tùy theo từng pha câu hỏi.
+  - [`src/frontend/src/components/BuzzerControl.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/components/BuzzerControl.jsx):
+    - Tích hợp thanh thẻ bài `TacticalCardBar` ngay phía trên cụm chuông và 4 đáp án.
+    - Hiệu ứng **Đóng băng nứt nẻ xanh tuyết (`❄️ BỊ ĐÓNG BĂNG`)** lên nút chuông 3D khi bị dính đòn DDoS, tạm khóa thao tác bấm trong 2.5s.
+    - Hiệu ứng **Đóng dấu mộc đỏ chéo ngang `❌ BÁC BỎ`** và làm mờ $35\%$ lên 2 đáp án sai khi kích hoạt thẻ 50/50.
+  - [`src/frontend/src/components/TugOfWarArena.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/components/TugOfWarArena.jsx):
+    - Hiệu ứng màng lưới năng lượng lục giác xanh dương `#38BDF8` bao bọc 5 bạn Chibi khi kích hoạt `🛡️ TƯỜNG LỬA`.
+    - Huy hiệu bốc lửa `⚡⚖️ X2 LỰC KÉO!` nhún nhảy trên nơ dây kéo khi kích hoạt `KHÁNG CÁO TỐI CAO`.
+    - Bóng thoại dở khóc dở cười `🥶 Bị DDoS lag quá!` trên đầu đội bị đóng băng.
+  - [`src/frontend/src/utils/audio.js`](file:///d:/KEOCOTRITHUC/src/frontend/src/utils/audio.js): 4 hàm Synthesizer Web Audio API độc lập, 100% offline không cần file mp3 ngoài:
+    - `playShieldUp()`: Tiếng năng lượng tạo khiên bảo vệ.
+    - `playFreezeSfx()`: Tiếng băng tuyết đóng băng sắc lạnh nứt nẻ.
+    - `playDoubleGavel()`: Tiếng búa công lý Thẩm phán gõ dồn vang 2 nhịp.
+    - `playFiftyFiftyDismiss()`: Tiếng đóng dấu mộc bác bỏ đáp án.
+  - [`src/frontend/src/App.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/App.jsx): Đồng bộ trạng thái thẻ bài, xử lý countdown thời gian đóng băng DDoS và tự động phát âm thanh hiệu ứng tương ứng.
+
+- **4 Thẻ bài chiến thuật hoàn chỉnh:**
+  1. **🛡️ TƯỜNG LỬA (FIREWALL):** Khóa quyền cướp điểm Rebound của đối thủ nếu trả lời sai.
+  2. **❄️ TẤN CÔNG DDoS (DDOS):** Đóng băng nút bấm chuông vàng 3D của đối thủ trong 2.5 giây đầu.
+  3. **⚖️ KHÁNG CÁO TỐI CAO (DOUBLE_PULL):** Đúng được $+2$ điểm (dây giật 2 nấc), Sai bị phạt lùi 1 nấc dây về đối phương.
+  4. **🔍 LUẬT SƯ TƯ VẤN (FIFTY_FIFTY):** Loại trừ 2 đáp án sai ngẫu nhiên, đóng dấu mộc đỏ `❌ BÁC BỎ`.
+- **Luật cân bằng trận đấu:** Mỗi thẻ chỉ dùng 1 lần/trận; mỗi round chỉ kích hoạt tối đa 1 thẻ/đội; hồi phục 4 thẻ khi bắt đầu trận mới.
+- **Quy chuẩn hiển thị:** Nằm trọn vẹn trong chiều cao `100dvh`, không gây cuộn trang trên mọi thiết bị di động.

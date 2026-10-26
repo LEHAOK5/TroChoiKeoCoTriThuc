@@ -13,7 +13,8 @@ export default function TugOfWarArena({
   teamACount = 5,
   teamBCount = 5,
   lastResult = null,
-  isBuzzed = false
+  isBuzzed = false,
+  activeCardEffects = {}
 }) {
   // ropeOffset ranges from -10 (Team A pull max) to +10 (Team B pull max)
   const isMatchPoint = (scoreA === 9 || scoreB === 9) && !winner;
@@ -320,7 +321,30 @@ export default function TugOfWarArena({
             style={{
               left: `calc(50% + ${ribbonShiftPx}px)`
             }}
-          />
+          >
+            {/* Double Pull Badge */}
+            {activeCardEffects.doublePullTeam && (
+              <div style={{
+                position: 'absolute',
+                top: -30,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                background: '#FEF08A',
+                border: '2px solid #854D0E',
+                borderRadius: 8,
+                padding: '2px 8px',
+                fontSize: '0.72rem',
+                fontWeight: 900,
+                color: '#713F12',
+                boxShadow: '0 2px 0 #854D0E, 0 0 10px rgba(234, 179, 8, 0.6)',
+                whiteSpace: 'nowrap',
+                animation: 'bounce 0.6s infinite alternate',
+                zIndex: 20
+              }}>
+                ⚡⚖️ X2 LỰC KÉO!
+              </div>
+            )}
+          </div>
 
           {/* ⚡ TEAM A: 5 BẠN CHIBI VHU (3 NAM, 2 NỮ) ⚡ */}
           <div
@@ -337,6 +361,47 @@ export default function TugOfWarArena({
               transition: 'transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)'
             }}
           >
+            {/* Firewall Blue Hexagonal Shield Effect */}
+            {activeCardEffects.firewallTeam === 'A' && (
+              <div style={{
+                position: 'absolute',
+                inset: -6,
+                borderRadius: 14,
+                border: '2px solid #38BDF8',
+                background: 'radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, rgba(37, 99, 235, 0.08) 100%)',
+                boxShadow: '0 0 14px #38BDF8',
+                pointerEvents: 'none',
+                zIndex: 25
+              }}>
+                <span style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', fontSize: '0.68rem', background: '#0284C7', color: '#FFF', padding: '1px 6px', borderRadius: 5, fontWeight: 900, whiteSpace: 'nowrap' }}>
+                  🛡️ TƯỜNG LỬA
+                </span>
+              </div>
+            )}
+
+            {/* DDoS Freeze Speech Bubble */}
+            {activeCardEffects.frozenTeam === 'A' && (
+              <div style={{
+                position: 'absolute',
+                top: -24,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                background: '#BAE6FD',
+                border: '1.5px solid #0284C7',
+                color: '#0369A1',
+                borderRadius: 8,
+                padding: '2px 8px',
+                fontSize: '0.68rem',
+                fontWeight: 900,
+                whiteSpace: 'nowrap',
+                zIndex: 25,
+                boxShadow: '0 2px 0 #0284C7',
+                animation: 'shake 0.3s infinite alternate'
+              }}>
+                🥶 Bị DDoS lag quá!
+              </div>
+            )}
+
             {/* Dust cloud when Team A is actively pulling */}
             {isAPulling && (
               <span
@@ -383,6 +448,46 @@ export default function TugOfWarArena({
               transition: 'transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)'
             }}
           >
+            {/* Firewall Blue Hexagonal Shield Effect */}
+            {activeCardEffects.firewallTeam === 'B' && (
+              <div style={{
+                position: 'absolute',
+                inset: -6,
+                borderRadius: 14,
+                border: '2px solid #38BDF8',
+                background: 'radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, rgba(37, 99, 235, 0.08) 100%)',
+                boxShadow: '0 0 14px #38BDF8',
+                pointerEvents: 'none',
+                zIndex: 25
+              }}>
+                <span style={{ position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)', fontSize: '0.68rem', background: '#0284C7', color: '#FFF', padding: '1px 6px', borderRadius: 5, fontWeight: 900, whiteSpace: 'nowrap' }}>
+                  🛡️ TƯỜNG LỬA
+                </span>
+              </div>
+            )}
+
+            {/* DDoS Freeze Speech Bubble */}
+            {activeCardEffects.frozenTeam === 'B' && (
+              <div style={{
+                position: 'absolute',
+                top: -24,
+                left: '50%',
+                transform: 'translateX(-50%)',
+                background: '#BAE6FD',
+                border: '1.5px solid #0284C7',
+                color: '#0369A1',
+                borderRadius: 8,
+                padding: '2px 8px',
+                fontSize: '0.68rem',
+                fontWeight: 900,
+                whiteSpace: 'nowrap',
+                zIndex: 25,
+                boxShadow: '0 2px 0 #0284C7',
+                animation: 'shake 0.3s infinite alternate'
+              }}>
+                🥶 Bị DDoS lag quá!
+              </div>
+            )}
             {teamBIndices.map((origIdx, renderIdx) => (
               <div
                 key={`b-pos-${origIdx}`}

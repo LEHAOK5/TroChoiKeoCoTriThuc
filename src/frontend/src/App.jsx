@@ -24,7 +24,11 @@ import {
   isMuted,
   toggleMute,
   subscribeMute,
-  unlockAudio
+  unlockAudio,
+  playShieldUp,
+  playFreezeSfx,
+  playDoubleGavel,
+  playFiftyFiftyDismiss
 } from './utils/audio';
 import {
   announceBuzzer,
@@ -136,6 +140,17 @@ export default function App() {
     return null;
   });
 
+  // Tactical Cards states
+  const [tacticalCards, setTacticalCards] = useState({
+    A: { FIREWALL: false, DDOS: false, DOUBLE_PULL: false, FIFTY_FIFTY: false },
+    B: { FIREWALL: false, DDOS: false, DOUBLE_PULL: false, FIFTY_FIFTY: false }
+  });
+  const [roundActiveCard, setRoundActiveCard] = useState(null);
+  const [activeCardEffects, setActiveCardEffects] = useState({});
+  const [isFrozen, setIsFrozen] = useState(false);
+  const [frozenSecondsLeft, setFrozenSecondsLeft] = useState(0);
+  const [fiftyFiftyEliminated, setFiftyFiftyEliminated] = useState([]);
+
   // Synchronized state refs to prevent stale closures in socket events
   const playerRef = useRef(player);
   const sessionTokenRef = useRef(sessionToken);
@@ -199,11 +214,22 @@ export default function App() {
       setScoreA(state.scoreA);
       setScoreB(state.scoreB);
       setRopeOffset(state.ropeOffset);
+      if (state.tacticalCards) {
+        setTacticalCards(state.tacticalCards);
+      }
 
       if (state.state === 'LOBBY') {
         if (currentPageRef.current === 'GAME') setCurrentPage('LOBBY');
         setGameOverData(null);
         setCurrentQuestion(null);
+        setTacticalCards({
+          A: { FIREWALL: false, DDOS: false, DOUBLE_PULL: false, FIFTY_FIFTY: false },
+          B: { FIREWALL: false, DDOS: false, DOUBLE_PULL: false, FIFTY_FIFTY: false }
+        });
+        setRoundActiveCard(null);
+        setActiveCardEffects({});
+        setIsFrozen(false);
+        setFiftyFiftyEliminated([]);
       }
     });
 
@@ -217,7 +243,8 @@ export default function App() {
       }
     });
 
-    socket.on('newQuestion', ({ question, state, scoreA: sA, scoreB: sB, ropeOffset: rO, deadline: dl }) => {
+    socket.on('newQuestion', (data) => {
+      const { question, scoreA: sA, scoreB: sB, ropeOffset: rO, deadline: dl, tacticalCards: tc } = data;
       setCountdown(null);
       setCurrentPage('GAME');
       setUiState('QUESTION_WAITING');
@@ -229,6 +256,11 @@ export default function App() {
       setScoreA(sA);
       setScoreB(sB);
       setRopeOffset(rO);
+      setRoundActiveCard(null);
+      setFiftyFiftyEliminated([]);
+      setIsFrozen(false);
+      setActiveCardEffects({});
+      if (tc) setTacticalCards(tc);
 
       // Dynamic BGM: Nếu sắp chạm vạch thắng (offset >= 2 hoặc tỷ số >= 3), kích hoạt TENSION BGM 152BPM!
       const isMatchPoint = Math.abs(rO || 0) >= 2 || (sA !== undefined && sB !== undefined && (sA >= 3 || sB >= 3));
@@ -258,6 +290,13 @@ export default function App() {
       setRopeOffset(result.ropeOffset);
       setUiState('LOCKED');
 
+      if (result.blockedByFirewall) {
+        playShieldUp();
+      }
+      if (result.isDoublePull) {
+        playDoubleGavel();
+      }
+
       if (result.isCorrect) {
         playCorrect();
         playRopePull();
@@ -270,6 +309,68 @@ export default function App() {
         playWrong();
         playCrowdGasp();
         announceWrong(result.answeringTeam);
+      }
+    });
+
+    socket.on('tacticalCardActivated', ({ team, cardType, playerName, tacticalCards: tc }) => {
+      if (tc) setTacticalCards(tc);
+      const curPlayer = playerRef.current;
+      if (curPlayer && curPlayer.team === team) {
+        setRoundActiveCard(cardType);
+      }
+      if (cardType === 'FIREWALL') {
+        playShieldUp();
+        setActiveCardEffects(prev => ({ ...prev, firewallTeam: team }));
+      } else if (cardType === 'DOUBLE_PULL') {
+        playDoubleGavel();
+        setActiveCardEffects(prev => ({ ...prev, doublePullTeam: team }));
+      } else if (cardType === 'DDOS') {
+        playFreezeSfx();
+      } else if (cardType === 'FIFTY_FIFTY') {
+        playFiftyFiftyDismiss();
+      }
+    });
+
+    socket.on('cardEffectApplied', ({ type, targetTeam, durationMs }) => {
+      if (type === 'FREEZE_BUZZER') {
+        const curPlayer = playerRef.current;
+        playFreezeSfx();
+        setActiveCardEffects(prev => ({ ...prev, frozenTeam: targetTeam }));
+
+        if (curPlayer && curPlayer.team === targetTeam) {
+          setIsFrozen(true);
+          setFrozenSecondsLeft((durationMs / 1000).toFixed(1));
+
+          const interval = setInterval(() => {
+            setFrozenSecondsLeft(prev => {
+              const next = (parseFloat(prev) - 0.2).toFixed(1);
+              if (parseFloat(next) <= 0) {
+                clearInterval(interval);
+                return 0;
+              }
+              return next;
+            });
+          }, 200);
+
+          setTimeout(() => {
+            clearInterval(interval);
+            setIsFrozen(false);
+            setFrozenSecondsLeft(0);
+            setActiveCardEffects(prev => ({ ...prev, frozenTeam: null }));
+          }, durationMs);
+        } else {
+          setTimeout(() => {
+            setActiveCardEffects(prev => ({ ...prev, frozenTeam: null }));
+          }, durationMs);
+        }
+      }
+    });
+
+    socket.on('fiftyFiftyResult', ({ team, eliminatedIndexes }) => {
+      const curPlayer = playerRef.current;
+      if (curPlayer && curPlayer.team === team) {
+        setFiftyFiftyEliminated(eliminatedIndexes);
+        playFiftyFiftyDismiss();
       }
     });
 
@@ -436,6 +537,11 @@ export default function App() {
 
   const handleRematch = () => {
     socket.emit('requestRematch', { roomCode: roomStateRef.current?.roomCode || 'KCO1' });
+  };
+
+  const handleUseTacticalCard = (cardType) => {
+    const rCode = sessionStorage.getItem('keoco_roomCode') || roomStateRef.current?.roomCode || 'KCO1';
+    socket.emit('useTacticalCard', { roomCode: rCode, cardType });
   };
 
   return (
@@ -631,8 +737,15 @@ export default function App() {
           gameOverData={gameOverData}
           roomState={roomState}
           player={player}
+          tacticalCards={tacticalCards}
+          roundActiveCard={roundActiveCard}
+          activeCardEffects={activeCardEffects}
+          isFrozen={isFrozen}
+          frozenSecondsLeft={frozenSecondsLeft}
+          fiftyFiftyEliminated={fiftyFiftyEliminated}
           onPressBuzzer={handlePressBuzzer}
           onSubmitAnswer={handleSubmitAnswer}
+          onUseCard={handleUseTacticalCard}
           onRematch={handleRematch}
         />
       )}

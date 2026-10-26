@@ -776,3 +776,117 @@ export function stopRegistrationTheme(fade = true) {
   }, 100);
 }
 
+// =====================================================================
+// TACTICAL CARDS SOUND EFFECTS (Synthesized Web Audio API)
+// =====================================================================
+
+// 1. Thẻ Tường Lửa (FIREWALL): Năng lượng khiên bảo vệ (Shield Up)
+export function playShieldUp() {
+  if (isAudioMuted) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  const filter = ctx.createBiquadFilter();
+
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(180, now);
+  osc.frequency.exponentialRampToValueAtTime(750, now + 0.35);
+
+  filter.type = 'bandpass';
+  filter.frequency.setValueAtTime(300, now);
+  filter.frequency.exponentialRampToValueAtTime(1200, now + 0.35);
+  filter.Q.value = 4.0;
+
+  gain.gain.setValueAtTime(0.01, now);
+  gain.gain.linearRampToValueAtTime(0.35, now + 0.08);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+
+  osc.connect(filter);
+  filter.connect(gain);
+  gain.connect(getMasterOutput());
+
+  osc.start(now);
+  osc.stop(now + 0.45);
+}
+
+// 2. Thẻ DDoS: Băng tuyết đóng băng sắc lạnh nứt nẻ
+export function playFreezeSfx() {
+  if (isAudioMuted) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  [0, 0.08, 0.16].forEach((offset, idx) => {
+    const t = now + offset;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = idx % 2 === 0 ? 'sine' : 'triangle';
+    osc.frequency.setValueAtTime(1800 + idx * 450, t);
+    osc.frequency.exponentialRampToValueAtTime(3200 + idx * 300, t + 0.15);
+
+    gain.gain.setValueAtTime(0.28, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+
+    osc.connect(gain);
+    gain.connect(getMasterOutput());
+
+    osc.start(t);
+    osc.stop(t + 0.2);
+  });
+}
+
+// 3. Thẻ Kháng Cáo (DOUBLE PULL): Búa công lý gõ vang 2 tiếng liên tiếp
+export function playDoubleGavel() {
+  if (isAudioMuted) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  [0, 0.18].forEach(offset => {
+    const t = now + offset;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(220, t);
+    osc.frequency.exponentialRampToValueAtTime(65, t + 0.14);
+
+    gain.gain.setValueAtTime(0.48, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.16);
+
+    osc.connect(gain);
+    gain.connect(getMasterOutput());
+
+    osc.start(t);
+    osc.stop(t + 0.18);
+  });
+}
+
+// 4. Thẻ Luật Sư 50/50: Âm thanh đóng dấu mộc đỏ BÁC BỎ
+export function playFiftyFiftyDismiss() {
+  if (isAudioMuted) return;
+  const ctx = getAudioContext();
+  if (!ctx) return;
+
+  const now = ctx.currentTime;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(600, now);
+  osc.frequency.exponentialRampToValueAtTime(130, now + 0.18);
+
+  gain.gain.setValueAtTime(0.3, now);
+  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+
+  osc.connect(gain);
+  gain.connect(getMasterOutput());
+
+  osc.start(now);
+  osc.stop(now + 0.22);
+}
+

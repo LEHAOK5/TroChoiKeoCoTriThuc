@@ -31,6 +31,13 @@ function registerGameHandlers(socket, roomManager, io) {
     room.submitAnswer(socket.id, answerIndex);
   });
 
+  // Use Tactical Card
+  socket.on(SOCKET_EVENTS.USE_TACTICAL_CARD, ({ roomCode, cardType } = {}) => {
+    const room = findRoom(roomCode);
+    if (!room) return;
+    room.handleUseTacticalCard(socket.id, cardType);
+  });
+
   // Request Rematch
   socket.on(SOCKET_EVENTS.REQUEST_REMATCH, ({ roomCode } = {}) => {
     const room = findRoom(roomCode);

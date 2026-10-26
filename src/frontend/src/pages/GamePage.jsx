@@ -21,8 +21,15 @@ export default function GamePage({
   gameOverData,
   roomState,
   player,
+  tacticalCards = {},
+  roundActiveCard = null,
+  activeCardEffects = {},
+  isFrozen = false,
+  frozenSecondsLeft = 0,
+  fiftyFiftyEliminated = [],
   onPressBuzzer,
   onSubmitAnswer,
+  onUseCard,
   onRematch
 }) {
   const [showCutscene, setShowCutscene] = useState(true);
@@ -55,6 +62,7 @@ export default function GamePage({
         teamBCount={teamBCount}
         lastResult={lastResult}
         isBuzzed={uiState === 'BUZZER_SELF' || uiState === 'BUZZER_OPPONENT'}
+        activeCardEffects={activeCardEffects}
       />
 
       {/* Tier 2: Quiz Question (25%) */}
@@ -71,8 +79,15 @@ export default function GamePage({
         buzzerData={buzzerData}
         reboundData={reboundData}
         lastResult={lastResult}
+        tacticalCards={tacticalCards}
+        roundActiveCard={roundActiveCard}
+        playerTeam={player?.team || 'A'}
+        isFrozen={isFrozen}
+        frozenSecondsLeft={frozenSecondsLeft}
+        fiftyFiftyEliminated={fiftyFiftyEliminated}
         onPressBuzzer={onPressBuzzer}
         onSubmitAnswer={onSubmitAnswer}
+        onUseCard={onUseCard}
       />
 
       {/* Result feedback overlay */}

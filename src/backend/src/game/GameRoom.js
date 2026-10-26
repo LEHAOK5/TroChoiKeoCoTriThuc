@@ -1,5 +1,5 @@
 const config = require('../config/env');
-const { ROOM_STATES, TEAMS, TEAM_NAMES, END_REASONS, SOCKET_EVENTS } = require('../config/constants');
+const { ROOM_STATES, TEAMS, TEAM_NAMES, END_REASONS, SOCKET_EVENTS, TACTICAL_CARDS } = require('../config/constants');
 const BuzzerEngine = require('./BuzzerEngine');
 const ReboundLaw = require('./ReboundLaw');
 const RopeCalculator = require('./RopeCalculator');
@@ -49,6 +49,14 @@ class GameRoom {
     this.startedAt = null;
     this.finishedAt = null;
     this.currentDeadline = null;
+
+    // Tactical Cards state
+    this.tacticalCards = {
+      A: { FIREWALL: false, DDOS: false, DOUBLE_PULL: false, FIFTY_FIFTY: false },
+      B: { FIREWALL: false, DDOS: false, DOUBLE_PULL: false, FIFTY_FIFTY: false }
+    };
+    this.roundActiveCard = { A: null, B: null };
+    this.frozenUntil = { A: 0, B: 0 };
   }
 
   // --- PLAYER MANAGEMENT ---
@@ -405,6 +413,8 @@ class GameRoom {
     this.reboundData = null;
     this.state = ROOM_STATES.ROUND_BUZZ;
     this.roundCount++;
+    this.roundActiveCard = { A: null, B: null };
+    this.frozenUntil = { A: 0, B: 0 };
 
     this.buzzerEngine.reset();
 
@@ -425,6 +435,7 @@ class GameRoom {
       scoreA: this.scoreA,
       scoreB: this.scoreB,
       ropeOffset: this.ropeOffset,
+      tacticalCards: this.tacticalCards,
       deadline
     });
 
@@ -475,6 +486,20 @@ class GameRoom {
     const player = this.players.get(socketId);
     if (!player) {
       logger.info('GameRoom', `Buzzer rejected: player not found for socket ${socketId}`);
+      return;
+    }
+
+    // Check if team is frozen by DDoS attack
+    if (this.frozenUntil[player.team] && Date.now() < this.frozenUntil[player.team]) {
+      logger.info('GameRoom', `Buzzer rejected: Team ${player.team} is currently frozen by DDoS attack`);
+      const timeLeft = Math.max(0.1, (this.frozenUntil[player.team] - Date.now()) / 1000).toFixed(1);
+      const sock = this.io.sockets.sockets.get(socketId);
+      if (sock) {
+        sock.emit(SOCKET_EVENTS.ERROR_MESSAGE, {
+          code: 'TEAM_FROZEN',
+          message: `Nút chuông đang bị đóng băng bởi DDoS! Còn ${timeLeft}s`
+        });
+      }
       return;
     }
 
@@ -543,18 +568,20 @@ class GameRoom {
     const isCorrect = Number(answerIndex) === Number(q.answer_index);
 
     if (isCorrect) {
-      const result = this.ropeCalculator.applyScore(team, this.scoreA, this.scoreB, this.ropeOffset);
+      const isDoublePull = this.roundActiveCard[team] === 'DOUBLE_PULL';
+      const result = this.ropeCalculator.applyScore(team, this.scoreA, this.scoreB, this.ropeOffset, isDoublePull);
       this.scoreA = result.scoreA;
       this.scoreB = result.scoreB;
       this.ropeOffset = result.ropeOffset;
 
-      logger.info('GameRoom', `[${this.roomCode}] Team ${team} answered CORRECT! Score: A=${this.scoreA} | B=${this.scoreB}`);
+      logger.info('GameRoom', `[${this.roomCode}] Team ${team} answered CORRECT! isDoublePull=${isDoublePull} Score: A=${this.scoreA} | B=${this.scoreB}`);
 
       this.io.to(this.roomCode).emit(SOCKET_EVENTS.ANSWER_RESULT, {
         isCorrect: true,
         answeringTeam: team,
         playerName,
         isRebound,
+        isDoublePull,
         correctIndex: q.answer_index,
         correctOption: q.options[q.answer_index],
         explanation: q.explanation,
@@ -572,7 +599,35 @@ class GameRoom {
       // Incorrect answer
       logger.info('GameRoom', `[${this.roomCode}] Team ${team} answered INCORRECT!`);
 
+      // Check Double Pull Penalty (lùi dây 1 nấc về phía đối phương)
+      if (this.roundActiveCard[team] === 'DOUBLE_PULL') {
+        const penResult = this.ropeCalculator.applyPenalty(team, this.scoreA, this.scoreB, this.ropeOffset, 1);
+        this.ropeOffset = penResult.ropeOffset;
+        logger.info('GameRoom', `[${this.roomCode}] DOUBLE_PULL failed! Penalized Team ${team} -1 rope step.`);
+      }
+
       if (!isRebound) {
+        // Check Firewall: Chống cướp điểm Rebound
+        if (this.roundActiveCard[team] === 'FIREWALL') {
+          logger.info('GameRoom', `[${this.roomCode}] Team ${team} FIREWALL active! Blocked opponent rebound.`);
+          this.io.to(this.roomCode).emit(SOCKET_EVENTS.ANSWER_RESULT, {
+            isCorrect: false,
+            answeringTeam: team,
+            playerName,
+            isRebound: false,
+            blockedByFirewall: true,
+            isDoublePull: this.roundActiveCard[team] === 'DOUBLE_PULL',
+            correctIndex: q.answer_index,
+            correctOption: q.options[q.answer_index],
+            explanation: q.explanation,
+            scoreA: this.scoreA,
+            scoreB: this.scoreB,
+            ropeOffset: this.ropeOffset
+          });
+          setTimeout(() => this.nextQuestion(), 3500);
+          return;
+        }
+
         // Open Rebound Opportunity for opponent (8s) with eliminatedIndex
         const rebound = this.reboundLaw.createReboundOpportunity({
           failedTeam: team,
@@ -749,6 +804,12 @@ class GameRoom {
     this.currentQuestion = null;
     this.buzzerWinner = null;
     this.reboundData = null;
+    this.tacticalCards = {
+      A: { FIREWALL: false, DDOS: false, DOUBLE_PULL: false, FIFTY_FIFTY: false },
+      B: { FIREWALL: false, DDOS: false, DOUBLE_PULL: false, FIFTY_FIFTY: false }
+    };
+    this.roundActiveCard = { A: null, B: null };
+    this.frozenUntil = { A: 0, B: 0 };
     // Note: Do not clear this.usedQuestionIds here so rematches continue with fresh questions
 
     for (const player of this.players.values()) {
@@ -756,6 +817,124 @@ class GameRoom {
     }
 
     this.broadcastRoomState();
+  }
+
+  // Handle tactical card usage
+  handleUseTacticalCard(socketId, cardType) {
+    const player = this.players.get(socketId);
+    if (!player) return;
+    const team = player.team;
+    const opponentTeam = team === 'A' ? 'B' : 'A';
+    const sock = this.io.sockets.sockets.get(socketId);
+
+    if (!Object.values(TACTICAL_CARDS).includes(cardType)) return;
+
+    if (this.tacticalCards[team][cardType]) {
+      if (sock) {
+        sock.emit(SOCKET_EVENTS.ERROR_MESSAGE, {
+          code: 'CARD_ALREADY_USED',
+          message: 'Thẻ bài này đã được sử dụng trong trận đấu!'
+        });
+      }
+      return;
+    }
+
+    if (this.roundActiveCard[team]) {
+      if (sock) {
+        sock.emit(SOCKET_EVENTS.ERROR_MESSAGE, {
+          code: 'CARD_LIMIT_REACHED',
+          message: 'Mỗi vòng chỉ được sử dụng tối đa 1 thẻ chiến thuật!'
+        });
+      }
+      return;
+    }
+
+    if (cardType === TACTICAL_CARDS.DDOS) {
+      if (this.state !== ROOM_STATES.ROUND_BUZZ || this.buzzerWinner) {
+        if (sock) sock.emit(SOCKET_EVENTS.ERROR_MESSAGE, { code: 'INVALID_TIMING', message: 'Thẻ DDoS chỉ được dùng trong 15s bấm chuông khi chưa có ai giành quyền!' });
+        return;
+      }
+      this.tacticalCards[team].DDOS = true;
+      this.roundActiveCard[team] = 'DDOS';
+      const durationMs = 2500;
+      this.frozenUntil[opponentTeam] = Date.now() + durationMs;
+
+      this.io.to(this.roomCode).emit(SOCKET_EVENTS.CARD_EFFECT_APPLIED, {
+        type: 'FREEZE_BUZZER',
+        targetTeam: opponentTeam,
+        durationMs,
+        triggeredByTeam: team,
+        playerName: player.name
+      });
+      this.io.to(this.roomCode).emit(SOCKET_EVENTS.TACTICAL_CARD_ACTIVATED, {
+        team,
+        cardType: 'DDOS',
+        playerName: player.name,
+        tacticalCards: this.tacticalCards
+      });
+      logger.info('GameRoom', `[${this.roomCode}] Team ${team} (${player.name}) activated DDOS on Team ${opponentTeam}`);
+    } else if (cardType === TACTICAL_CARDS.FIFTY_FIFTY) {
+      const canUse = (this.state === ROOM_STATES.ROUND_ANSWER && this.buzzerWinner?.team === team) ||
+                     (this.state === ROOM_STATES.ROUND_REBOUND && this.reboundData?.reboundTeam === team);
+      if (!canUse) {
+        if (sock) sock.emit(SOCKET_EVENTS.ERROR_MESSAGE, { code: 'INVALID_TIMING', message: 'Thẻ 50/50 chỉ được dùng khi đội bạn đang có quyền trả lời!' });
+        return;
+      }
+      this.tacticalCards[team].FIFTY_FIFTY = true;
+      this.roundActiveCard[team] = 'FIFTY_FIFTY';
+
+      const correctIdx = Number(this.currentQuestion.answer_index);
+      let wrongIndexes = [0, 1, 2, 3].filter(idx => idx !== correctIdx);
+      if (this.state === ROOM_STATES.ROUND_REBOUND && this.reboundData?.eliminatedIndex !== undefined) {
+        wrongIndexes = wrongIndexes.filter(idx => idx !== Number(this.reboundData.eliminatedIndex));
+      }
+      wrongIndexes.sort(() => Math.random() - 0.5);
+      const eliminatedIndexes = wrongIndexes.slice(0, 2);
+
+      this.io.to(this.roomCode).emit(SOCKET_EVENTS.FIFTY_FIFTY_RESULT, {
+        team,
+        eliminatedIndexes
+      });
+      this.io.to(this.roomCode).emit(SOCKET_EVENTS.TACTICAL_CARD_ACTIVATED, {
+        team,
+        cardType: 'FIFTY_FIFTY',
+        playerName: player.name,
+        tacticalCards: this.tacticalCards
+      });
+      logger.info('GameRoom', `[${this.roomCode}] Team ${team} (${player.name}) activated FIFTY_FIFTY: eliminated [${eliminatedIndexes}]`);
+    } else if (cardType === TACTICAL_CARDS.FIREWALL) {
+      if (this.state !== ROOM_STATES.ROUND_ANSWER || this.buzzerWinner?.team !== team) {
+        if (sock) sock.emit(SOCKET_EVENTS.ERROR_MESSAGE, { code: 'INVALID_TIMING', message: 'Thẻ Tường Lửa chỉ được dùng khi đội bạn đang giữ quyền trả lời chính thức!' });
+        return;
+      }
+      this.tacticalCards[team].FIREWALL = true;
+      this.roundActiveCard[team] = 'FIREWALL';
+
+      this.io.to(this.roomCode).emit(SOCKET_EVENTS.TACTICAL_CARD_ACTIVATED, {
+        team,
+        cardType: 'FIREWALL',
+        playerName: player.name,
+        tacticalCards: this.tacticalCards
+      });
+      logger.info('GameRoom', `[${this.roomCode}] Team ${team} (${player.name}) activated FIREWALL`);
+    } else if (cardType === TACTICAL_CARDS.DOUBLE_PULL) {
+      const canUse = (this.state === ROOM_STATES.ROUND_BUZZ) ||
+                     (this.state === ROOM_STATES.ROUND_ANSWER && this.buzzerWinner?.team === team);
+      if (!canUse) {
+        if (sock) sock.emit(SOCKET_EVENTS.ERROR_MESSAGE, { code: 'INVALID_TIMING', message: 'Thẻ Kháng Cáo (X2) chỉ được dùng trước khi bấm chuông hoặc ngay khi vừa giành chuông!' });
+        return;
+      }
+      this.tacticalCards[team].DOUBLE_PULL = true;
+      this.roundActiveCard[team] = 'DOUBLE_PULL';
+
+      this.io.to(this.roomCode).emit(SOCKET_EVENTS.TACTICAL_CARD_ACTIVATED, {
+        team,
+        cardType: 'DOUBLE_PULL',
+        playerName: player.name,
+        tacticalCards: this.tacticalCards
+      });
+      logger.info('GameRoom', `[${this.roomCode}] Team ${team} (${player.name}) activated DOUBLE_PULL`);
+    }
   }
 
   clearRoundTimers() {
@@ -821,6 +1000,7 @@ class GameRoom {
       scoreA: this.scoreA,
       scoreB: this.scoreB,
       ropeOffset: this.ropeOffset,
+      tacticalCards: this.tacticalCards,
       isReadyA: teamA.length >= this.maxPerTeam && teamA.every(p => p.isReady),
       isReadyB: teamB.length >= this.maxPerTeam && teamB.every(p => p.isReady),
       deadline: this.currentDeadline
