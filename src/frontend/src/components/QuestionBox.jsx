@@ -30,24 +30,24 @@ export default function QuestionBox({ question, deadline }) {
 
   return (
     <div className="question-tier">
-      <div className="quiz-card" style={{ padding: isMobile ? '8px 12px' : '12px 18px' }}>
+      <div className="quiz-card" style={{ padding: isMobile ? '6px 10px' : '12px 18px' }}>
         {/* Header Metadata with Comic Badges */}
-        <div className="quiz-meta" style={{ gap: isMobile ? 6 : 10 }}>
-          <span className={`topic-badge ${isIT ? 'topic-it' : 'topic-law'}`} style={{ fontSize: isMobile ? '0.72rem' : '0.85rem' }}>
+        <div className="quiz-meta" style={{ gap: isMobile ? 4 : 10, marginBottom: isMobile ? 4 : 8 }}>
+          <span className={`topic-badge ${isIT ? 'topic-it' : 'topic-law'}`} style={{ fontSize: isMobile ? '0.7rem' : '0.85rem', padding: isMobile ? '2px 8px' : '4px 12px' }}>
             {isIT ? '💻 CÔNG NGHỆ THÔNG TIN' : '⚖️ PHÁP LUẬT ĐỜI SỐNG'}
           </span>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 4 : 10 }}>
             <span
               style={{
-                fontSize: isMobile ? '0.7rem' : '0.78rem',
+                fontSize: isMobile ? '0.68rem' : '0.78rem',
                 fontFamily: 'var(--font-title)',
                 color: '#713F12',
                 fontWeight: 900,
                 background: '#FEF08A',
                 border: '2px solid var(--comic-black)',
                 boxShadow: '0 2px 0 var(--comic-black)',
-                padding: isMobile ? '2px 8px' : '4px 10px',
+                padding: isMobile ? '2px 6px' : '4px 10px',
                 borderRadius: 999,
                 whiteSpace: 'nowrap'
               }}
@@ -55,7 +55,7 @@ export default function QuestionBox({ question, deadline }) {
               {isMobile ? '🎯 10đ' : '🎯 MỤC TIÊU 10đ'}
             </span>
             {deadline && (
-              <RingTimer seconds={secondsLeft} totalSeconds={15} size={isMobile ? 36 : 44} strokeWidth={isMobile ? 3.5 : 4} />
+              <RingTimer seconds={secondsLeft} totalSeconds={15} size={isMobile ? 32 : 44} strokeWidth={isMobile ? 3 : 4} />
             )}
           </div>
         </div>
@@ -65,11 +65,11 @@ export default function QuestionBox({ question, deadline }) {
           className="quiz-text"
           style={{
             fontFamily: 'var(--font-body)',
-            fontSize: isMobile ? '0.94rem' : '1.08rem',
+            fontSize: isMobile ? '0.88rem' : '1.08rem',
             fontWeight: 800,
             color: '#0F172A',
-            lineHeight: isMobile ? 1.4 : 1.5,
-            paddingTop: 3
+            lineHeight: isMobile ? 1.35 : 1.5,
+            paddingTop: 1
           }}
         >
           {question.question}

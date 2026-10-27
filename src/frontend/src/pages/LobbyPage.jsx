@@ -171,11 +171,11 @@ export default function LobbyPage({
             border: currentTeam === 'A' ? '3px solid #1A1AFF' : '2.5px solid var(--comic-black)',
             boxShadow: currentTeam === 'A' ? '0 6px 0 #1A1AFF' : 'var(--shadow-3d)',
             borderRadius: 18,
-            padding: '18px',
+            padding: isMobile ? '12px' : '18px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            gap: 16,
+            gap: isMobile ? 10 : 16,
             position: 'relative',
             overflow: 'hidden'
           }}
@@ -268,6 +268,68 @@ export default function LobbyPage({
               <span>⬅️ CHUYỂN SANG ĐỘI A</span>
             )}
           </button>
+
+          {/* Danh sách thành viên Đội A tích hợp */}
+          <div style={{ borderTop: '1.5px solid #E2E8F0', paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 900, color: '#1A1AFF' }}>
+                ⚡ THÀNH VIÊN ({teamA.length}/{maxPerTeam})
+              </span>
+              <span style={{
+                fontSize: '0.72rem',
+                fontWeight: 900,
+                color: readyA ? '#15803D' : '#B45309',
+                background: readyA ? '#DCFCE7' : '#FEF3C7',
+                border: '1px solid ' + (readyA ? '#86EFAC' : '#FDE68A'),
+                padding: '2px 8px',
+                borderRadius: 6
+              }}>
+                {readyA ? '✅ SẴN SÀNG' : '⏳ CHỜ SẴN SÀNG'}
+              </span>
+            </div>
+            {teamA.map(p => (
+              <div
+                key={p.socketId}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  background: p.socketId === player?.socketId ? '#F3F3FF' : '#F8FAFC',
+                  border: '1.5px solid ' + (p.socketId === player?.socketId ? '#C7C7FF' : '#E2E8F0'),
+                  padding: '6px 10px',
+                  borderRadius: 8,
+                  fontSize: '0.82rem'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span>👤</span>
+                  <strong style={{ color: 'var(--comic-black)' }}>{p.name}</strong>
+                  {p.socketId === player?.socketId && (
+                    <span style={{ background: '#1A1AFF', color: '#FFFFFF', fontSize: '0.68rem', fontWeight: 900, padding: '1px 5px', borderRadius: 4 }}>
+                      BẠN
+                    </span>
+                  )}
+                  <span style={{ color: '#64748B', fontSize: '0.74rem', fontWeight: 600 }}>({p.studentId})</span>
+                </div>
+                <span style={{
+                  color: p.isReady ? '#15803D' : '#B45309',
+                  background: p.isReady ? '#DCFCE7' : '#FEF3C7',
+                  border: '1px solid ' + (p.isReady ? '#86EFAC' : '#FDE68A'),
+                  padding: '1px 6px',
+                  borderRadius: 4,
+                  fontWeight: 900,
+                  fontSize: '0.72rem'
+                }}>
+                  {p.isReady ? '✅' : '⏳'}
+                </span>
+              </div>
+            ))}
+            {teamA.length === 0 && (
+              <div style={{ color: '#94A3B8', fontSize: '0.78rem', fontStyle: 'italic', padding: '8px', textAlign: 'center', background: '#F8FAFC', borderRadius: 8, border: '1.5px dashed #CBD5E1' }}>
+                Chưa có đấu thủ vào Đội A
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Team B Card */}
@@ -277,11 +339,11 @@ export default function LobbyPage({
             border: currentTeam === 'B' ? '3px solid #EA580C' : '2.5px solid var(--comic-black)',
             boxShadow: currentTeam === 'B' ? '0 6px 0 #EA580C' : 'var(--shadow-3d)',
             borderRadius: 18,
-            padding: '18px',
+            padding: isMobile ? '12px' : '18px',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between',
-            gap: 16,
+            gap: isMobile ? 10 : 16,
             position: 'relative',
             overflow: 'hidden'
           }}
@@ -374,124 +436,25 @@ export default function LobbyPage({
               <span>CHUYỂN SANG ĐỘI B ➡️</span>
             )}
           </button>
-        </div>
-      </div>
 
-      {/* Rosters View - Real-time Player List for all teammates */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 16 }}>
-        {/* Team A Members */}
-        <div style={{
-          background: '#FFFFFF',
-          border: '2.5px solid var(--comic-black)',
-          boxShadow: 'var(--shadow-3d)',
-          borderRadius: 16,
-          padding: '14px'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.88rem', marginBottom: 10, paddingBottom: 8, borderBottom: '2px solid #E2E8F0' }}>
-            <strong style={{ color: '#1A1AFF', fontWeight: 900 }}>
-              ⚡ THÀNH VIÊN ĐỘI A ({teamA.length}/{maxPerTeam})
-            </strong>
-            <span style={{
-              fontSize: '0.78rem',
-              fontWeight: 900,
-              color: readyA ? '#15803D' : '#B45309',
-              background: readyA ? '#DCFCE7' : '#FEF3C7',
-              border: '1.5px solid ' + (readyA ? '#86EFAC' : '#FDE68A'),
-              padding: '3px 8px',
-              borderRadius: 8
-            }}>
-              {readyA ? '✅ SẴN SÀNG' : '⏳ CHỜ SẴN SÀNG'}
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {teamA.map(p => (
-              <div
-                key={p.socketId}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  background: p.socketId === player?.socketId ? '#F3F3FF' : '#F8FAFC',
-                  border: '1.5px solid ' + (p.socketId === player?.socketId ? '#C7C7FF' : '#E2E8F0'),
-                  padding: '8px 12px',
-                  borderRadius: 10,
-                  fontSize: '0.86rem'
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span>👤</span>
-                  <strong style={{ color: 'var(--comic-black)' }}>{p.name}</strong>
-                  {p.socketId === player?.socketId && (
-                    <span style={{
-                      background: '#1A1AFF',
-                      color: '#FFFFFF',
-                      fontSize: '0.72rem',
-                      fontWeight: 900,
-                      padding: '1px 6px',
-                      borderRadius: 6
-                    }}>
-                      BẠN
-                    </span>
-                  )}
-                  <span style={{ color: '#64748B', fontSize: '0.78rem', fontWeight: 600 }}>({p.studentId})</span>
-                </div>
-                <span style={{
-                  color: p.isReady ? '#15803D' : '#B45309',
-                  background: p.isReady ? '#DCFCE7' : '#FEF3C7',
-                  border: '1px solid ' + (p.isReady ? '#86EFAC' : '#FDE68A'),
-                  padding: '2px 8px',
-                  borderRadius: 6,
-                  fontWeight: 900,
-                  fontSize: '0.76rem'
-                }}>
-                  {p.isReady ? '✅ SẴN SÀNG' : '⏳ CHỜ'}
-                </span>
-              </div>
-            ))}
-            {teamA.length === 0 && (
-              <div style={{
-                color: '#64748B',
-                fontSize: '0.84rem',
-                fontStyle: 'italic',
-                padding: '12px',
-                textAlign: 'center',
-                background: '#F8FAFC',
-                borderRadius: 10,
-                border: '1.5px dashed #CBD5E1'
+          {/* Danh sách thành viên Đội B tích hợp */}
+          <div style={{ borderTop: '1.5px solid #E2E8F0', paddingTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.8rem', fontWeight: 900, color: '#EA580C' }}>
+                🔥 THÀNH VIÊN ({teamB.length}/{maxPerTeam})
+              </span>
+              <span style={{
+                fontSize: '0.72rem',
+                fontWeight: 900,
+                color: readyB ? '#15803D' : '#B45309',
+                background: readyB ? '#DCFCE7' : '#FEF3C7',
+                border: '1px solid ' + (readyB ? '#86EFAC' : '#FDE68A'),
+                padding: '2px 8px',
+                borderRadius: 6
               }}>
-                Chưa có đấu thủ vào Đội A
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Team B Members */}
-        <div style={{
-          background: '#FFFFFF',
-          border: '2.5px solid var(--comic-black)',
-          boxShadow: 'var(--shadow-3d)',
-          borderRadius: 16,
-          padding: '14px'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.88rem', marginBottom: 10, paddingBottom: 8, borderBottom: '2px solid #E2E8F0' }}>
-            <strong style={{ color: '#EA580C', fontWeight: 900 }}>
-              🔥 THÀNH VIÊN ĐỘI B ({teamB.length}/{maxPerTeam})
-            </strong>
-            <span style={{
-              fontSize: '0.78rem',
-              fontWeight: 900,
-              color: readyB ? '#15803D' : '#B45309',
-              background: readyB ? '#DCFCE7' : '#FEF3C7',
-              border: '1.5px solid ' + (readyB ? '#86EFAC' : '#FDE68A'),
-              padding: '3px 8px',
-              borderRadius: 8
-            }}>
-              {readyB ? '✅ SẴN SÀNG' : '⏳ CHỜ SẴN SÀNG'}
-            </span>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {readyB ? '✅ SẴN SÀNG' : '⏳ CHỜ SẴN SÀNG'}
+              </span>
+            </div>
             {teamB.map(p => (
               <div
                 key={p.socketId}
@@ -501,52 +464,36 @@ export default function LobbyPage({
                   alignItems: 'center',
                   background: p.socketId === player?.socketId ? '#FFF7ED' : '#F8FAFC',
                   border: '1.5px solid ' + (p.socketId === player?.socketId ? '#FED7AA' : '#E2E8F0'),
-                  padding: '8px 12px',
-                  borderRadius: 10,
-                  fontSize: '0.86rem'
+                  padding: '6px 10px',
+                  borderRadius: 8,
+                  fontSize: '0.82rem'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span>👤</span>
                   <strong style={{ color: 'var(--comic-black)' }}>{p.name}</strong>
                   {p.socketId === player?.socketId && (
-                    <span style={{
-                      background: '#EA580C',
-                      color: '#FFFFFF',
-                      fontSize: '0.72rem',
-                      fontWeight: 900,
-                      padding: '1px 6px',
-                      borderRadius: 6
-                    }}>
+                    <span style={{ background: '#EA580C', color: '#FFFFFF', fontSize: '0.68rem', fontWeight: 900, padding: '1px 5px', borderRadius: 4 }}>
                       BẠN
                     </span>
                   )}
-                  <span style={{ color: '#64748B', fontSize: '0.78rem', fontWeight: 600 }}>({p.studentId})</span>
+                  <span style={{ color: '#64748B', fontSize: '0.74rem', fontWeight: 600 }}>({p.studentId})</span>
                 </div>
                 <span style={{
                   color: p.isReady ? '#15803D' : '#B45309',
                   background: p.isReady ? '#DCFCE7' : '#FEF3C7',
                   border: '1px solid ' + (p.isReady ? '#86EFAC' : '#FDE68A'),
-                  padding: '2px 8px',
-                  borderRadius: 6,
+                  padding: '1px 6px',
+                  borderRadius: 4,
                   fontWeight: 900,
-                  fontSize: '0.76rem'
+                  fontSize: '0.72rem'
                 }}>
-                  {p.isReady ? '✅ SẴN SÀNG' : '⏳ CHỜ'}
+                  {p.isReady ? '✅' : '⏳'}
                 </span>
               </div>
             ))}
             {teamB.length === 0 && (
-              <div style={{
-                color: '#64748B',
-                fontSize: '0.84rem',
-                fontStyle: 'italic',
-                padding: '12px',
-                textAlign: 'center',
-                background: '#F8FAFC',
-                borderRadius: 10,
-                border: '1.5px dashed #CBD5E1'
-              }}>
+              <div style={{ color: '#64748B', fontSize: '0.78rem', fontStyle: 'italic', padding: '8px', textAlign: 'center', background: '#F8FAFC', borderRadius: 8, border: '1.5px dashed #CBD5E1' }}>
                 Chưa có đấu thủ vào Đội B
               </div>
             )}

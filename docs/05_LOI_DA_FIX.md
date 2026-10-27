@@ -349,6 +349,57 @@ Sau khi push commit lên GitHub:
    - `VictoryCutscene`: Chuyển background thành `#1A1AFF` phẳng.
    - **Kết quả:** Thẻ kết quả chiến thắng màu trắng viền đen dày nổi bật rực rỡ trên nền ngoài màu xanh thuần `#1A1AFF` phẳng 100%, sạch sẽ, không có bất kỳ đốm hạt hay quầng đen bóng ma nào.
 
+---
+
+## 8. Lỗi Nút Chuông Vàng Bị Văng/Cắt Mất Dưới Đáy Màn Hình Mobile & Tối Ưu Bố Cục Vừa Vặn 100dvh
+
+- **Thời gian xử lý:** 28/10/2026.
+- **Tập tin liên quan:**
+  - [`src/frontend/src/styles/index.css`](file:///d:/KEOCOTRITHUC/src/frontend/src/styles/index.css)
+  - [`src/frontend/src/components/QuestionBox.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/components/QuestionBox.jsx)
+  - [`src/frontend/src/components/TacticalCardBar.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/components/TacticalCardBar.jsx)
+  - [`src/frontend/src/components/BuzzerControl.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/components/BuzzerControl.jsx)
+  - [`src/frontend/src/pages/LobbyPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/LobbyPage.jsx)
+
+### 1. Hiện Tượng & Báo Cáo
+- Khi trải nghiệm ván đấu trên điện thoại di động (viewport 390x844px):
+  - Nút tròn chuông vàng 3D ("BẤM CHUÔNG!") ở dưới cùng bị **đẩy văng xuống dưới nếp gấp màn hình**, người chơi chỉ thấy được 1/3 chóp chuông hoặc khi câu hỏi dài/xuất hiện banner Match Point thì nút chuông **biến mất 100% khỏi màn hình**.
+  - Người chơi buộc phải vuốt cuộn màn hình mới thấy chuông, làm mất đi tính phản xạ tức thời của trò chơi kéo co.
+  - Thanh 4 thẻ bài chiến thuật có icon `🃏` thừa bị bóp méo bên trái và thẻ số 4 bị cắt chữ thành `T.Lửa`.
+  - Sảnh chờ `LobbyPage` bị kéo dài tới 4 tầng thẻ, đẩy nút "SẴN SÀNG" và "THÊM BOT" xuống tận trang 2.
+
+---
+
+### 2. Phân Tích Nguyên Nhân Gốc Rễ (Root Causes)
+1. **Quá tải không gian dọc (Vertical Space Exhaustion) trên Mobile:**
+   - Khung sân đấu `TugOfWarArena` chiếm tới `114px` + padding + score row = ~183px.
+   - Thẻ câu hỏi `QuestionBox` chiếm ~105px.
+   - Thanh thẻ bài và dòng trạng thái chiếm ~75px.
+   - 4 ô đáp án xếp dọc chiếm ~210px.
+   - Khối chuông vàng (kích thước 88x88px + margin + hint) chiếm ~125px.
+   - Tổng chiều cao vượt quá **750px**, trong khi không gian hiển thị khả dụng trên webview điện thoại chỉ còn khoảng ~720px. Thuộc tính `min-height: calc(100dvh - 48px)` khiến layout tự phình to và sinh thanh cuộn dọc.
+2. **Thanh thẻ bài chưa tối ưu lưới chia cột:**
+   - Dùng icon `🃏` cố định bên trái chiếm diện tích ngang của 4 thẻ bài, khiến thẻ "TƯỜNG LỬA" thiếu chỗ hiển thị phải viết tắt thành `T.Lửa`.
+3. **Sảnh chờ bị phân mảnh 2 lần:**
+   - Thẻ chọn đội (Đội A, Đội B) tách rời hoàn toàn với Thẻ danh sách thành viên (Roster View), dẫn đến lặp lại 4 thẻ lớn xếp chồng nhau.
+
+---
+
+### 3. Giải Pháp Khắc Phục Triệt Để
+1. **Thu gọn chiều cao các khối trong sân đấu để 100% vừa vặn `100dvh` không cần cuộn ([`index.css`](file:///d:/KEOCOTRITHUC/src/frontend/src/styles/index.css), [`QuestionBox.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/components/QuestionBox.jsx), [`BuzzerControl.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/components/BuzzerControl.jsx)):**
+   - Khóa `.game-layout` ở chiều cao `height: calc(100dvh - 48px); max-height: calc(100dvh - 48px); box-sizing: border-box; justify-content: space-between;`.
+   - Giảm chiều cao sân kéo co `.rope-stage` từ `114px` xuống `92px`, giữ nguyên toàn bộ 10 nhân vật Chibi và dây kéo cân đối theo yêu cầu người dùng.
+   - Tối ưu padding `.quiz-card` từ `8px 12px` xuống `6px 10px`, cỡ chữ câu hỏi `0.88rem`.
+   - Điều chỉnh ô đáp án `.answer-btn` `min-height: 33px`, `padding: 3px 8px`, `font-size: 0.81rem`.
+   - Thu gọn nút chuông vàng `.buzzer-tactile` từ `88px` xuống `78px x 78px`, `marginTop: 3px`, dòng gợi ý `marginTop: 2px`.
+   - **Tổng dung lượng chiều cao tiết kiệm được: ~100px**, giúp nút chuông vàng luôn hiển thị **100% trọn vẹn, to rõ và nổi bật ngay dưới ngón cái của người chơi mà không cần cuộn bất kỳ 1 pixel nào**.
+2. **Tối ưu thanh thẻ bài chiến thuật ([`TacticalCardBar.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/components/TacticalCardBar.jsx)):**
+   - Ẩn icon `🃏` thừa trên mobile, chia đều 4 nút thành lưới `grid-template-columns: repeat(4, 1fr)`.
+   - Tên thẻ "🛡️ TƯỜNG LỬA" hiển thị trọn vẹn, không còn bị cắt cụt `T.Lửa`.
+3. **Gọn hóa Sảnh chờ ([`LobbyPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/LobbyPage.jsx)):**
+   - Tích hợp trực tiếp danh sách thành viên vào bên trong thẻ Đội A và Đội B.
+   - Loại bỏ khối Roster View trùng lặp, đưa nút "THÊM BOT ĐỐI THỦ" và "BẤM SẴN SÀNG THI ĐẤU" lên ngay tầm mắt người chơi.
+
 
 
 

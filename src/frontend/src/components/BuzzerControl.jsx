@@ -83,12 +83,12 @@ export default function BuzzerControl({
 
       {/* Top Banner Status Bar based on UI State */}
       {isWaiting && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: isMobile ? 4 : 8, padding: '0 4px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: isMobile ? 2 : 8, padding: '0 4px' }}>
           <span style={{ color: '#FFFFFF', textShadow: '0 1px 2px rgba(0,0,0,0.7)', fontWeight: 900, fontSize: isMobile ? '0.78rem' : '0.85rem' }}>
             {isMobile ? '🔔 Bấm chuông vàng để giành quyền trả lời:' : '🔒 Đọc kỹ 4 đáp án & Bấm chuông vàng để giành quyền trả lời:'}
           </span>
           {deadline && (
-            <span className="timer-pill" style={{ fontSize: isMobile ? '0.75rem' : '0.85rem', padding: isMobile ? '2px 8px' : '4px 10px' }}>
+            <span className="timer-pill" style={{ fontSize: isMobile ? '0.72rem' : '0.85rem', padding: isMobile ? '2px 8px' : '4px 10px' }}>
               ⏱️ {secondsLeft}s
             </span>
           )}
@@ -96,14 +96,14 @@ export default function BuzzerControl({
       )}
 
       {isSelf && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: 8, padding: '0 4px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: isMobile ? 3 : 8, padding: '0 4px' }}>
           <span
             style={{
               color: '#1A1AFF',
               fontWeight: 900,
-              fontSize: '0.98rem',
+              fontSize: isMobile ? '0.82rem' : '0.98rem',
               background: '#E6E6FF',
-              padding: '4px 12px',
+              padding: isMobile ? '2px 8px' : '4px 12px',
               borderRadius: 999,
               border: '2px solid var(--comic-black)',
               boxShadow: '0 2px 0 var(--comic-black)'
@@ -111,7 +111,7 @@ export default function BuzzerControl({
           >
             ⚡ BẠN ĐÃ BẤM CHUÔNG! CHỌN 1 ĐÁP ÁN:
           </span>
-          <span className="timer-pill" style={{ background: '#E6E6FF', color: '#1010CC' }}>
+          <span className="timer-pill" style={{ background: '#E6E6FF', color: '#1010CC', fontSize: isMobile ? '0.72rem' : '0.85rem', padding: isMobile ? '2px 8px' : '4px 10px' }}>
             ⏱️ {secondsLeft}s
           </span>
         </div>
@@ -121,35 +121,35 @@ export default function BuzzerControl({
         <div
           style={{
             width: '100%',
-            padding: '8px 14px',
+            padding: isMobile ? '4px 8px' : '8px 14px',
             background: '#FFEDD5',
             border: '2.5px solid var(--comic-black)',
             borderRadius: 14,
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: 8,
+            marginBottom: isMobile ? 3 : 8,
             boxShadow: '0 3px 0 var(--comic-black)'
           }}
         >
-          <span style={{ color: '#C2410C', fontWeight: 900, fontSize: '0.88rem' }}>
+          <span style={{ color: '#C2410C', fontWeight: 900, fontSize: isMobile ? '0.78rem' : '0.88rem' }}>
             🔒 ĐỐI THỦ ({buzzerData?.team === 'A' ? 'ĐỘI A' : 'ĐỘI B'}) ĐANG TRẢ LỜI...
           </span>
-          <span style={{ color: '#9A3412', fontSize: '0.78rem', fontWeight: 800 }}>
+          <span style={{ color: '#9A3412', fontSize: isMobile ? '0.72rem' : '0.78rem', fontWeight: 800 }}>
             Chuẩn bị cướp điểm nếu sai!
           </span>
         </div>
       )}
 
       {isSteal && (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: 8, padding: '0 4px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: isMobile ? 3 : 8, padding: '0 4px' }}>
           <span
             style={{
               color: '#B45309',
               fontWeight: 900,
-              fontSize: '0.98rem',
+              fontSize: isMobile ? '0.82rem' : '0.98rem',
               background: '#FEF08A',
-              padding: '4px 12px',
+              padding: isMobile ? '2px 8px' : '4px 12px',
               borderRadius: 999,
               border: '2px solid var(--comic-black)',
               boxShadow: '0 2px 0 var(--comic-black)'
@@ -157,7 +157,7 @@ export default function BuzzerControl({
           >
             🎯 ĐỐI THỦ SAI! CƠ HỘI CƯỚP ĐIỂM CỦA BẠN:
           </span>
-          <span className="timer-pill" style={{ background: '#FEF08A', color: '#713F12' }}>
+          <span className="timer-pill" style={{ background: '#FEF08A', color: '#713F12', fontSize: isMobile ? '0.72rem' : '0.85rem', padding: isMobile ? '2px 8px' : '4px 10px' }}>
             ⏱️ {secondsLeft}s
           </span>
         </div>
@@ -319,7 +319,7 @@ export default function BuzzerControl({
 
       {/* GIANT 3D GOLDEN BELL BUZZER (Shown when waiting for players to buzz) */}
       {isWaiting && (
-        <div style={{ marginTop: isMobile ? 8 : 14, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ marginTop: isMobile ? 3 : 14, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <button
             className={`buzzer-tactile ${isFrozen ? 'buzzer-frozen' : ''}`}
             onClick={isFrozen ? undefined : handleBuzzClick}
@@ -340,7 +340,7 @@ export default function BuzzerControl({
               {isFrozen ? `ĐÓNG BĂNG (${frozenSecondsLeft}s)` : 'BẤM CHUÔNG!'}
             </span>
           </button>
-          <small style={{ marginTop: 6, color: isFrozen ? '#7DD3FC' : '#FEF08A', textShadow: '0 1px 2px rgba(0,0,0,0.6)', fontWeight: 900, fontSize: '0.78rem' }}>
+          <small style={{ marginTop: isMobile ? 2 : 6, color: isFrozen ? '#7DD3FC' : '#FEF08A', textShadow: '0 1px 2px rgba(0,0,0,0.6)', fontWeight: 900, fontSize: isMobile ? '0.74rem' : '0.78rem' }}>
             {isFrozen ? '🥶 Đang bị đối thủ DDoS đóng băng chuông!' : '⚡ Đập chuông nhanh để mở khóa 4 đáp án trên!'}
           </small>
         </div>
@@ -348,8 +348,8 @@ export default function BuzzerControl({
 
       {/* Wide buzzer if in steal phase */}
       {isSteal && (
-        <div style={{ marginTop: 12, width: '100%', display: 'flex', justifyContent: 'center' }}>
-          <div className="buzzer-wide-btn" style={{ background: '#FEF08A', color: '#713F12' }}>
+        <div style={{ marginTop: isMobile ? 4 : 12, width: '100%', display: 'flex', justifyContent: 'center' }}>
+          <div className="buzzer-wide-btn" style={{ background: '#FEF08A', color: '#713F12', padding: isMobile ? '8px 14px' : '12px 24px', fontSize: isMobile ? '0.82rem' : '0.98rem' }}>
             <span>⚡ HÃY CHỌN 1 TRONG CÁC ĐÁP ÁN CÒN LẠI!</span>
           </div>
         </div>

@@ -24,7 +24,7 @@ export default function TacticalCardBar({
   const CARDS = [
     {
       id: 'DDOS',
-      name: isMobile ? '❄️ DDoS' : '❄️ DDoS',
+      name: '❄️ DDoS',
       fullName: 'Tấn Công DDoS',
       icon: '❄️',
       canUse: canUseDDoS,
@@ -36,7 +36,7 @@ export default function TacticalCardBar({
     },
     {
       id: 'DOUBLE_PULL',
-      name: isMobile ? '⚖️ X2 Kéo' : '⚖️ X2 Kéo',
+      name: '⚖️ X2 Kéo',
       fullName: 'Kháng Cáo Tối Cao',
       icon: '⚖️',
       canUse: canUseDoublePull,
@@ -48,9 +48,9 @@ export default function TacticalCardBar({
     },
     {
       id: 'FIFTY_FIFTY',
-      name: isMobile ? '🔍 50/50' : '🔍 50/50',
+      name: '🎯 50/50',
       fullName: 'Luật Sư Tư Vấn',
-      icon: '🔍',
+      icon: '🎯',
       canUse: canUse5050,
       used: isUsed('FIFTY_FIFTY'),
       isActive: roundActiveCard === 'FIFTY_FIFTY',
@@ -60,7 +60,7 @@ export default function TacticalCardBar({
     },
     {
       id: 'FIREWALL',
-      name: isMobile ? '🛡️ T.Lửa' : '🛡️ Tường Lửa',
+      name: isMobile ? '🛡️ Tường Lửa' : '🛡️ Tường Lửa',
       fullName: 'Tường Lửa',
       icon: '🛡️',
       canUse: canUseFirewall,
@@ -87,34 +87,36 @@ export default function TacticalCardBar({
         justifyContent: 'space-between',
         gap: isMobile ? 4 : 8,
         width: '100%',
-        padding: isMobile ? '3px 4px' : '5px 8px',
+        padding: isMobile ? '2px 4px' : '5px 8px',
         background: 'rgba(255, 255, 255, 0.95)',
         backdropFilter: 'blur(8px)',
         borderRadius: 12,
         border: '2px solid var(--comic-black)',
         boxShadow: '0 2px 0 var(--comic-black)',
-        marginBottom: isMobile ? 4 : 8,
+        marginBottom: isMobile ? 3 : 8,
         boxSizing: 'border-box',
         flexShrink: 0,
         position: 'relative',
         zIndex: 10
       }}
     >
-      <div style={{
-        fontSize: isMobile ? '0.65rem' : '0.75rem',
-        fontWeight: 900,
-        color: 'var(--comic-black)',
-        whiteSpace: 'nowrap',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 3,
-        paddingLeft: 2
-      }}>
-        <span>🃏</span>
-        {!isMobile && <span>THẺ:</span>}
-      </div>
+      {!isMobile && (
+        <div style={{
+          fontSize: '0.75rem',
+          fontWeight: 900,
+          color: 'var(--comic-black)',
+          whiteSpace: 'nowrap',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 3,
+          paddingLeft: 2
+        }}>
+          <span>🃏</span>
+          <span>THẺ:</span>
+        </div>
+      )}
 
-      <div style={{ display: 'flex', gap: isMobile ? 3 : 6, flex: 1, justifyContent: 'flex-end' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: isMobile ? 3 : 6, width: '100%' }}>
         {CARDS.map(card => {
           const clickable = card.canUse && !card.used;
           return (
@@ -124,10 +126,9 @@ export default function TacticalCardBar({
               disabled={!clickable}
               title={card.used ? `${card.fullName}: Đã dùng` : `${card.fullName}: ${card.desc}`}
               style={{
-                flex: 1,
-                maxWidth: isMobile ? 76 : 110,
-                height: isMobile ? 32 : 36,
-                padding: isMobile ? '2px 3px' : '4px 8px',
+                width: '100%',
+                height: isMobile ? 28 : 36,
+                padding: isMobile ? '1px 2px' : '4px 8px',
                 borderRadius: 8,
                 border: '2px solid var(--comic-black)',
                 boxShadow: card.isActive
@@ -138,7 +139,7 @@ export default function TacticalCardBar({
                   : (card.isActive ? '#FDE047' : (clickable ? card.bgGradient : '#F1F5F9')),
                 color: card.used ? '#94A3B8' : (clickable ? card.textColor : '#94A3B8'),
                 fontWeight: 900,
-                fontSize: isMobile ? '0.68rem' : '0.78rem',
+                fontSize: isMobile ? '0.72rem' : '0.78rem',
                 cursor: clickable ? 'pointer' : 'not-allowed',
                 opacity: card.used ? 0.45 : (clickable || card.isActive ? 1 : 0.6),
                 textDecoration: card.used ? 'line-through' : 'none',
