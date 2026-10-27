@@ -1049,13 +1049,13 @@ html, body {
 }
 
 /* ========================================================
-   OVERLAYS, MODALS & FEEDBACK
+   OVERLAYS, MODALS & FEEDBACK (Solid HARMONY Blue #1A1AFF)
    ======================================================== */
 .overlay-backdrop {
   position: fixed;
   inset: 0;
-  background: radial-gradient(circle at center, rgba(26, 26, 255, 0.28) 0%, rgba(10, 10, 70, 0.78) 100%);
-  backdrop-filter: blur(10px) saturate(130%);
+  background-color: #1A1AFF;
+  background: #1A1AFF;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1097,6 +1097,7 @@ html, body {
 
 /* ========================================================
    FACE-OFF 3-2-1 COUNTDOWN ARENA ANIMATIONS & STYLES
+   (Solid HARMONY Blue #1A1AFF 100% Không đốm hạt)
    ======================================================== */
 .faceoff-backdrop {
   position: fixed;
@@ -1106,8 +1107,8 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at 50% 45%, #2A2AFF 0%, #1A1AFF 48%, #0D0D99 82%, #08085E 100%);
-  backdrop-filter: blur(12px);
+  background-color: #1A1AFF;
+  background: #1A1AFF;
   padding: 16px;
   overflow: hidden;
   user-select: none;

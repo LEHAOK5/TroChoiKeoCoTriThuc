@@ -865,10 +865,10 @@ export default function AdminPage({ onBackToGame }) {
               {/* SECTION: DANH SÁCH PHÒNG ĐẤU ĐANG CHẠY */}
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-                  <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '1.25rem', margin: 0, color: '#0F172A', fontWeight: 900 }}>
+                  <h2 style={{ fontFamily: 'var(--font-title)', fontSize: '1.25rem', margin: 0, color: '#FFFFFF', textShadow: '0 2px 0 var(--comic-black)', fontWeight: 900 }}>
                     🔴 CÁC PHÒNG ĐẤU ĐANG HOẠT ĐỘNG ({rooms.length})
                   </h2>
-                  <span style={{ fontSize: '0.8rem', color: '#64748B', fontWeight: 700 }}>
+                  <span style={{ fontSize: '0.8rem', color: '#FEF08A', textShadow: '0 1px 2px rgba(0,0,0,0.6)', fontWeight: 700 }}>
                     Đồng bộ trực tiếp với màn hình sinh viên
                   </span>
                 </div>
@@ -1362,7 +1362,7 @@ export default function AdminPage({ onBackToGame }) {
                   Hiển thị <strong>{filteredStudents.length}</strong> / <strong>{registrations.length}</strong> sinh viên
                 </span>
                 {searchStudent && (
-                  <span style={{ color: '#1A1AFF' }}>
+                  <span style={{ color: '#FEF08A', fontWeight: 800 }}>
                     Bộ lọc: "{searchStudent}"
                   </span>
                 )}
@@ -1649,7 +1649,7 @@ export default function AdminPage({ onBackToGame }) {
 
               {/* Refresh Match list */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.9rem', color: '#0F172A', fontWeight: 800 }}>
+                <span style={{ fontSize: '0.9rem', color: '#FFFFFF', textShadow: '0 1px 2px rgba(0,0,0,0.6)', fontWeight: 800 }}>
                   Danh sách {matches.length} trận đấu gần đây nhất:
                 </span>
                 <button

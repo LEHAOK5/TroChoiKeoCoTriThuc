@@ -311,6 +311,44 @@ Sau khi push commit lên GitHub:
    - Nút `[ Kiểm tra ]`: `minWidth: isMobile ? 74 : 96`, `padding: isMobile ? '0 8px' : '0 16px'`.
    - **Kết quả:** Placeholder `VD: 8291` hiển thị trọn vẹn 100%, cách lề thoáng đãng, không bao giờ bị cắt chữ hay mất dấu ngoặc trên bất kỳ dòng điện thoại nào.
 
+---
+
+## 7. Lỗi Chữ Đen Trên Nền Xanh Admin & Nền Ngoài Màn Hình Kết Quả Trận Đấu Chưa Thuần #1A1AFF 100%
+
+- **Thời gian xử lý:** 28/10/2026.
+- **Tập tin liên quan:**
+  - [`src/frontend/src/pages/admin/AdminPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/admin/AdminPage.jsx)
+  - [`src/frontend/src/styles/index.css`](file:///d:/KEOCOTRITHUC/src/frontend/src/styles/index.css)
+  - [`src/frontend/src/components/VictoryCutscene.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/components/VictoryCutscene.jsx)
+
+### 1. Hiện Tượng & Báo Cáo
+1. **Trên Bảng điều khiển Ban tổ chức (`AdminPage.jsx`):**
+   - Tiêu đề mục `🔴 CÁC PHÒNG ĐẤU ĐANG HOẠT ĐỘNG (0)` và dòng trạng thái `Đồng bộ trực tiếp với màn hình sinh viên` bị màu đen/xám than trên nền xanh `#1A1AFF`, rất khó đọc và thiếu tương phản.
+2. **Trên Màn hình Kết thúc trận đấu & Hiển thị kết quả (`VictoryModal.jsx`):**
+   - Nền ngoài bao quanh thẻ hiển thị kết quả có quầng màu tối dần về viền (vignette navy/đen) và lộ màu cam/xanh của sân đấu bên dưới do hiệu ứng làm mờ `backdrop-filter`, chưa phải màu xanh thuần `#1A1AFF` 100% phẳng, sạch sẽ.
+
+---
+
+### 2. Phân Tích Nguyên Nhân Gốc Rễ (Root Causes)
+1. **Thiếu màu tương phản trên nền xanh bên ngoài thẻ Card (`AdminPage.jsx`):**
+   - Thẻ `h2` tiêu đề `🔴 CÁC PHÒNG ĐẤU ĐANG HOẠT ĐỘNG` được đặt trực tiếp ngoài nền xanh nhưng lại dùng `color: '#0F172A'` (màu xám than gần đen) và subtext dùng `color: '#64748B'`, khiến chữ bị chìm tối hoàn toàn vào nền xanh `#1A1AFF`.
+2. **Lớp phủ `.overlay-backdrop` và `.faceoff-backdrop` dùng dải chuyển màu radial & hiệu ứng kính mờ (`index.css`):**
+   - `.overlay-backdrop` trước đây sử dụng `background: radial-gradient(circle at center, rgba(26, 26, 255, 0.28) 0%, rgba(10, 10, 70, 0.78) 100%)` cùng `backdrop-filter: blur(10px)`.
+   - Điều này tạo ra một lớp phủ tối dần thành màu đen ở 4 góc và làm nhòe các dải màu của giao diện phía sau (vạch dây kéo, banner cam đội B) xuyên lên phía trên, làm mất đi tính thuần nhất phẳng của màu xanh nhận diện `#1A1AFF`.
+
+---
+
+### 3. Giải Pháp Khắc Phục Triệt Để
+1. **Đồng bộ màu sắc tương phản cao cho chữ ngoài nền xanh ([`AdminPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/admin/AdminPage.jsx)):**
+   - Đổi tiêu đề `🔴 CÁC PHÒNG ĐẤU ĐANG HOẠT ĐỘNG` thành màu trắng tinh khiết `#FFFFFF` kèm đổ bóng comic `textShadow: '0 2px 0 var(--comic-black)'`.
+   - Đổi dòng trạng thái thành màu vàng rực rỡ `#FEF08A` kèm đổ bóng `textShadow: '0 1px 2px rgba(0,0,0,0.6)'`.
+   - Đổi nhãn `Danh sách {matches.length} trận đấu gần đây nhất` thành `#FFFFFF` và nhãn `Bộ lọc: "..."` thành `#FEF08A`.
+2. **Chuyển toàn bộ nền ngoài màn hình kết quả và đếm ngược sang `#1A1AFF` 100% phẳng ([`index.css`](file:///d:/KEOCOTRITHUC/src/frontend/src/styles/index.css), [`VictoryCutscene.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/components/VictoryCutscene.jsx)):**
+   - `.overlay-backdrop`: Thiết lập `background-color: #1A1AFF; background: #1A1AFF;`, loại bỏ hoàn toàn `radial-gradient` và `backdrop-filter`.
+   - `.faceoff-backdrop`: Thiết lập `background-color: #1A1AFF; background: #1A1AFF;`.
+   - `VictoryCutscene`: Chuyển background thành `#1A1AFF` phẳng.
+   - **Kết quả:** Thẻ kết quả chiến thắng màu trắng viền đen dày nổi bật rực rỡ trên nền ngoài màu xanh thuần `#1A1AFF` phẳng 100%, sạch sẽ, không có bất kỳ đốm hạt hay quầng đen bóng ma nào.
+
 
 
 
