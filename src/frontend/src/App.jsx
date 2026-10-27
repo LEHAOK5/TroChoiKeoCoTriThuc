@@ -553,7 +553,7 @@ export default function App() {
           <div>
             <div className="brand-title">
               <span className="full-title">KÉO CO TRI THỨC</span>
-              <span className="short-title">⚡ KÉO CO VHU</span>
+              <span className="short-title">KÉO CO TRI THỨC</span>
             </div>
             <div className="booth-tag">{BOOTH_LABEL}</div>
           </div>
