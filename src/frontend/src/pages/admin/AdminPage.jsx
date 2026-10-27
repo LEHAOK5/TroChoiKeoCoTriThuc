@@ -376,11 +376,11 @@ export default function AdminPage({ onBackToGame }) {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 10 }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-title)', fontSize: isMobile ? '1.3rem' : '1.6rem', fontWeight: 900, margin: 0, color: '#0F172A' }}>
+          <h1 style={{ fontFamily: 'var(--font-title)', fontSize: isMobile ? '1.3rem' : '1.6rem', fontWeight: 900, margin: 0, color: '#FFFFFF', textShadow: '0 2px 0 var(--comic-black)' }}>
             🏛️ BẢNG ĐIỀU KHIỂN BAN TỔ CHỨC
           </h1>
           {adminUser && (
-            <div style={{ fontSize: '0.82rem', color: '#1A1AFF', marginTop: 4, fontWeight: 700 }}>
+            <div style={{ fontSize: '0.82rem', color: '#FEF08A', textShadow: '0 1px 2px rgba(0,0,0,0.6)', marginTop: 4, fontWeight: 700 }}>
               👤 Đăng nhập: <strong>{adminUser.full_name}</strong> ({adminUser.role})
             </div>
           )}
@@ -1255,7 +1255,7 @@ export default function AdminPage({ onBackToGame }) {
 
               {/* Status Filter Badges (2D Comic Pills) */}
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#475569', marginRight: 4 }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#FFFFFF', textShadow: '0 1px 2px rgba(0,0,0,0.6)', marginRight: 4 }}>
                   Lọc trạng thái:
                 </span>
 
@@ -1357,7 +1357,7 @@ export default function AdminPage({ onBackToGame }) {
               </div>
 
               {/* Status Indicator */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', color: '#475569', fontWeight: 700 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem', color: '#FEF08A', textShadow: '0 1px 2px rgba(0,0,0,0.6)', fontWeight: 700 }}>
                 <span>
                   Hiển thị <strong>{filteredStudents.length}</strong> / <strong>{registrations.length}</strong> sinh viên
                 </span>
