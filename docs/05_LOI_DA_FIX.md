@@ -260,5 +260,57 @@ Sau khi push commit lên GitHub:
    - Nút chuông vàng 3D điều chỉnh kích thước `88px x 88px` để cân đối hoàn hảo trong viewport `100dvh`.
    - Cả 4 ô đáp án A, B, C, D đều có kích thước hài hòa, đều đặn, không còn tình trạng ô khổng lồ ô tí hon.
 
+---
+
+## 6. Lỗi Ô Nhập Mã Phòng Bị Mất Chữ (VD: 8291) Trên Giao Diện Điện Thoại
+
+- **Thời gian xử lý:** 28/10/2026.
+- **Tập tin liên quan:**
+  - [`src/frontend/src/pages/RegisterPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/RegisterPage.jsx)
+
+### 1. Hiện Tượng & Báo Cáo
+- Trên màn hình điện thoại di động tại trang Đăng ký vào phòng (`RegisterPage`):
+  - Ô nhập mã phòng thi đấu bị cắt cụt chữ: Placeholder hiển thị `MÃ PHÒNG (VD: 8291` và bị mất dấu đóng ngoặc `)` cùng khoảng biên phải, chữ bị che khuất sát mép nút bấm `[ Kiểm tra ]`.
+
+---
+
+### 2. Phân Tích Nguyên Nhân Gốc Rễ (Root Causes)
+
+1. **Chuỗi placeholder quá dài đối với độ rộng màn hình hẹp:**
+   - Chuỗi `MÃ PHÒNG (VD: 8291)` dài tới **22 ký tự in hoa**.
+   - Trong khi đó, nhãn tiêu đề ngay phía trên đã ghi rõ: `🔑 MÃ PHÒNG THI ĐẤU * (Hỏi BTC tại quầy)`. Việc lặp lại cụm từ `MÃ PHÒNG` bên trong ô placeholder là dư thừa và chiếm dụng diện tích không cần thiết.
+
+2. **Cộng hưởng khoảng cách ký tự (`letterSpacing: 1.5`):**
+   - Thuộc tính `letterSpacing: 1.5` được thiết lập cố định cho cả ô input, khiến ngay cả khi chưa nhập gì thì mỗi ký tự trong placeholder cũng bị cộng thêm 1.5px (22 * 1.5px = **33px cộng thêm**), làm chuỗi chữ bị kéo dãn vượt khỏi khung nhìn.
+
+3. **Cạnh tranh không gian cùng hàng với nút [Kiểm tra]:**
+   - Ô input và nút `[ Kiểm tra ]` (có `minWidth: 80px`) được xếp cùng 1 hàng flex (`flex: 1` và `flexShrink: 0`).
+   - Trên màn hình điện thoại di động có chiều rộng từ **360px - 390px**, sau khi trừ padding của thẻ card và khung vàng, không gian còn lại cho ô input chỉ khoảng **~210px**, không thể chứa vừa 22 ký tự chữ đậm in hoa cỡ 1.05rem kèm letter-spacing 1.5px.
+
+---
+
+### 3. Giải Pháp Khắc Phục Triệt Để
+
+1. **Tối ưu Placeholder tương thích theo thiết bị (`isMobile`):**
+   - Trên mobile: Chuyển placeholder thành `VD: 8291` (ngắn gọn chỉ 8 ký tự, chiếm chưa đến 80px bề ngang).
+   - Trên laptop/máy tính: Giữ nguyên `MÃ PHÒNG (VD: 8291)`.
+   ```jsx
+   placeholder={isMobile ? "VD: 8291" : "MÃ PHÒNG (VD: 8291)"}
+   ```
+
+2. **Áp dụng `letterSpacing` thông minh chỉ khi người dùng nhập dữ liệu:**
+   - Khi ô đang trống (hiển thị placeholder): `letterSpacing: 'normal'` để placeholder hiển thị gọn gàng, tự nhiên.
+   - Khi người dùng gõ mã phòng (ví dụ `8291`): `letterSpacing: isMobile ? 1.5 : 2` để các ký tự mã phòng to rõ, cách điệu đẹp mắt.
+   ```jsx
+   letterSpacing: formData.roomCode ? (isMobile ? 1.5 : 2) : 'normal'
+   ```
+
+3. **Điều chỉnh kích thước & khoảng đệm cân đối:**
+   - Cỡ chữ mobile: `fontSize: isMobile ? '0.96rem' : '1.15rem'`.
+   - Padding mobile: `padding: isMobile ? '8px 10px' : '12px 14px'`.
+   - Nút `[ Kiểm tra ]`: `minWidth: isMobile ? 74 : 96`, `padding: isMobile ? '0 8px' : '0 16px'`.
+   - **Kết quả:** Placeholder `VD: 8291` hiển thị trọn vẹn 100%, cách lề thoáng đãng, không bao giờ bị cắt chữ hay mất dấu ngoặc trên bất kỳ dòng điện thoại nào.
+
+
 
 

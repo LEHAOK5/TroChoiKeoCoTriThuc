@@ -181,7 +181,7 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
                 type="text"
                 required
                 maxLength={8}
-                placeholder="MÃ PHÒNG (VD: 8291)"
+                placeholder={isMobile ? "VD: 8291" : "MÃ PHÒNG (VD: 8291)"}
                 value={formData.roomCode}
                 onChange={e => {
                   const val = e.target.value.toUpperCase();
@@ -193,14 +193,14 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
                   flex: 1,
                   minWidth: 0,
                   width: '100%',
-                  padding: isMobile ? '10px 10px' : '12px 14px',
+                  padding: isMobile ? '8px 10px' : '12px 14px',
                   background: '#FFFFFF',
                   border: '2px solid var(--comic-black)',
                   borderRadius: 10,
                   color: '#0F172A',
-                  fontSize: isMobile ? '1.05rem' : '1.2rem',
+                  fontSize: isMobile ? '0.96rem' : '1.15rem',
                   fontWeight: 900,
-                  letterSpacing: 1.5,
+                  letterSpacing: formData.roomCode ? (isMobile ? 1.5 : 2) : 'normal',
                   outline: 'none',
                   textTransform: 'uppercase',
                   boxShadow: '0 2px 0 var(--comic-black)',
@@ -213,8 +213,8 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
                 disabled={checkingRoom || !formData.roomCode.trim()}
                 style={{
                   flexShrink: 0,
-                  minWidth: isMobile ? 80 : 96,
-                  padding: isMobile ? '0 10px' : '0 16px',
+                  minWidth: isMobile ? 74 : 96,
+                  padding: isMobile ? '0 8px' : '0 16px',
                   background: '#1A1AFF',
                   border: '2px solid var(--comic-black)',
                   boxShadow: '0 2px 0 var(--comic-black)',
