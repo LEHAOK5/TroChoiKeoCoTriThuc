@@ -120,8 +120,8 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
             fontSize: isMobile ? '1.8rem' : '2.4rem',
             fontWeight: 900,
             letterSpacing: '0.02em',
-            color: '#1E40AF',
-            textShadow: '2px 2px 0 #93C5FD',
+            color: '#FFFFFF',
+            textShadow: '0 3px 0 var(--comic-black), 0 0 20px rgba(74, 74, 255, 0.8)',
             textTransform: 'uppercase',
             marginBottom: 4
           }}
@@ -130,7 +130,7 @@ export default function RegisterPage({ onRegisterSuccess, onGoAdmin }) {
         </h1>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
           <span style={{ fontSize: isMobile ? '1rem' : '1.2rem' }}>⚡</span>
-          <span style={{ color: '#334155', fontSize: isMobile ? '0.82rem' : '0.92rem', fontWeight: 800, fontFamily: 'var(--font-title)' }}>
+          <span style={{ color: '#FEF08A', textShadow: '0 1.5px 0 var(--comic-black)', fontSize: isMobile ? '0.82rem' : '0.92rem', fontWeight: 900, fontFamily: 'var(--font-title)' }}>
             Đấu Trường 2D Trí Tuệ IT & Pháp Luật
           </span>
           <span style={{ fontSize: isMobile ? '1rem' : '1.2rem' }}>🔥</span>

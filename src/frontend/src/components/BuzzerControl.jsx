@@ -84,7 +84,7 @@ export default function BuzzerControl({
       {/* Top Banner Status Bar based on UI State */}
       {isWaiting && (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: isMobile ? 4 : 8, padding: '0 4px' }}>
-          <span style={{ color: 'var(--text-muted)', fontWeight: 800, fontSize: isMobile ? '0.78rem' : '0.85rem' }}>
+          <span style={{ color: '#FFFFFF', textShadow: '0 1px 2px rgba(0,0,0,0.7)', fontWeight: 900, fontSize: isMobile ? '0.78rem' : '0.85rem' }}>
             {isMobile ? '🔔 Bấm chuông vàng để giành quyền trả lời:' : '🔒 Đọc kỹ 4 đáp án & Bấm chuông vàng để giành quyền trả lời:'}
           </span>
           {deadline && (
@@ -340,7 +340,7 @@ export default function BuzzerControl({
               {isFrozen ? `ĐÓNG BĂNG (${frozenSecondsLeft}s)` : 'BẤM CHUÔNG!'}
             </span>
           </button>
-          <small style={{ marginTop: 6, color: isFrozen ? '#0284C7' : 'var(--text-muted)', fontWeight: 800, fontSize: '0.78rem' }}>
+          <small style={{ marginTop: 6, color: isFrozen ? '#7DD3FC' : '#FEF08A', textShadow: '0 1px 2px rgba(0,0,0,0.6)', fontWeight: 900, fontSize: '0.78rem' }}>
             {isFrozen ? '🥶 Đang bị đối thủ DDoS đóng băng chuông!' : '⚡ Đập chuông nhanh để mở khóa 4 đáp án trên!'}
           </small>
         </div>

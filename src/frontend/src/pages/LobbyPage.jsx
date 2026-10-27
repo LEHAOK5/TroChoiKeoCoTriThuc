@@ -626,8 +626,9 @@ export default function LobbyPage({
           textAlign: 'center',
           marginTop: 12,
           fontSize: '0.86rem',
-          color: '#334155',
-          fontWeight: 700
+          color: '#FEF08A',
+          textShadow: '0 1px 2px rgba(0,0,0,0.6)',
+          fontWeight: 800
         }}>
           {allReady
             ? '🎉 Cả 2 đội đã sẵn sàng! Đang khởi động đếm ngược 3-2-1...'

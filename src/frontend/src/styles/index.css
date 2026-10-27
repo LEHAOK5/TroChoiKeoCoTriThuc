@@ -17,7 +17,9 @@
   --blue-sky: #7D7DFF;
   --blue-soft: #E6E6FF;
   --blue-bg: #F3F3FF;
-  --game-backdrop: #EBEBFE;
+  --game-backdrop: #1A1AFF;
+  --game-backdrop-dark: #10108A;
+  --game-backdrop-deep: #0B0B80;
 
   /* Comic 2D Outlines & Shadows */
   --comic-black: #0F172A;
@@ -130,19 +132,19 @@ html, body {
   flex-direction: column;
   position: relative;
   background: 
-    radial-gradient(circle at 10% 10%, rgba(26, 26, 255, 0.14) 0%, transparent 45%),
-    radial-gradient(circle at 90% 10%, rgba(255, 87, 34, 0.10) 0%, transparent 45%),
-    radial-gradient(circle at 50% 90%, rgba(250, 204, 21, 0.12) 0%, transparent 50%),
-    linear-gradient(180deg, #EEF1FF 0%, #F5F7FF 40%, #E8ECFF 100%);
+    radial-gradient(circle at 15% 15%, rgba(74, 74, 255, 0.45) 0%, transparent 50%),
+    radial-gradient(circle at 85% 20%, rgba(255, 87, 34, 0.22) 0%, transparent 45%),
+    radial-gradient(circle at 50% 85%, rgba(250, 204, 21, 0.20) 0%, transparent 50%),
+    linear-gradient(180deg, #10108A 0%, #1A1AFF 45%, #0C0C7A 100%);
   background-attachment: fixed;
 }
 
-/* Ambient Halftone Grid Pattern for Comic 2D Feel */
+/* Ambient Halftone Grid Pattern for Comic 2D Feel (White/Cyan Glow on Blue) */
 .app-wrapper::before {
   content: '';
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(rgba(15, 23, 42, 0.04) 1.5px, transparent 1.5px);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.12) 1.5px, transparent 1.5px);
   background-size: 20px 20px;
   pointer-events: none;
   z-index: 0;
