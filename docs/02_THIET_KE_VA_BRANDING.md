@@ -6,7 +6,7 @@ Dự án tuân thủ nghiêm ngặt bảng màu nhận diện **HARMONY** của 
 
 | Thành phần | Mã Hex | Giá trị CMYK | Ý nghĩa & Vị trí sử dụng |
 | :--- | :--- | :--- | :--- |
-| **Màu Chủ Đạo (Primary)** | `#1A1AFF` | **100 65 0 0** | Màu nhận diện thương hiệu VHU, dải gradient nền chính, Đội A (Tia Chớp ⚡), các nút bấm hành động chính. |
+| **Màu Chủ Đạo (Primary)** | `#1A1AFF` | **100 65 0 0** | Màu nhận diện thương hiệu VHU, màu nền ngoài thuần phẳng 100% (Solid Color) cho toàn bộ Web App trên Mobile và Laptop, Đội A (Tia Chớp ⚡), các nút bấm hành động chính. |
 | **Dải Gradient Chủ Đạo** | `linear-gradient(180deg, #101077 0%, #1A1AFF 50%, #0D0D99 100%)` | — | Dùng cho nền khung hình chiến thắng, khung hình nhà tù đội thua, thanh tiêu đề lớn. |
 | **Màu Đối Kháng (Opponent)**| `#EA580C` / `#FF5722` | — | Màu nhận diện Đội B (Ngọn Lửa 🔥), tạo sự tương phản mạnh mẽ với Đội A trên sân đấu. |
 | **Vàng Vinh Quang (Gold)** | `#FACC15` / `#EAB308` | — | Nút bấm chuông vàng 3D, cúp vô địch, bục vinh quang số 1, thẻ quà tặng trạm 2. |
