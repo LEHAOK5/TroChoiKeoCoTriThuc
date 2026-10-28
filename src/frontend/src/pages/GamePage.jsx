@@ -30,7 +30,8 @@ export default function GamePage({
   onPressBuzzer,
   onSubmitAnswer,
   onUseCard,
-  onRematch
+  onRematch,
+  onExitGame
 }) {
   const [showCutscene, setShowCutscene] = useState(true);
 
@@ -107,6 +108,7 @@ export default function GamePage({
         <VictoryModal
           gameOverData={gameOverData}
           onRematch={onRematch}
+          onExitGame={onExitGame}
           player={player}
         />
       )}

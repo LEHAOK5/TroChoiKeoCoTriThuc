@@ -4,7 +4,7 @@ import { playVictory } from '../utils/audio';
 import JailCellMemeBox from './JailCellMemeBox';
 import WinnerCelebrationBox from './WinnerCelebrationBox';
 
-export default function VictoryModal({ gameOverData, onRematch, player }) {
+export default function VictoryModal({ gameOverData, onRematch, onExitGame, player }) {
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
 
   useEffect(() => {
@@ -148,23 +148,58 @@ export default function VictoryModal({ gameOverData, onRematch, player }) {
           )}
         </div>
 
-        <button
-          className="btn-tactile"
+        <div
           style={{
-            width: '100%',
-            padding: isMobile ? '11px' : '14px',
-            background: 'linear-gradient(180deg, #4A4AFF 0%, #1A1AFF 100%)',
-            color: '#FFFFFF',
-            fontSize: isMobile ? '0.98rem' : '1.1rem',
-            fontWeight: 900,
-            textTransform: 'uppercase',
-            letterSpacing: '0.04em'
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: isMobile ? 8 : 12,
+            width: '100%'
           }}
-          onClick={onRematch}
-          id="rematch-btn"
         >
-          CHƠI LẠI TRẬN MỚI 🔄
-        </button>
+          <button
+            className="btn-tactile"
+            style={{
+              padding: isMobile ? '10px 6px' : '13px 10px',
+              background: 'linear-gradient(180deg, #4A4AFF 0%, #1A1AFF 100%)',
+              color: '#FFFFFF',
+              fontSize: isMobile ? '0.86rem' : '1.02rem',
+              fontWeight: 900,
+              textTransform: 'uppercase',
+              letterSpacing: '0.02em',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 4
+            }}
+            onClick={onRematch}
+            id="rematch-btn"
+          >
+            <span>🔄</span>
+            <span>ĐẤU VÁN MỚI</span>
+          </button>
+
+          <button
+            className="btn-tactile"
+            style={{
+              padding: isMobile ? '10px 6px' : '13px 10px',
+              background: 'linear-gradient(180deg, #EF4444 0%, #DC2626 100%)',
+              color: '#FFFFFF',
+              fontSize: isMobile ? '0.86rem' : '1.02rem',
+              fontWeight: 900,
+              textTransform: 'uppercase',
+              letterSpacing: '0.02em',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 4
+            }}
+            onClick={onExitGame}
+            id="exit-game-btn"
+          >
+            <span>🛑</span>
+            <span>THOÁT GAME</span>
+          </button>
+        </div>
       </div>
     </div>
   );

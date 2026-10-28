@@ -400,6 +400,30 @@ Sau khi push commit lên GitHub:
    - Tích hợp trực tiếp danh sách thành viên vào bên trong thẻ Đội A và Đội B.
    - Loại bỏ khối Roster View trùng lặp, đưa nút "THÊM BOT ĐỐI THỦ" và "BẤM SẴN SÀNG THI ĐẤU" lên ngay tầm mắt người chơi.
 
+---
 
+## 9. Bổ Sung Nút "Thoát Game", Chiến Lược Thoát 3 Tầng & Màn Hình Phiếu Xác Nhận Kết Quả
 
+### 1. Hiện Tượng & Vấn Đề
+- Trước đây, trên màn hình kết thúc ván đấu (`VictoryModal`), hệ thống chỉ có duy nhất 1 nút "CHƠI LẠI TRẬN MỚI 🔄".
+- Khi sinh viên thi đấu xong tại gian hàng ngày 30/10, các bạn không biết làm cách nào để thoát ra nhường máy cho bạn kế tiếp hoặc lấy minh chứng nhận quà.
+- Sinh viên phải tìm nút "Thoát" nhỏ xíu trên thanh Header góc trên, dẫn đến việc nhiều bạn bấm nhầm nút chơi lại làm chiếm phòng và nghẽn tài nguyên trên máy chủ.
 
+### 2. Giải Pháp Triển Khai
+1. **Bố cục 2 nút hành động song song trên [`VictoryModal.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/components/VictoryModal.jsx):**
+   - `🔄 ĐẤU VÁN MỚI`: Kích hoạt `onRematch`, reset tỉ số và đưa cả phòng về Sảnh chờ.
+   - `🛑 THOÁT GAME`: Kích hoạt quy trình thoát game an toàn 3 tầng.
+2. **Chiến lược thoát 3 tầng (Multi-tier Exit Strategy) trên [`App.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/App.jsx):**
+   - **Tầng 1 (Dọn dẹp & Giải phóng slot):** Gửi sự kiện socket `leaveRoom` lên máy chủ Render để nhả slot phòng ngay lập tức; xóa sạch `sessionStorage` và `localStorage` (MSSV, tên thí sinh, token).
+   - **Tầng 2 (Thử đóng tab):** Gọi `window.close()` đối với các trình duyệt cho phép tự đóng tab.
+   - **Tầng 3 (Màn hình Phiếu xác nhận kết quả [`ExitPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/ExitPage.jsx)):** Nếu trình duyệt chặn không cho đóng tab tự động, chuyển giao diện sang màn hình tổng kết trang trọng với nền xanh `#1A1AFF` đồng bộ:
+     - Huy chương hoạt hình 🎖️ và thông báo chúc mừng hoàn thành phần thi.
+     - Phiếu xác nhận kết quả: Họ tên, MSSV, Đội thi đấu, Kết quả (Thắng/Thua, Điểm rèn luyện), Mã ván đấu (`matchCode`).
+     - Hướng dẫn sinh viên chụp ảnh màn hình để đối soát nhận quà tại Trạm 2.
+     - Nút "🛑 ĐÓNG TAB TRÌNH DUYỆT" kèm cảnh báo nhắc nhở tắt tab nếu trình duyệt chặn.
+     - Nút "👥 NHƯỜNG LƯỢT / ĐĂNG KÝ BẠN MỚI" đưa về trang đăng ký để truyền máy cho bạn khác thi đấu ngay.
+
+### 3. Kết Quả
+- Sinh viên có thể chủ động thoát game chỉ với 1 cú chạm.
+- Máy chủ Backend giải phóng kết nối tức thời, sẵn sàng phục vụ 7.000 sinh viên luân phiên mà không bị treo socket.
+- Minh chứng kết quả hiển thị rõ ràng, chuyên nghiệp cho công tác cộng điểm rèn luyện.

@@ -5,6 +5,7 @@ import ConnectionBadge from './components/ConnectionBadge';
 import RegisterPage from './pages/RegisterPage';
 import LobbyPage from './pages/LobbyPage';
 import GamePage from './pages/GamePage';
+import ExitPage from './pages/ExitPage';
 import AdminPage from './pages/admin/AdminPage';
 import CountdownOverlay from './components/CountdownOverlay';
 import {
@@ -150,6 +151,7 @@ export default function App() {
   const [isFrozen, setIsFrozen] = useState(false);
   const [frozenSecondsLeft, setFrozenSecondsLeft] = useState(0);
   const [fiftyFiftyEliminated, setFiftyFiftyEliminated] = useState([]);
+  const [exitSummary, setExitSummary] = useState(null);
 
   // Synchronized state refs to prevent stale closures in socket events
   const playerRef = useRef(player);
@@ -157,12 +159,14 @@ export default function App() {
   const roomStateRef = useRef(roomState);
   const uiStateRef = useRef(uiState);
   const currentPageRef = useRef(currentPage);
+  const gameOverDataRef = useRef(gameOverData);
 
   useEffect(() => { playerRef.current = player; }, [player]);
   useEffect(() => { sessionTokenRef.current = sessionToken; }, [sessionToken]);
   useEffect(() => { roomStateRef.current = roomState; }, [roomState]);
   useEffect(() => { uiStateRef.current = uiState; }, [uiState]);
   useEffect(() => { currentPageRef.current = currentPage; }, [currentPage]);
+  useEffect(() => { gameOverDataRef.current = gameOverData; }, [gameOverData]);
 
   useEffect(() => {
     if (currentPage === 'REGISTER') {
@@ -174,6 +178,9 @@ export default function App() {
     } else if (currentPage === 'GAME') {
       stopRegistrationTheme(true);
     } else if (currentPage === 'ADMIN') {
+      stopRegistrationTheme(false);
+      stopBGM();
+    } else if (currentPage === 'EXIT') {
       stopRegistrationTheme(false);
       stopBGM();
     }
@@ -539,6 +546,57 @@ export default function App() {
     socket.emit('requestRematch', { roomCode: roomStateRef.current?.roomCode || 'KCO1' });
   };
 
+  const handleExitGame = () => {
+    const curPlayer = playerRef.current;
+    const rCode = sessionStorage.getItem('keoco_roomCode') || roomStateRef.current?.roomCode || 'KCO1';
+    const gData = gameOverDataRef.current || gameOverData;
+    const isWinner = curPlayer?.team ? curPlayer.team === gData?.winner : true;
+
+    const summary = {
+      playerName: curPlayer?.name || 'Sinh viên VHU',
+      studentId: curPlayer?.studentId || '',
+      playerTeam: curPlayer?.team || 'A',
+      matchCode: gData?.matchCode || `MATCH-${rCode}`,
+      winner: gData?.winner,
+      scoreA: gData?.scoreA ?? scoreA,
+      scoreB: gData?.scoreB ?? scoreB,
+      isWinner
+    };
+
+    setExitSummary(summary);
+
+    // Báo máy chủ giải phóng vị trí trong phòng ngay lập tức
+    socket.emit('leaveRoom', { roomCode: rCode });
+
+    // Xóa session đăng nhập của sinh viên này
+    sessionStorage.removeItem('keoco_player');
+    sessionStorage.removeItem('keoco_token');
+    sessionStorage.removeItem('keoco_roomCode');
+    localStorage.removeItem('keoco_player');
+    localStorage.removeItem('keoco_token');
+    localStorage.removeItem('keoco_roomCode');
+
+    setPlayer(null);
+    setSessionToken('');
+    setRoomState(null);
+    setCurrentQuestion(null);
+    setGameOverData(null);
+
+    // Thử đóng tab trình duyệt nếu được cấp quyền
+    try {
+      window.close();
+    } catch (e) {
+      console.log('window.close blocked by browser', e);
+    }
+
+    setCurrentPage('EXIT');
+  };
+
+  const handleNewPlayer = () => {
+    setExitSummary(null);
+    setCurrentPage('REGISTER');
+  };
+
   const handleUseTacticalCard = (cardType) => {
     const rCode = sessionStorage.getItem('keoco_roomCode') || roomStateRef.current?.roomCode || 'KCO1';
     socket.emit('useTacticalCard', { roomCode: rCode, cardType });
@@ -546,7 +604,8 @@ export default function App() {
 
   return (
     <div className="app-wrapper">
-      {/* Top Header */}
+      {/* Top Header (ẩn khi đang ở màn hình kết thúc ExitPage) */}
+      {currentPage !== 'EXIT' && (
       <header className="app-header">
         <div className="brand-box">
           <span style={{ fontSize: '1.4rem' }}>⚔️</span>
@@ -692,6 +751,7 @@ export default function App() {
           <ConnectionBadge isConnected={isConnected} pingMs={pingMs} compact={isMobile} />
         </div>
       </header>
+      )}
 
       {/* Reconnecting alert banner */}
       {isReconnecting && (
@@ -747,6 +807,14 @@ export default function App() {
           onSubmitAnswer={handleSubmitAnswer}
           onUseCard={handleUseTacticalCard}
           onRematch={handleRematch}
+          onExitGame={handleExitGame}
+        />
+      )}
+
+      {currentPage === 'EXIT' && (
+        <ExitPage
+          summary={exitSummary}
+          onNewPlayer={handleNewPlayer}
         />
       )}
 
