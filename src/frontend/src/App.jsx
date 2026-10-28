@@ -242,11 +242,8 @@ export default function App() {
 
     socket.on('startCountdown', ({ seconds }) => {
       setCountdown(seconds);
-      playCountdown(seconds);
       if (seconds > 0) {
         setBGMMode('COUNTDOWN');
-      } else {
-        setCountdown(null);
       }
     });
 

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { announceStart } from '../utils/announcer';
+import { announceCountdownNumber } from '../utils/announcer';
+import { playCountdown } from '../utils/audio';
 
 export default function CountdownOverlay({ seconds, roomState, player }) {
   if (seconds === null || seconds === undefined) return null;
@@ -22,11 +23,10 @@ export default function CountdownOverlay({ seconds, roomState, player }) {
   const mode = roomState?.mode || '1vs1';
   const maxPerTeam = roomState?.maxPerTeam || 1;
 
-  // Haptic feedback & voice announcer per second
+  // Âm thanh đếm số (Audio & Voice) và Rung (Haptic feedback) mỗi nhịp đếm
   useEffect(() => {
-    if (seconds === 0) {
-      announceStart();
-    }
+    playCountdown(seconds);
+    announceCountdownNumber(seconds);
 
     if (typeof navigator !== 'undefined' && navigator.vibrate) {
       try {

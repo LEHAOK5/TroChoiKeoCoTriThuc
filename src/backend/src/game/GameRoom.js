@@ -331,7 +331,11 @@ class GameRoom {
       } else {
         clearInterval(this.countdownInterval);
         this.countdownInterval = null;
-        await this.startMatch();
+        // Bắn sự kiện số 0: Kích hoạt tiếng còi trọng tài, hợp âm xuất trận và MC hô "Bắt đầu!"
+        this.io.to(this.roomCode).emit(SOCKET_EVENTS.START_COUNTDOWN, { seconds: 0 });
+        setTimeout(async () => {
+          await this.startMatch();
+        }, 1200);
       }
     }, 1000);
   }

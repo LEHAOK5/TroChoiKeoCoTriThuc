@@ -195,21 +195,67 @@ export function playCountdown(count) {
   if (!ctx) return;
 
   const now = ctx.currentTime;
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
 
-  const isGo = count === 0;
-  osc.type = isGo ? 'sawtooth' : 'sine';
-  osc.frequency.setValueAtTime(isGo ? 880 : 440, now);
+  if (count === 0) {
+    // Whistle trọng tài + Hợp âm kèn xuất trận
+    playWhistle();
 
-  gain.gain.setValueAtTime(0.35, now);
-  gain.gain.exponentialRampToValueAtTime(0.01, now + (isGo ? 0.45 : 0.18));
+    [1046.5, 1318.5, 1567.98].forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(freq, now + idx * 0.03);
 
-  osc.connect(gain);
-  gain.connect(getMasterOutput());
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
 
-  osc.start(now);
-  osc.stop(now + (isGo ? 0.48 : 0.2));
+      osc.connect(gain);
+      gain.connect(getMasterOutput());
+
+      osc.start(now);
+      osc.stop(now + 0.65);
+    });
+    return;
+  }
+
+  // Tần số chuông thi đấu tăng dần theo nhịp đếm:
+  // 3 -> 523.25 Hz (Đô C5)
+  // 2 -> 659.25 Hz (Mi E5)
+  // 1 -> 783.99 Hz (Sol G5) - Căng thẳng tột độ
+  const freqMap = {
+    3: 523.25,
+    2: 659.25,
+    1: 783.99
+  };
+  const baseFreq = freqMap[count] || 523.25;
+
+  // Âm chính (Triangle)
+  const osc1 = ctx.createOscillator();
+  const gain1 = ctx.createGain();
+  osc1.type = 'triangle';
+  osc1.frequency.setValueAtTime(baseFreq, now);
+
+  gain1.gain.setValueAtTime(0.42, now);
+  gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+
+  osc1.connect(gain1);
+  gain1.connect(getMasterOutput());
+  osc1.start(now);
+  osc1.stop(now + 0.48);
+
+  // Âm hài hòa cao ngân chuông (Sine overtone 1 octave cao hơn)
+  const osc2 = ctx.createOscillator();
+  const gain2 = ctx.createGain();
+  osc2.type = 'sine';
+  osc2.frequency.setValueAtTime(baseFreq * 2, now);
+
+  gain2.gain.setValueAtTime(0.22, now);
+  gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+
+  osc2.connect(gain2);
+  gain2.connect(getMasterOutput());
+  osc2.start(now);
+  osc2.stop(now + 0.38);
 }
 
 // 6. Fanfare Victory

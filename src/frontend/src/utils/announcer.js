@@ -117,6 +117,46 @@ function playClip(clipKey, volume = 1.0) {
 // BỘ CÂU VOICE ANNOUNCER TIẾNG VIỆT THEO YÊU CẦU NGƯỜI DÙNG
 // =====================================================================
 
+// 0. Đếm ngược 3 - 2 - 1 và Bắt đầu
+export function announceCountdownNumber(num) {
+  if (isVoiceMuted()) return;
+  if (typeof window === 'undefined') return;
+
+  if (num === 0) {
+    playClip('start', 1.0);
+    return;
+  }
+
+  const numberWords = {
+    3: 'Ba!',
+    2: 'Hai!',
+    1: 'Một!'
+  };
+
+  const word = numberWords[num];
+  if (!word) return;
+
+  if (window.speechSynthesis) {
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.lang = 'vi-VN';
+      utterance.rate = 1.15;
+      utterance.pitch = 1.1;
+      utterance.volume = 1.0;
+
+      const voices = window.speechSynthesis.getVoices();
+      const viVoice = voices.find(v => (v.lang === 'vi-VN' || v.lang === 'vi_VN' || v.lang === 'vi'));
+      if (viVoice) {
+        utterance.voice = viVoice;
+      }
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      // ignore
+    }
+  }
+}
+
 // 1. "Sẵn sàng... Bắt đầu!"
 export function announceStart() {
   playClip('start', 1.0);

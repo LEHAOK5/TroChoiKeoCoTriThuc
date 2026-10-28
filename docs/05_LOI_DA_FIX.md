@@ -428,3 +428,27 @@ Sau khi push commit lên GitHub:
 - Máy chủ Backend giải phóng kết nối tức thời, sẵn sàng phục vụ 7.000 sinh viên luân phiên mà không bị treo socket.
 - Minh chứng kết quả hiển thị rõ ràng, chuyên nghiệp cho công tác cộng điểm rèn luyện.
 - **Tinh chỉnh giao diện Phiếu xác nhận:** Đã loại bỏ chữ "Đã lưu database" gây rối mắt, xóa phần "(+10 ĐRL)" / "(+5 ĐRL)" theo yêu cầu, đồng bộ các dòng thông tin thành huy hiệu Neo-Brutalism (Badge) canh đều hai bên, không bị rớt dòng trên điện thoại.
+---
+## 10. Sửa Lỗi Âm Thanh Đếm Số 3-2-1 Khai Cuộc Trận Đấu
+### 1. Hiện Tượng & Nguyên Nhân
+1. **Mất nhịp đếm 0 (BẮT ĐẦU KÉO):**
+- Trên máy chủ Backend ([`GameRoom.js`](file:///d:/KEOCOTRITHUC/src/backend/src/game/GameRoom.js)), vòng lặp đếm ngược chỉ bắn sự kiện `startCountdown` khi `count > 0`. Khi `count = 0`, hàm tự hủy timer và gọi `startMatch()` ngay lập tức mà không bao giờ gửi nhịp `seconds: 0` về cho người chơi.
+- Do đó, câu lệnh gọi âm thanh xuất trận `announceStart()` ("Sẵn sàng... Bắt đầu!") và tiếng còi trọng tài bị bỏ qua 100%.
+2. **Giao diện tắt đột ngột trước khi xuất trận:**
+- Trên Frontend ([`App.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/App.jsx)), điều kiện `if (seconds > 0) ... else { setCountdown(null); }` khiến màn hình đếm ngược bị unmount tức thì khi chạm 0, nhảy cụt lủn sang câu hỏi số 1 mà người chơi không kịp thấy màn "0 - BẮT ĐẦU KÉO!".
+3. **Âm thanh đếm số 3-2-1 đơn điệu, dễ bị lấn át:**
+- Hàm `playCountdown` cũ chỉ phát 1 sóng sine 440Hz ngắn 0.18s giống hệt nhau ở cả 3 số, không có giọng đọc tiếng Việt và bị át bởi nhạc nền BGM dồn dập.
+### 2. Giải Pháp Triển Khai
+1. **Khắc phục logic gửi nhịp đếm trên Backend ([`GameRoom.js`](file:///d:/KEOCOTRITHUC/src/backend/src/game/GameRoom.js)):**
+- Bắn thêm sự kiện `START_COUNTDOWN` với `{ seconds: 0 }` để kích hoạt trạng thái "BẮT ĐẦU KÉO!".
+- Thêm độ trễ `setTimeout(..., 1200ms)` trước khi load câu hỏi số 1, tạo khoảng đệm hoàn hảo để người chơi nghe trọn vẹn tiếng còi khai trận và giọng MC.
+2. **Nâng cấp âm thanh đếm số cao cấp ([`audio.js`](file:///d:/KEOCOTRITHUC/src/frontend/src/utils/audio.js)):**
+- Tần số chuông thi đấu tăng dần theo cao độ hồi hộp:
+* Số 3: Đô C5 (`523.25 Hz`) + chuông ngân harmonic C6 (`1046 Hz`).
+* Số 2: Mi E5 (`659.25 Hz`) + chuông ngân harmonic E6 (`1318 Hz`).
+* Số 1: Sol G5 (`783.99 Hz`) + chuông ngân harmonic G6 (`1568 Hz`) căng thẳng cao độ.
+* Số 0: Tiếng còi trọng tài (`playWhistle()`) kết hợp hợp âm kèn xuất trận fanfare rực lửa.
+3. **Giọng MC đếm số tiếng Việt ([`announcer.js`](file:///d:/KEOCOTRITHUC/src/frontend/src/utils/announcer.js)):**
+- Thêm hàm `announceCountdownNumber(num)` đọc dõng dạc "Ba!", "Hai!", "Một!" và khớp với clip âm thanh `start.mp3` ("Sẵn sàng... Bắt đầu!").
+4. **Đồng bộ màn hình đếm ([`CountdownOverlay.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/components/CountdownOverlay.jsx) & [`App.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/App.jsx)):**
+- Kích hoạt âm thanh và giọng đọc trực tiếp theo từng số, giữ màn hình "BẮT ĐẦU KÉO!" hiển thị trọn vẹn cho tới khi câu hỏi số 1 nạp xong.
