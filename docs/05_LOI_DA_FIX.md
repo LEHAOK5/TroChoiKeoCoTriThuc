@@ -427,3 +427,4 @@ Sau khi push commit lên GitHub:
 - Sinh viên có thể chủ động thoát game chỉ với 1 cú chạm.
 - Máy chủ Backend giải phóng kết nối tức thời, sẵn sàng phục vụ 7.000 sinh viên luân phiên mà không bị treo socket.
 - Minh chứng kết quả hiển thị rõ ràng, chuyên nghiệp cho công tác cộng điểm rèn luyện.
+- **Tinh chỉnh giao diện Phiếu xác nhận:** Đã loại bỏ chữ "Đã lưu database" gây rối mắt, xóa phần "(+10 ĐRL)" / "(+5 ĐRL)" theo yêu cầu, đồng bộ các dòng thông tin thành huy hiệu Neo-Brutalism (Badge) canh đều hai bên, không bị rớt dòng trên điện thoại.

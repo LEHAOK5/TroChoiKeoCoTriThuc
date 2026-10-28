@@ -87,72 +87,117 @@ export default function ExitPage({ summary, onNewPlayer }) {
         <div
           style={{
             background: '#F8FAFC',
-            border: '2px solid var(--comic-black)',
-            borderRadius: 14,
-            padding: isMobile ? '10px 12px' : '14px 16px',
+            border: '2.5px solid var(--comic-black)',
+            borderRadius: 16,
+            padding: isMobile ? '12px 14px' : '16px 18px',
             textAlign: 'left',
-            boxShadow: '0 3px 0 var(--comic-black)',
+            boxShadow: '0 4px 0 var(--comic-black)',
             marginBottom: 14
           }}
         >
+          {/* Tiêu đề Phiếu xác nhận kết quả */}
           <div
             style={{
               fontFamily: 'var(--font-title)',
-              fontSize: isMobile ? '0.78rem' : '0.86rem',
+              fontSize: isMobile ? '0.86rem' : '0.94rem',
               fontWeight: 900,
               color: '#1A1AFF',
               textTransform: 'uppercase',
-              borderBottom: '1.5px dashed #CBD5E1',
-              paddingBottom: 6,
-              marginBottom: 8,
+              letterSpacing: '0.04em',
+              borderBottom: '2px dashed #CBD5E1',
+              paddingBottom: 8,
+              marginBottom: 10,
               display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 6
             }}
           >
-            <span>📜 PHIẾU XÁC NHẬN KẾT QUẢ</span>
-            <span style={{ color: '#16A34A', fontSize: '0.75rem' }}>● ĐÃ LƯU DATABASE</span>
+            <span>📜</span>
+            <span>PHIẾU XÁC NHẬN KẾT QUẢ</span>
           </div>
 
-          <div style={{ display: 'grid', gap: isMobile ? '5px' : '7px', fontSize: isMobile ? '0.8rem' : '0.88rem' }}>
-            <div>
-              <strong>Thí sinh:</strong>{' '}
-              <span style={{ color: '#0F172A', fontWeight: 800 }}>
-                {summary?.playerName || 'Sinh viên VHU'}
-              </span>{' '}
-              {summary?.studentId && (
-                <span style={{ color: 'var(--text-muted)' }}>({summary.studentId})</span>
-              )}
+          <div style={{ display: 'grid', gap: isMobile ? '8px' : '10px', fontSize: isMobile ? '0.82rem' : '0.88rem' }}>
+            {/* Dòng 1: Thí sinh */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
+              <span style={{ color: 'var(--text-muted)', fontWeight: 700 }}>👤 Thí sinh:</span>
+              <span style={{ fontWeight: 800, color: '#0F172A', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <span>{summary?.playerName || 'Sinh viên VHU'}</span>
+                {summary?.studentId && (
+                  <span
+                    style={{
+                      background: '#E2E8F0',
+                      padding: '1px 6px',
+                      borderRadius: 4,
+                      fontSize: '0.74rem',
+                      fontWeight: 700,
+                      color: '#475569'
+                    }}
+                  >
+                    {summary.studentId}
+                  </span>
+                )}
+              </span>
             </div>
 
-            <div>
-              <strong>Đội thi đấu:</strong>{' '}
-              <span style={{ fontWeight: 800, color: summary?.playerTeam === 'A' ? '#1A1AFF' : '#EA580C' }}>
+            {/* Dòng 2: Đội thi đấu */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
+              <span style={{ color: 'var(--text-muted)', fontWeight: 700 }}>⚔️ Đội thi đấu:</span>
+              <span
+                style={{
+                  fontWeight: 900,
+                  fontFamily: 'var(--font-title)',
+                  fontSize: '0.78rem',
+                  padding: '2px 8px',
+                  borderRadius: 999,
+                  background: summary?.playerTeam === 'A' ? '#E6E6FF' : '#FFEDD5',
+                  color: summary?.playerTeam === 'A' ? '#1A1AFF' : '#EA580C',
+                  border: '1.5px solid var(--comic-black)',
+                  boxShadow: '0 1.5px 0 var(--comic-black)'
+                }}
+              >
                 {teamName}
               </span>
             </div>
 
-            <div>
-              <strong>Kết quả trận:</strong>{' '}
-              <span style={{ fontWeight: 900, color: isWinner ? '#16A34A' : '#D97706' }}>
-                {isWinner ? '🏆 CHIẾN THẮNG (+10 ĐRL)' : '👏 HOÀN THÀNH (+5 ĐRL)'}
-              </span>{' '}
-              <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>
-                (Tỷ số: {summary?.scoreA ?? 0} - {summary?.scoreB ?? 0})
-              </span>
+            {/* Dòng 3: Kết quả trận */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
+              <span style={{ color: 'var(--text-muted)', fontWeight: 700 }}>🏅 Kết quả trận:</span>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <span
+                  style={{
+                    fontWeight: 900,
+                    fontFamily: 'var(--font-title)',
+                    fontSize: '0.78rem',
+                    padding: '2px 8px',
+                    borderRadius: 999,
+                    background: isWinner ? '#DCFCE7' : '#FEF3C7',
+                    color: isWinner ? '#15803D' : '#B45309',
+                    border: '1.5px solid var(--comic-black)',
+                    boxShadow: '0 1.5px 0 var(--comic-black)'
+                  }}
+                >
+                  {isWinner ? '🏆 CHIẾN THẮNG' : '👏 HOÀN THÀNH'}
+                </span>
+                <span style={{ color: '#0F172A', fontWeight: 800, fontSize: '0.8rem' }}>
+                  ({summary?.scoreA ?? 0} - {summary?.scoreB ?? 0})
+                </span>
+              </div>
             </div>
 
+            {/* Dòng 4: Mã ván đấu */}
             {summary?.matchCode && (
-              <div>
-                <strong>Mã ván đấu:</strong>{' '}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 700 }}>🔖 Mã ván đấu:</span>
                 <code
                   style={{
                     background: '#FEF08A',
-                    padding: '2px 6px',
-                    borderRadius: 4,
-                    border: '1px solid var(--comic-black)',
+                    padding: '2px 8px',
+                    borderRadius: 6,
+                    border: '1.5px solid var(--comic-black)',
+                    boxShadow: '0 1.5px 0 var(--comic-black)',
                     fontWeight: 900,
-                    fontSize: '0.76rem',
+                    fontSize: '0.78rem',
                     color: '#713F12'
                   }}
                 >
