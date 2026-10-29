@@ -41,6 +41,17 @@ export async function getRoom(roomCode) {
   return json;
 }
 
+export async function getActiveRooms() {
+  try {
+    const res = await fetch(`${API_URL}/api/rooms`);
+    if (!res.ok) return { success: false, rooms: [] };
+    const json = await res.json();
+    return json;
+  } catch (err) {
+    return { success: false, rooms: [] };
+  }
+}
+
 export async function checkRoomCode(roomCode) {
   const res = await fetch(`${API_URL}/api/rooms/check/${encodeURIComponent(roomCode.trim())}`);
   const json = await res.json();

@@ -14,7 +14,8 @@ export default function TugOfWarArena({
   teamBCount = 5,
   lastResult = null,
   isBuzzed = false,
-  activeCardEffects = {}
+  activeCardEffects = {},
+  tacticalCards = { A: {}, B: {} }
 }) {
   // ropeOffset ranges from -10 (Team A pull max) to +10 (Team B pull max)
   const isMatchPoint = (scoreA === 9 || scoreB === 9) && !winner;
@@ -138,6 +139,41 @@ export default function TugOfWarArena({
                 />
               ))}
             </div>
+
+            {/* Tactical Cards Status HUD for Team A */}
+            <div style={{ display: 'flex', gap: isMobile ? 2 : 4, marginTop: 4, flexWrap: 'wrap' }}>
+              {[
+                { key: 'FIREWALL', icon: '🛡️', label: 'Tường Lửa' },
+                { key: 'DDOS', icon: '❄️', label: 'DDoS' },
+                { key: 'DOUBLE_PULL', icon: '⚖️', label: 'X2 Kéo' },
+                { key: 'FIFTY_FIFTY', icon: '🎯', label: '50/50' }
+              ].map(c => {
+                const isUsed = Boolean(tacticalCards?.A?.[c.key]);
+                return (
+                  <span
+                    key={c.key}
+                    title={`Đội A: Thẻ ${c.label} (${isUsed ? 'Đã sử dụng' : 'Khả dụng'})`}
+                    style={{
+                      background: isUsed ? '#F1F5F9' : '#E0F2FE',
+                      color: isUsed ? '#94A3B8' : '#0369A1',
+                      border: `1.5px solid ${isUsed ? '#CBD5E1' : '#0284C7'}`,
+                      borderRadius: 6,
+                      padding: isMobile ? '1px 3px' : '1px 5px',
+                      fontSize: isMobile ? '0.62rem' : '0.72rem',
+                      fontWeight: 900,
+                      opacity: isUsed ? 0.45 : 1,
+                      filter: isUsed ? 'grayscale(1)' : 'none',
+                      textDecoration: isUsed ? 'line-through' : 'none',
+                      boxShadow: isUsed ? 'none' : '0 1px 0 var(--comic-black)',
+                      transition: 'all 0.2s ease',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {c.icon} {c.label}
+                  </span>
+                );
+              })}
+            </div>
           </div>
 
           {/* Center Boundary VS Badge */}
@@ -174,6 +210,41 @@ export default function TugOfWarArena({
                   style={{ height: isMobile ? 5 : 7 }}
                 />
               ))}
+            </div>
+
+            {/* Tactical Cards Status HUD for Team B */}
+            <div style={{ display: 'flex', gap: isMobile ? 2 : 4, marginTop: 4, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              {[
+                { key: 'FIREWALL', icon: '🛡️', label: 'Tường Lửa' },
+                { key: 'DDOS', icon: '❄️', label: 'DDoS' },
+                { key: 'DOUBLE_PULL', icon: '⚖️', label: 'X2 Kéo' },
+                { key: 'FIFTY_FIFTY', icon: '🎯', label: '50/50' }
+              ].map(c => {
+                const isUsed = Boolean(tacticalCards?.B?.[c.key]);
+                return (
+                  <span
+                    key={c.key}
+                    title={`Đội B: Thẻ ${c.label} (${isUsed ? 'Đã sử dụng' : 'Khả dụng'})`}
+                    style={{
+                      background: isUsed ? '#F1F5F9' : '#FFEDD5',
+                      color: isUsed ? '#94A3B8' : '#C2410C',
+                      border: `1.5px solid ${isUsed ? '#CBD5E1' : '#EA580C'}`,
+                      borderRadius: 6,
+                      padding: isMobile ? '1px 3px' : '1px 5px',
+                      fontSize: isMobile ? '0.62rem' : '0.72rem',
+                      fontWeight: 900,
+                      opacity: isUsed ? 0.45 : 1,
+                      filter: isUsed ? 'grayscale(1)' : 'none',
+                      textDecoration: isUsed ? 'line-through' : 'none',
+                      boxShadow: isUsed ? 'none' : '0 1px 0 var(--comic-black)',
+                      transition: 'all 0.2s ease',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {c.icon} {c.label}
+                  </span>
+                );
+              })}
             </div>
           </div>
         </div>

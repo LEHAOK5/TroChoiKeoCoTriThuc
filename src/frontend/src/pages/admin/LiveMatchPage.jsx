@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { socket } from '../../services/socket';
-import { getAdminRooms, getRoom } from '../../services/api';
+import { getAdminRooms, getRoom, getActiveRooms } from '../../services/api';
 import TugOfWarArena from '../../components/TugOfWarArena';
 import RingTimer from '../../components/RingTimer';
 import VictoryCutscene from '../../components/VictoryCutscene';
@@ -73,6 +73,7 @@ export default function LiveMatchPage({
   const [tacticalCards, setTacticalCards] = useState({ A: {}, B: {} });
   const [activeCardEffects, setActiveCardEffects] = useState({});
   const [fiftyFiftyEliminated, setFiftyFiftyEliminated] = useState([]);
+  const [cardBanner, setCardBanner] = useState(null);
 
   // Subscribe to audio mute changes
   useEffect(() => {
@@ -131,27 +132,38 @@ export default function LiveMatchPage({
   // Fetch rooms list periodically (kết hợp cả admin rooms và public room endpoint)
   const fetchRooms = async () => {
     try {
+      let roomsList = [];
       if (token) {
         const res = await getAdminRooms(token);
         if (res?.success && Array.isArray(res.rooms)) {
-          setRooms(res.rooms);
-          let targetCode = selectedRoomCode;
-          if (!targetCode && res.rooms.length > 0) {
-            const playingRoom = res.rooms.find(r => r.state === 'ROUND_BUZZ' || r.state === 'ROUND_ANSWER' || r.state === 'ROUND_REBOUND') || res.rooms[0];
-            targetCode = playingRoom.roomCode;
-            setSelectedRoomCode(targetCode);
-          } else if (autoFollow && !selectedRoomCode && res.rooms.length > 0) {
-            const activePlaying = res.rooms.find(r => r.state === 'ROUND_BUZZ' || r.state === 'ROUND_ANSWER' || r.state === 'ROUND_REBOUND');
-            if (activePlaying && activePlaying.roomCode !== selectedRoomCode) {
-              targetCode = activePlaying.roomCode;
-              setSelectedRoomCode(targetCode);
-            }
-          }
+          roomsList = res.rooms;
+        }
+      }
+      if (roomsList.length === 0) {
+        const publicRes = await getActiveRooms();
+        if (publicRes?.success && Array.isArray(publicRes.rooms)) {
+          roomsList = publicRes.rooms;
+        }
+      }
 
-          const targetRoomData = res.rooms.find(r => r.roomCode === (targetCode || selectedRoomCode));
-          if (targetRoomData) {
-            syncRoomData(targetRoomData);
+      if (roomsList.length > 0) {
+        setRooms(roomsList);
+        let targetCode = selectedRoomCode;
+        if (!targetCode && roomsList.length > 0) {
+          const playingRoom = roomsList.find(r => r.state === 'ROUND_BUZZ' || r.state === 'ROUND_ANSWER' || r.state === 'ROUND_REBOUND') || roomsList[0];
+          targetCode = playingRoom.roomCode;
+          setSelectedRoomCode(targetCode);
+        } else if (autoFollow && !selectedRoomCode && roomsList.length > 0) {
+          const activePlaying = roomsList.find(r => r.state === 'ROUND_BUZZ' || r.state === 'ROUND_ANSWER' || r.state === 'ROUND_REBOUND');
+          if (activePlaying && activePlaying.roomCode !== selectedRoomCode) {
+            targetCode = activePlaying.roomCode;
+            setSelectedRoomCode(targetCode);
           }
+        }
+
+        const targetRoomData = roomsList.find(r => r.roomCode === (targetCode || selectedRoomCode));
+        if (targetRoomData) {
+          syncRoomData(targetRoomData);
         }
       }
 
@@ -221,6 +233,8 @@ export default function LiveMatchPage({
       setReboundData(null);
       setLastResult(null);
       setFiftyFiftyEliminated([]);
+      setActiveCardEffects({});
+      setCardBanner(null);
       if (typeof data.scoreA === 'number') setScoreA(data.scoreA);
       if (typeof data.scoreB === 'number') setScoreB(data.scoreB);
       if (typeof data.ropeOffset === 'number') setRopeOffset(data.ropeOffset);
@@ -264,15 +278,36 @@ export default function LiveMatchPage({
     const handleTacticalCardActivated = (data) => {
       console.log('🃏 [Card Activated Live]:', data);
       if (data.tacticalCards) setTacticalCards(data.tacticalCards);
-      setActiveCardEffects(prev => ({
-        ...prev,
-        [data.team]: data.cardType
-      }));
 
-      if (data.cardType === 'FIREWALL') playShieldUp();
-      else if (data.cardType === 'DDOS') playFreezeSfx();
-      else if (data.cardType === 'DOUBLE_PULL') playDoubleGavel();
-      else if (data.cardType === 'FIFTY_FIFTY') playFiftyFiftyDismiss();
+      setCardBanner({
+        team: data.team,
+        cardType: data.cardType,
+        playerName: data.playerName || (data.team === 'A' ? 'Đội A' : 'Đội B')
+      });
+      setTimeout(() => setCardBanner(null), 3500);
+
+      if (data.cardType === 'FIREWALL') {
+        playShieldUp();
+        setActiveCardEffects(prev => ({ ...prev, firewallTeam: data.team }));
+      } else if (data.cardType === 'DOUBLE_PULL') {
+        playDoubleGavel();
+        setActiveCardEffects(prev => ({ ...prev, doublePullTeam: data.team }));
+      } else if (data.cardType === 'DDOS') {
+        playFreezeSfx();
+      } else if (data.cardType === 'FIFTY_FIFTY') {
+        playFiftyFiftyDismiss();
+      }
+    };
+
+    const handleCardEffectApplied = (data) => {
+      console.log('❄️ [Card Effect Applied Live]:', data);
+      if (data.type === 'FREEZE_BUZZER') {
+        playFreezeSfx();
+        setActiveCardEffects(prev => ({ ...prev, frozenTeam: data.targetTeam }));
+        setTimeout(() => {
+          setActiveCardEffects(prev => ({ ...prev, frozenTeam: null }));
+        }, data.durationMs || 2500);
+      }
     };
 
     const handleFiftyFiftyResult = (data) => {
@@ -310,6 +345,7 @@ export default function LiveMatchPage({
     socket.on('reboundOpen', handleReboundOpen);
     socket.on('bothTeamsWrong', handleBothTeamsWrong);
     socket.on('tacticalCardActivated', handleTacticalCardActivated);
+    socket.on('cardEffectApplied', handleCardEffectApplied);
     socket.on('fiftyFiftyResult', handleFiftyFiftyResult);
     socket.on('gameOver', handleGameOver);
 
@@ -325,6 +361,7 @@ export default function LiveMatchPage({
       socket.off('reboundOpen', handleReboundOpen);
       socket.off('bothTeamsWrong', handleBothTeamsWrong);
       socket.off('tacticalCardActivated', handleTacticalCardActivated);
+      socket.off('cardEffectApplied', handleCardEffectApplied);
       socket.off('fiftyFiftyResult', handleFiftyFiftyResult);
       socket.off('gameOver', handleGameOver);
     };
@@ -367,6 +404,36 @@ export default function LiveMatchPage({
   const teamACount = maxPerTeam;
   const teamBCount = maxPerTeam;
   const isIT = currentQuestion?.category === 'IT';
+
+  const otherRooms = rooms.filter(r => r.roomCode !== selectedRoomCode);
+  const nextPlayingRoom = otherRooms.find(r => r.state === 'ROUND_BUZZ' || r.state === 'ROUND_ANSWER' || r.state === 'ROUND_REBOUND') || otherRooms.find(r => r.state === 'LOBBY');
+  const isWinnerA = gameOverData?.winner === 'A' || scoreA >= 10 || (gameOverData && scoreA > scoreB);
+  const isWinnerB = gameOverData?.winner === 'B' || scoreB >= 10 || (gameOverData && scoreB > scoreA);
+
+  const handleSwitchRoom = (newCode) => {
+    if (!newCode || newCode === selectedRoomCode) return;
+    const cleanCode = newCode.toUpperCase().trim();
+    setSelectedRoomCode(cleanCode);
+    setGameOverData(null);
+    setCurrentQuestion(null);
+    setUiState('LOBBY');
+    setLastResult(null);
+    setBuzzerWinner(null);
+    setReboundData(null);
+    setShowCutscene(false);
+    setActiveCardEffects({});
+    setCardBanner(null);
+
+    if (typeof window !== 'undefined' && window.history?.replaceState) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('tv', cleanCode);
+      window.history.replaceState({}, '', url.toString());
+    }
+
+    getRoom(cleanCode).then(r => {
+      if (r && (r.roomCode || r.state)) syncRoomData(r);
+    }).catch(err => console.warn(err));
+  };
 
   return (
     <div
@@ -445,7 +512,7 @@ export default function LiveMatchPage({
             <select
               value={selectedRoomCode}
               onChange={(e) => {
-                setSelectedRoomCode(e.target.value);
+                handleSwitchRoom(e.target.value);
                 setAutoFollow(false);
               }}
               style={{
@@ -461,7 +528,7 @@ export default function LiveMatchPage({
             >
               {rooms.map(r => (
                 <option key={r.roomCode} value={r.roomCode}>
-                  Phòng #{r.roomCode} ({r.state === 'ROUND_BUZZ' || r.state === 'ROUND_ANSWER' ? '🔴 Đang đấu' : '⏳ Sảnh'})
+                  Phòng #{r.roomCode} ({r.state === 'ROUND_BUZZ' || r.state === 'ROUND_ANSWER' ? '🔴 Đang đấu' : r.state === 'FINISHED' ? '🏆 Đã xong' : '⏳ Sảnh'})
                 </option>
               ))}
             </select>
@@ -548,7 +615,7 @@ export default function LiveMatchPage({
         }}
       >
         {/* TIER 1: TUG OF WAR ARENA (10 CHIBI + REFEREE + SCORES) */}
-        <section style={{ flex: '0 0 auto', width: '100%', marginBottom: 10 }}>
+        <section style={{ flex: '0 0 auto', width: '100%', marginBottom: 10, position: 'relative' }}>
           <TugOfWarArena
             scoreA={scoreA}
             scoreB={scoreB}
@@ -559,7 +626,44 @@ export default function LiveMatchPage({
             lastResult={lastResult}
             isBuzzed={uiState === 'BUZZER_AWARDED'}
             activeCardEffects={activeCardEffects}
+            tacticalCards={tacticalCards}
           />
+
+          {/* POP-UP BANNER THÔNG BÁO DÙNG THẺ BÀI CHIẾN THUẬT NỔI BẬT */}
+          {cardBanner && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                zIndex: 60,
+                background: cardBanner.team === 'A' ? 'linear-gradient(135deg, #0284C7, #0369A1)' : 'linear-gradient(135deg, #EA580C, #C2410C)',
+                border: '4px solid var(--comic-black)',
+                boxShadow: '0 8px 0 var(--comic-black)',
+                borderRadius: 20,
+                padding: '14px 28px',
+                color: '#FFFFFF',
+                textAlign: 'center',
+                minWidth: 380,
+                maxWidth: '92%',
+                animation: 'bounceIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+              }}
+            >
+              <div style={{ fontSize: '0.82rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: 1.5, color: '#FEF08A' }}>
+                ⚡ KÍCH HOẠT THẺ BÀI CHIẾN THUẬT!
+              </div>
+              <div style={{ fontFamily: 'var(--font-title)', fontSize: '1.45rem', fontWeight: 900, margin: '4px 0', textShadow: '0 2px 0 var(--comic-black)' }}>
+                {cardBanner.cardType === 'FIREWALL' && '🛡️ TƯỜNG LỬA (CHỐNG CƯỚP REBOUND)'}
+                {cardBanner.cardType === 'DDOS' && '❄️ ĐÓNG BĂNG DDOS ĐỐI THỦ (2.5S)'}
+                {cardBanner.cardType === 'DOUBLE_PULL' && '⚖️ KÉO X2 (GẤP ĐÔI SỨC KÉO)'}
+                {cardBanner.cardType === 'FIFTY_FIFTY' && '🎯 TRỢ GIÚP 50/50 (BÁC BỎ 2 ĐÁP ÁN)'}
+              </div>
+              <div style={{ fontSize: '0.88rem', fontWeight: 800, background: 'rgba(0,0,0,0.3)', padding: '3px 12px', borderRadius: 999, display: 'inline-block' }}>
+                Đội {cardBanner.team === 'A' ? 'A (TIA CHỚP)' : 'B (NGỌN LỬA)'} • {cardBanner.playerName} tung đòn!
+              </div>
+            </div>
+          )}
         </section>
 
         {/* TIER 2: E-SPORTS LOBBY ROSTER (NO QR) OR LIVE QUESTION */}
@@ -838,7 +942,7 @@ export default function LiveMatchPage({
           {/* ==================================================== */}
           {/* SCENARIO 2: LIVE MATCH (QUESTION & 4 CHOICES 2X2)     */}
           {/* ==================================================== */}
-          {uiState !== 'LOBBY' && currentQuestion && (
+          {uiState !== 'LOBBY' && uiState !== 'FINISHED' && currentQuestion && (
             <div
               style={{
                 background: '#FFFFFF',
@@ -1060,6 +1164,190 @@ export default function LiveMatchPage({
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          )}
+
+          {/* ==================================================== */}
+          {/* SCENARIO 3: MATCH FINISHED (PODIUM & ROOM SWITCHER) */}
+          {/* ==================================================== */}
+          {uiState === 'FINISHED' && (
+            <div
+              style={{
+                background: '#FFFFFF',
+                border: '3px solid var(--comic-black)',
+                borderRadius: 20,
+                boxShadow: '0 8px 0 var(--comic-black)',
+                padding: '18px 22px',
+                color: '#0F172A',
+                display: 'flex',
+                gap: 20,
+                height: '100%',
+                boxSizing: 'border-box'
+              }}
+            >
+              {/* Left Column: Victory Podium & Match Summary */}
+              <div
+                style={{
+                  flex: 1.1,
+                  background: isWinnerA ? '#F0F9FF' : '#FFF7ED',
+                  border: '2.5px solid var(--comic-black)',
+                  borderRadius: 16,
+                  padding: '16px 20px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  textAlign: 'center',
+                  boxShadow: '0 4px 0 var(--comic-black)'
+                }}
+              >
+                <div style={{ fontSize: '3.6rem', marginBottom: 4 }}>🏆</div>
+                <div style={{ fontFamily: 'var(--font-title)', fontSize: '1.65rem', fontWeight: 900, color: isWinnerA ? '#0284C7' : '#EA580C', textShadow: '0 2px 0 var(--comic-black)', lineHeight: 1.2 }}>
+                  {isWinnerA ? '🎉 ĐỘI A (VHU TIA CHỚP) VÔ ĐỊCH!' : isWinnerB ? '🎉 ĐỘI B (VHU NGỌN LỬA) VÔ ĐỊCH!' : '🤝 TRẬN ĐẤU KẾT THÚC HÒA!'}
+                </div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0F172A', margin: '10px 0 6px 0' }}>
+                  TỈ SỐ CHUNG CUỘC: <span style={{ color: '#0284C7' }}>{scoreA}</span> - <span style={{ color: '#EA580C' }}>{scoreB}</span>
+                </div>
+                <div style={{ fontSize: '0.86rem', color: '#64748B', fontWeight: 700, marginBottom: 12 }}>
+                  Phòng thi đấu #{selectedRoomCode} đã hoàn tất phần thi!
+                </div>
+                {/* Winning Team Players */}
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+                  {(isWinnerA ? teamAPlayers : teamBPlayers).map((p, idx) => (
+                    <span
+                      key={idx}
+                      style={{
+                        background: '#FEF08A',
+                        color: '#713F12',
+                        border: '1.5px solid var(--comic-black)',
+                        boxShadow: '0 2px 0 var(--comic-black)',
+                        padding: '4px 12px',
+                        borderRadius: 999,
+                        fontWeight: 900,
+                        fontSize: '0.85rem'
+                      }}
+                    >
+                      🎖️ {p.name} ({p.studentId})
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Right Column: Other Active Rooms Navigator */}
+              <div
+                style={{
+                  flex: 1.3,
+                  background: '#FAF5FF',
+                  border: '2.5px solid var(--comic-black)',
+                  borderRadius: 16,
+                  padding: '16px 20px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  boxShadow: '0 4px 0 var(--comic-black)',
+                  minHeight: 0
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+                  <div style={{ fontFamily: 'var(--font-title)', fontSize: '1.12rem', fontWeight: 900, color: '#7E22CE' }}>
+                    🔴 CÁC PHÒNG ĐẤU KHÁC ĐANG DIỄN RA ({otherRooms.length})
+                  </div>
+                  {nextPlayingRoom && (
+                    <button
+                      onClick={() => handleSwitchRoom(nextPlayingRoom.roomCode)}
+                      style={{
+                        background: 'linear-gradient(135deg, #10B981, #059669)',
+                        color: '#FFFFFF',
+                        border: '2px solid var(--comic-black)',
+                        boxShadow: '0 3px 0 var(--comic-black)',
+                        padding: '6px 14px',
+                        borderRadius: 10,
+                        fontWeight: 900,
+                        fontSize: '0.82rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4
+                      }}
+                    >
+                      ⏭️ XEM PHÒNG #{nextPlayingRoom.roomCode}
+                    </button>
+                  )}
+                </div>
+
+                {/* List of Other Rooms */}
+                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, paddingRight: 4 }}>
+                  {otherRooms.length === 0 ? (
+                    <div style={{ textAlign: 'center', color: '#64748B', fontWeight: 700, padding: 32, background: '#FFFFFF', borderRadius: 12, border: '1.5px dashed #CBD5E1' }}>
+                      Hiện chưa có phòng thi đấu nào khác đang mở.
+                      <div style={{ marginTop: 6, fontSize: '0.82rem', color: '#94A3B8' }}>
+                        Admin có thể tạo thêm phòng từ Bảng điều khiển quản trị!
+                      </div>
+                    </div>
+                  ) : (
+                    otherRooms.map(r => {
+                      const isPlaying = r.state === 'ROUND_BUZZ' || r.state === 'ROUND_ANSWER' || r.state === 'ROUND_REBOUND';
+                      const isLobby = r.state === 'LOBBY';
+                      return (
+                        <div
+                          key={r.roomCode}
+                          style={{
+                            background: '#FFFFFF',
+                            border: '2px solid var(--comic-black)',
+                            borderRadius: 12,
+                            padding: '10px 14px',
+                            boxShadow: '0 2px 0 var(--comic-black)',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            gap: 10
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                            <span style={{ fontFamily: 'var(--font-title)', fontSize: '1.1rem', fontWeight: 900, color: '#1A1AFF' }}>
+                              #{r.roomCode}
+                            </span>
+                            <span style={{ background: '#E0E7FF', color: '#3730A3', padding: '2px 8px', borderRadius: 6, fontSize: '0.75rem', fontWeight: 800 }}>
+                              {r.mode || '1vs1'}
+                            </span>
+                            <span style={{
+                              background: isPlaying ? '#DCFCE7' : isLobby ? '#FEF08A' : '#F1F5F9',
+                              color: isPlaying ? '#166534' : isLobby ? '#854D0E' : '#475569',
+                              padding: '2px 8px',
+                              borderRadius: 6,
+                              fontSize: '0.75rem',
+                              fontWeight: 800
+                            }}>
+                              {isPlaying
+                                ? `⚡ ĐANG ĐẤU (Câu ${r.roundCount || 1} | ${r.scoreA || 0}-${r.scoreB || 0})`
+                                : isLobby
+                                ? `⏳ SẢNH CHỜ (${r.teamACount + r.teamBCount}/${(r.maxPerTeam || 1) * 2})`
+                                : '🏆 ĐÃ KẾT THÚC'}
+                            </span>
+                          </div>
+
+                          <button
+                            onClick={() => handleSwitchRoom(r.roomCode)}
+                            style={{
+                              background: '#1A1AFF',
+                              color: '#FFFFFF',
+                              border: '1.5px solid var(--comic-black)',
+                              boxShadow: '0 2px 0 var(--comic-black)',
+                              padding: '6px 12px',
+                              borderRadius: 8,
+                              fontWeight: 900,
+                              fontSize: '0.8rem',
+                              cursor: 'pointer',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            👁️ CHIẾU PHÒNG NÀY
+                          </button>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
               </div>
             </div>
           )}

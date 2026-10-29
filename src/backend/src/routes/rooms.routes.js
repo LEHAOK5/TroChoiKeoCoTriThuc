@@ -16,6 +16,16 @@ function createRoomsRouter(roomManager) {
     });
   });
 
+  // List all active rooms for public spectator navigation
+  router.get('/', (req, res) => {
+    const rooms = roomManager ? roomManager.listRooms() : [];
+    res.json({
+      success: true,
+      count: rooms.length,
+      rooms
+    });
+  });
+
   // Quick match into an open room
   router.post('/quick-match', (req, res) => {
     const room = roomManager.quickMatch();

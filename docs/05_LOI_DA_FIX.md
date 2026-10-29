@@ -595,3 +595,32 @@ Sau khi push commit lên GitHub:
    - Toàn bộ âm thanh chuông bấm, còi trọng tài, pháo hoa ăn mừng và giọng MC bình luận trận đấu trên TV do duy nhất [`LiveMatchPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/admin/LiveMatchPage.jsx) kiểm soát thông qua nút bật/tắt `🔊 LOA TV`, loại bỏ hoàn toàn hiện tượng vọng âm/phát đè từ `App.jsx`.
 4. **Bảo toàn hiển thị kết quả đáp án đúng/sai (`ANSWER_RESULT`) trong [`LiveMatchPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/admin/LiveMatchPage.jsx):**
    - Trong hàm đồng bộ phòng `syncRoomData()`, khi màn hình TV đang ở trạng thái `ANSWER_RESULT` (chiếu banner chúc mừng đội trả lời đúng và hoạt cảnh kéo dây), cơ chế polling không được ghi đè lùi lại trạng thái trước đó, giúp khán giả xem trọn vẹn 3.5 giây ăn mừng trước khi sang câu hỏi kế tiếp.
+
+---
+
+## 15. Bổ Sung Hiển Thị Tương Tác 4 Thẻ Bài & Bộ Điều Hướng Chuyển Phòng Thi Đấu Khi Kết Thúc Trận
+
+### 1. Hiện Tượng Thực Tế
+1. **Thiếu tương tác thẻ bài:** Khi thí sinh trên điện thoại sử dụng 4 thẻ bài chiến thuật (`TƯỜNG LỬA`, `DDOS`, `X2 KÉO`, `50/50`), Màn Chiếu TV không hiển thị hoạt cảnh hiệu ứng và khán giả không biết đội nào đang tung chiêu hay bị đóng băng.
+2. **Màn hình trống khi kết thúc trận:** Khi một đội đạt mốc 10 điểm chiến thắng, nửa dưới màn hình TV bị trống trơn một màu xanh `#1A1AFF`, không có bảng tổng kết tỉ số và không có nút để chuyển màn chiếu sang các phòng đấu khác đang hoạt động.
+
+### 2. Nguyên Nhân Kỹ Thuật (Root Cause Analysis)
+1. **Lệch cấu trúc thuộc tính `activeCardEffects`:**
+   - `LiveMatchPage.jsx` trước đó lưu `activeCardEffects[team] = cardType` (ví dụ: `{ A: 'FIREWALL' }`).
+   - Trong khi `TugOfWarArena.jsx` kiểm tra: `activeCardEffects.firewallTeam`, `activeCardEffects.frozenTeam`, `activeCardEffects.doublePullTeam`. Do lệch tên thuộc tính, toàn bộ hiệu ứng lá chắn lửa, khối băng và búa kéo đôi bị vô hiệu hóa. Đồng thời thiếu bộ lắng nghe `cardEffectApplied` khi dính DDoS.
+2. **Thiếu khối JSX render cho `uiState === 'FINISHED'`:**
+   - Trong `LiveMatchPage.jsx`, nửa dưới màn hình chỉ render khi `uiState === 'LOBBY'` hoặc `uiState !== 'LOBBY' && currentQuestion`. Khi trận kết thúc (`uiState === 'FINISHED'`), `currentQuestion` không còn nên không có bất kỳ component nào được render, dẫn đến khoảng trống màu xanh.
+
+### 3. Giải Pháp Khắc Phục Triệt Để
+1. **Chuẩn hóa cấu trúc và hoạt cảnh 4 thẻ bài ([`LiveMatchPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/admin/LiveMatchPage.jsx) & [`TugOfWarArena.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/components/TugOfWarArena.jsx)):**
+   - Đồng bộ chuẩn xác `firewallTeam`, `frozenTeam`, `doublePullTeam` và lắng nghe sự kiện `cardEffectApplied` để kích hoạt hiệu ứng khối băng đối thủ và lá chắn năng lượng trên sân kéo co.
+   - Thêm **Pop-up Banner Thông Báo Kích Hoạt Thẻ Bài Siêu Nổi Bật** (3.5 giây) ngay giữa đấu trường kèm âm thanh sôi động khi có thí sinh tung chiêu.
+   - Bổ sung **Thanh 4 Huy Hiệu Thẻ Bài Neo-brutalism** (`🛡️ Tường Lửa`, `❄️ DDoS`, `⚖️ X2 Kéo`, `🎯 50/50`) bên dưới vạch năng lượng của từng đội: thẻ còn dùng hiển thị sáng rõ, thẻ đã dùng tự động gạch chéo và làm mờ.
+2. **Xây dựng Bảng Tổng Kết Trận Đấu & Vinh Danh Chiến Thắng (Podium Victory):**
+   - Khi trận đấu kết thúc (`uiState === 'FINISHED'`), render Cúp vàng 🏆, chúc mừng đội vô địch, hiển thị tỉ số chung cuộc và danh sách thí sinh đạt giải.
+3. **Bộ Điều Hướng Chuyển Phòng Thi Đấu (Live Match Switcher):**
+   - Liệt kê trực quan danh sách tất cả các phòng đang thi đấu khác kèm mã phòng, chế độ và trạng thái (`⚡ ĐANG ĐẤU (Câu X | SA-SB)`, `⏳ SẢNH CHỜ`).
+   - Nút to nổi bật: `👉 XEM PHÒNG ĐANG ĐẤU TIẾP THEO ⏭️` (tự động gợi ý phòng đang diễn ra hấp dẫn nhất).
+   - Nút `👁️ CHIẾU PHÒNG NÀY` tại từng thẻ phòng: Bấm một chạm là Màn Chiếu TV lập tức chuyển sang chiếu phòng đó ngay mà không cần reload trang.
+4. **Backend Public Endpoint ([`rooms.routes.js`](file:///d:/KEOCOTRITHUC/src/backend/src/routes/rooms.routes.js) & [`api.js`](file:///d:/KEOCOTRITHUC/src/frontend/src/services/api.js)):**
+   - Thêm `GET /api/rooms` công khai trả về danh sách các phòng đang chạy để màn chiếu TV luôn tải được danh sách phòng ngay cả khi không có token Admin.
