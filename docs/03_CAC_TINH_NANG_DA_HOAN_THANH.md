@@ -132,25 +132,20 @@ Tài liệu này liệt kê chi tiết từng tính năng đã hoàn thiện tro
 
 ## 9. Màn Chiếu TV Trực Tiếp & Chế Độ Khán Giả Độc Lập (Live Arena Spectator Mode)
 - **Tập tin Frontend:**
-  - [`src/frontend/src/pages/admin/LiveMatchPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/admin/LiveMatchPage.jsx): Trang chuyên dụng phục vụ trình chiếu TV / Máy chiếu lớn tỷ lệ 16:9 Full HD & 4K không có thanh cuộn.
+  - [`src/frontend/src/pages/admin/LiveMatchPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/admin/LiveMatchPage.jsx): Trang chuyên dụng phục vụ máy chiếu / màn hình TV lớn tỷ lệ 16:9 Full HD & 4K không có thanh cuộn.
   - [`src/frontend/src/pages/admin/AdminPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/admin/AdminPage.jsx):
-    - Bổ sung nút điều hướng thứ 4: **`🔴 📺 XEM TRẬN ĐẤU TRỰC TIẾP`** kế bên `🏆 LỊCH SỬ TRẬN ĐẤU`.
-    - Bổ sung nút **`[ 📺 Chiếu TV ↗ ]`** trên mỗi thẻ phòng đấu tại Tab 1 (ROOMS) để mở nhanh cửa sổ/tab mới.
-  - [`src/frontend/src/App.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/App.jsx): Tự động nhận diện URL tham số `?spectate=:roomCode` hoặc `?tv=:roomCode` hoặc hash `#live` để nạp ngay trang trực tiếp mà không cần đăng nhập.
+    - Bổ sung nút **`🔴 📺 XEM TRẬN ĐẤU TRỰC TIẾP ↗`** kế bên `🏆 LỊCH SỬ TRẬN ĐẤU`: Click mở ngay một **Tab Google Chrome mới độc lập (`window.open('/?tv=...', '_blank')`)**, giúp laptop của BTC vẫn ở trang Admin để quản trị bình thường.
+    - Bổ sung nút **`[ 📺 Chiếu TV ↗ ]`** trên mỗi thẻ phòng đấu tại Tab 1 (ROOMS) để mở nhanh màn chiếu TV cho phòng tương ứng.
+  - [`src/frontend/src/App.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/App.jsx): Tự động nhận diện URL tham số `?tv=:roomCode` hoặc `?spectate=:roomCode` để nạp trang trình chiếu độc lập, ẩn toàn bộ header sinh viên.
 - **Tập tin Backend:**
   - [`src/backend/src/sockets/roomHandlers.js`](file:///d:/KEOCOTRITHUC/src/backend/src/sockets/roomHandlers.js):
     - Hỗ trợ sự kiện Socket `joinSpectator` và `leaveSpectator`.
-    - Gửi snapshot toàn bộ trạng thái phòng đấu tức thì (`spectatorJoinedSuccess`) cho màn hình TV ngay khi vừa kết nối mà **không chiếm slot thí sinh 5vs5 của phòng**.
-- **Tính năng nổi bật cho màn hình TV gian hàng sự kiện:**
-  1. **Giao diện Đấu Trường Khổng Lồ:** Đấu trường 10 Chibi VHU (áo Xanh & Cam), dây thừng kéo lực chuyển động mượt mà, Thẩm phán tri thức gõ búa công lý, tỉ số cực đại `⚡ ĐỘI A  [ 7 - 5 ]  ĐỘI B 🔥`.
-  2. **Hộp Câu Hỏi & 4 Đáp Án Cỡ Đại (2x2 Grid):** Tối ưu font chữ to rõ (1.25rem - 1.5rem), tương phản cao, dễ đọc từ khoảng cách 5 - 10 mét. Hiển thị trực quan:
-     - Ai bấm chuông giành quyền trả lời (vàng rực).
-     - Đáp án đúng sáng xanh lá kèm tiếng reo hò; đáp án sai sáng đỏ.
-     - Pha cướp điểm Rebound 8 giây.
-     - Hiệu ứng thẻ bài (Tường lửa, Đóng băng DDoS, X2 Lực kéo, 50/50 bác bỏ).
-  3. **Chế độ Sảnh chờ & Quét mã QR khổng lồ:** Khi phòng ở trạng thái LOBBY, màn hình TV tự động chiếu danh sách thành viên 2 đội cùng mã QR to ở chính giữa để sinh viên đến gian hàng có thể quét điện thoại tham gia lượt tiếp theo.
-  4. **Công cụ Trình Chiếu Chuyên Nghiệp:**
-     - Nút `⛶ Toàn màn hình (F11)`: Trình chiếu tràn viền 100%.
-     - Nút `🔊 / 🔇 Âm thanh TV`: Bật/tắt âm thanh ra loa TV độc lập với máy tính Admin.
-     - Nút `⚡ Tự bắt trận (Auto-follow)`: Tự động chuyển màn hình TV sang phòng đang thi đấu sôi nổi nhất.
-     - Nút `↗ TAB TV RIÊNG`: Cho phép mở một tab trình duyệt riêng biệt kéo sang màn hình TV qua cáp HDMI, giúp laptop của BTC vẫn ở trang Admin để quản trị bình thường.
+    - Gửi snapshot toàn bộ trạng thái phòng đấu tức thì (`spectatorJoinedSuccess`) cho màn hình TV ngay khi vừa kết nối mà **không chiếm slot thí sinh của phòng**.
+- **Quy chuẩn hiển thị & Tính năng nổi bật cho máy chiếu gian hàng sự kiện:**
+  1. **Màu Nền Chuẩn VHU HARMONY (#1A1AFF Thuần Phẳng 100%):** Nền ngoài toàn trang và thanh header sử dụng màu xanh `#1A1AFF` thuần 100%, không sử dụng vignette/gradient tối góc hay quầng đen bóng ma, đảm bảo sắc thái nhận diện thương hiệu tươi sáng và rực rỡ khi chiếu lên máy chiếu lớn.
+  2. **Không Dùng Mã QR Khổng Lồ:** Toàn bộ diện tích màn chiếu TV được dành trọn cho trải nghiệm thị giác của hàng trăm sinh viên vây quanh xem thi đấu (mã QR đã được in sẵn tại quầy và standee).
+  3. **Slot Thành Viên Động (Dynamic Slots 1vs1 đến 5vs5):** Sảnh chờ LOBBY tự động co giãn số lượng slot thành viên theo chế độ phòng đấu (`maxPerTeam = 1..5`). Ô có thí sinh thì sáng rõ họ tên, khoa, badge `✅ ĐÃ SẴN SÀNG`; ô còn trống hiển thị khung nét đứt chờ đón.
+  4. **Giao diện So Găng e-Sports (⚔️ VS ⚔️):** Khối Đội A (Tia Chớp ⚡) đối đầu khối Đội B (Ngọn Lửa 🔥), huy hiệu phòng và chế độ thi đấu nổi bật.
+  5. **Đấu Trường 10 Chibi & Câu Hỏi Cỡ Đại (2x2 Grid):** Tỉ số cực đại `⚡ ĐỘI A [ 7 - 5 ] ĐỘI B 🔥`, dây kéo co và nơ cờ đỏ giật tức thời, Thẩm phán gõ búa, font chữ câu hỏi và 4 đáp án to rõ (1.3rem - 1.6rem) dễ đọc từ khoảng cách 10 mét. Hiển thị trực quan đội bấm chuông, đúng/sai, Rebound 8s và hiệu ứng 4 thẻ bài chiến thuật.
+  6. **Hoạt Cảnh Chiến Thắng & Vòng Lặp Đón Lượt Mới Tự Động:** Chiếu trọn vẹn Cutscene kéo ngã đối thủ trên sân cỏ (4.2s), vinh danh bục #1 vô địch. Khi BTC bấm "Đón lượt mới" trên laptop, TV tự động reset về Sảnh chờ LOBBY đón lượt tiếp theo.
+  7. **Công cụ Trình Chiếu Chuyên Nghiệp:** Nút `⛶ Toàn màn hình (F11)`, Nút `🔊 / 🔇 Âm thanh Loa TV`, Nút `⚡ Tự bắt trận (Auto-follow)` tự động bám theo phòng đang thi đấu sôi nổi nhất.

@@ -31,11 +31,8 @@ import {
 } from '../../utils/announcer';
 
 const OPTION_PREFIXES = ['A', 'B', 'C', 'D'];
-const OPTION_SHAPES = ['⚪', '🔺', '⏹️', '🔶'];
 
 export default function LiveMatchPage({
-  onBack,
-  isIndependentTab = false,
   initialRoomCode = ''
 }) {
   const [token] = useState(() => sessionStorage.getItem('adminToken') || '');
@@ -43,12 +40,11 @@ export default function LiveMatchPage({
   const [selectedRoomCode, setSelectedRoomCode] = useState(() => {
     if (initialRoomCode) return initialRoomCode;
     const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('spectate') || urlParams.get('room') || urlParams.get('tv') || '';
+    return urlParams.get('tv') || urlParams.get('spectate') || urlParams.get('room') || '';
   });
 
   const [autoFollow, setAutoFollow] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showQrModal, setShowQrModal] = useState(false);
   const [audioMuted, setAudioMuted] = useState(() => isMuted());
 
   // Room Match States
@@ -71,8 +67,6 @@ export default function LiveMatchPage({
   const [tacticalCards, setTacticalCards] = useState({ A: {}, B: {} });
   const [activeCardEffects, setActiveCardEffects] = useState({});
   const [fiftyFiftyEliminated, setFiftyFiftyEliminated] = useState([]);
-  const [isFrozenTeam, setIsFrozenTeam] = useState(null);
-  const [frozenSecondsLeft, setFrozenSecondsLeft] = useState(0);
 
   // Subscribe to audio mute changes
   useEffect(() => {
@@ -108,7 +102,7 @@ export default function LiveMatchPage({
     return () => clearInterval(interval);
   }, [token, autoFollow, selectedRoomCode]);
 
-  // Connect socket as spectator when roomCode changes
+  // Connect socket as spectator when selectedRoomCode changes
   useEffect(() => {
     if (!selectedRoomCode) return;
 
@@ -136,7 +130,7 @@ export default function LiveMatchPage({
       setBuzzerWinner(data.buzzerWinner || null);
       setReboundData(data.reboundData || null);
 
-      if (data.currentQuestion) {
+      if (data.currentQuestion && (data.state === 'ROUND_BUZZ' || data.state === 'ROUND_ANSWER' || data.state === 'ROUND_REBOUND')) {
         setCurrentQuestion(data.currentQuestion);
         setDeadline(data.deadline || null);
         if (data.state === 'ROUND_BUZZ') setUiState('ROUND_BUZZ');
@@ -160,6 +154,7 @@ export default function LiveMatchPage({
       if (typeof data.ropeOffset === 'number') setRopeOffset(data.ropeOffset);
       if (data.tacticalCards) setTacticalCards(data.tacticalCards);
 
+      // Auto-reset when room returns to LOBBY
       if (data.state === 'LOBBY') {
         setUiState('LOBBY');
         setCurrentQuestion(null);
@@ -167,7 +162,6 @@ export default function LiveMatchPage({
         setReboundData(null);
         setLastResult(null);
         setFiftyFiftyEliminated([]);
-        setIsFrozenTeam(null);
         setGameOverData(null);
         setShowCutscene(false);
       }
@@ -195,7 +189,6 @@ export default function LiveMatchPage({
       setReboundData(null);
       setLastResult(null);
       setFiftyFiftyEliminated([]);
-      setIsFrozenTeam(null);
       if (typeof data.scoreA === 'number') setScoreA(data.scoreA);
       if (typeof data.scoreB === 'number') setScoreB(data.scoreB);
       if (typeof data.ropeOffset === 'number') setRopeOffset(data.ropeOffset);
@@ -250,13 +243,6 @@ export default function LiveMatchPage({
       else if (data.cardType === 'FIFTY_FIFTY') playFiftyFiftyDismiss();
     };
 
-    const handleCardEffectApplied = (data) => {
-      if (data.effect === 'FROZEN') {
-        setIsFrozenTeam(data.targetTeam);
-        setFrozenSecondsLeft(Math.ceil((data.durationMs || 2500) / 1000));
-      }
-    };
-
     const handleFiftyFiftyResult = (data) => {
       if (Array.isArray(data.eliminatedIndexes)) {
         setFiftyFiftyEliminated(data.eliminatedIndexes);
@@ -280,7 +266,6 @@ export default function LiveMatchPage({
     socket.on('answerResult', handleAnswerResult);
     socket.on('reboundOpen', handleReboundOpen);
     socket.on('tacticalCardActivated', handleTacticalCardActivated);
-    socket.on('cardEffectApplied', handleCardEffectApplied);
     socket.on('fiftyFiftyResult', handleFiftyFiftyResult);
     socket.on('gameOver', handleGameOver);
 
@@ -294,7 +279,6 @@ export default function LiveMatchPage({
       socket.off('answerResult', handleAnswerResult);
       socket.off('reboundOpen', handleReboundOpen);
       socket.off('tacticalCardActivated', handleTacticalCardActivated);
-      socket.off('cardEffectApplied', handleCardEffectApplied);
       socket.off('fiftyFiftyResult', handleFiftyFiftyResult);
       socket.off('gameOver', handleGameOver);
     };
@@ -325,19 +309,15 @@ export default function LiveMatchPage({
     }
   };
 
-  // Open independent tab for TV
-  const handleOpenIndependentTab = (code) => {
-    const room = code || selectedRoomCode;
-    const url = `${window.location.origin}/?spectate=${room}`;
-    window.open(url, '_blank');
-  };
+  // Dynamic slots calculation based on room maxPerTeam (1vs1 to 5vs5)
+  const maxPerTeam = roomState?.maxPerTeam || 5;
+  const teamAPlayers = roomState?.teamA || [];
+  const teamBPlayers = roomState?.teamB || [];
+  const teamASlots = Array.from({ length: maxPerTeam }, (_, i) => teamAPlayers[i] || null);
+  const teamBSlots = Array.from({ length: maxPerTeam }, (_, i) => teamBPlayers[i] || null);
 
-  const roomJoinUrl = selectedRoomCode
-    ? `${window.location.origin}/?room=${selectedRoomCode}`
-    : window.location.origin;
-
-  const teamACount = roomState?.teamA?.length || 5;
-  const teamBCount = roomState?.teamB?.length || 5;
+  const teamACount = teamAPlayers.length || maxPerTeam;
+  const teamBCount = teamBPlayers.length || maxPerTeam;
   const isIT = currentQuestion?.category === 'IT';
 
   return (
@@ -345,7 +325,8 @@ export default function LiveMatchPage({
       style={{
         width: '100vw',
         height: '100vh',
-        background: '#1A1AFF',
+        backgroundColor: '#1A1AFF',
+        background: '#1A1AFF', // 100% Solid Flat VHU Harmony
         color: '#FFFFFF',
         fontFamily: 'var(--font-sans)',
         display: 'flex',
@@ -355,126 +336,113 @@ export default function LiveMatchPage({
       }}
     >
       {/* ======================================================== */}
-      {/* TV STAGE HEADER (BAR QUẢN LÝ PHÒNG & ĐIỀU KHIỂN TRÌNH CHIẾU) */}
+      {/* TV STAGE HEADER (SOLID #1A1AFF BAR - KHÔNG GRADIENT TỐI)  */}
       {/* ======================================================== */}
       <header
         style={{
-          background: 'linear-gradient(180deg, #101077 0%, #1A1AFF 100%)',
+          backgroundColor: '#1A1AFF',
+          background: '#1A1AFF', // 100% Solid Flat VHU Harmony
           borderBottom: '3px solid var(--comic-black)',
-          padding: '6px 14px',
+          padding: '8px 16px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           flexWrap: 'wrap',
           gap: 10,
           zIndex: 30,
-          boxShadow: '0 4px 10px rgba(0,0,0,0.3)'
+          boxShadow: '0 4px 0 var(--comic-black)'
         }}
       >
-        {/* Left: Branding & Back Button */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {onBack && (
-            <button
-              onClick={onBack}
-              style={{
-                background: '#FFFFFF',
-                color: '#0F172A',
-                border: '2px solid var(--comic-black)',
-                boxShadow: '0 3px 0 var(--comic-black)',
-                borderRadius: 10,
-                padding: '6px 12px',
-                fontWeight: 900,
-                fontSize: '0.85rem',
-                cursor: 'pointer'
-              }}
-            >
-              ⬅️ Quay lại Quản trị
-            </button>
-          )}
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <img src={vhuLogo} alt="VHU Logo" style={{ height: 32, objectFit: 'contain' }} />
-            <div>
-              <div style={{ fontFamily: 'var(--font-title)', fontSize: '1.05rem', fontWeight: 900, color: '#FEF08A', textShadow: '0 1px 2px #000' }}>
-                KÉO CO TRI THỨC ⚡ MÀN CHIẾU TV TRỰC TIẾP
-              </div>
-              <small style={{ fontSize: '0.72rem', color: '#E2E8F0', fontWeight: 700 }}>
-                Trạm 1: Thử Thách Trí Tuệ • Đại học Văn Hiến
-              </small>
+        {/* Left: Branding & Event Identity */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <img src={vhuLogo} alt="VHU Logo" style={{ height: 36, objectFit: 'contain' }} />
+          <div>
+            <div style={{ fontFamily: 'var(--font-title)', fontSize: '1.15rem', fontWeight: 900, color: '#FEF08A', textShadow: '0 2px 0 var(--comic-black)', letterSpacing: 0.5 }}>
+              KÉO CO TRI THỨC ⚡ MÀN CHIẾU KHÁN GIẢ
+            </div>
+            <div style={{ fontSize: '0.74rem', color: '#FFFFFF', fontWeight: 800, textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}>
+              Trạm 1: Thử Thách Trí Tuệ • Trường Đại học Văn Hiến (VHU)
             </div>
           </div>
         </div>
 
-        {/* Center: Active Rooms Selector Pills */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflowX: 'auto', maxWidth: '45%' }}>
-          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#FEF08A', flexShrink: 0 }}>
-            CHỌN PHÒNG ĐẤU:
+        {/* Center: Match Room Badge & Dynamic Mode */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{
+            background: '#FACC15',
+            color: '#713F12',
+            border: '2px solid var(--comic-black)',
+            boxShadow: '0 2px 0 var(--comic-black)',
+            padding: '4px 12px',
+            borderRadius: 999,
+            fontWeight: 900,
+            fontSize: '0.85rem'
+          }}>
+            🔑 PHÒNG: #{selectedRoomCode || '---'}
           </span>
-          {rooms.length === 0 ? (
-            <span style={{ fontSize: '0.75rem', color: '#CBD5E1' }}>Chưa có phòng nào mở</span>
-          ) : (
-            rooms.map(r => {
-              const isSelected = r.roomCode === selectedRoomCode;
-              const isPlaying = r.state === 'ROUND_BUZZ' || r.state === 'ROUND_ANSWER' || r.state === 'ROUND_REBOUND';
-              return (
-                <button
-                  key={r.roomCode}
-                  onClick={() => {
-                    setSelectedRoomCode(r.roomCode);
-                    setAutoFollow(false);
-                  }}
-                  style={{
-                    background: isSelected ? '#FACC15' : isPlaying ? '#EF4444' : '#FFFFFF',
-                    color: isSelected ? '#000' : isPlaying ? '#FFF' : '#0F172A',
-                    border: '2px solid var(--comic-black)',
-                    boxShadow: isSelected ? '0 3px 0 var(--comic-black)' : '0 2px 0 var(--comic-black)',
-                    borderRadius: 999,
-                    padding: '3px 10px',
-                    fontSize: '0.76rem',
-                    fontWeight: 900,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 5,
-                    flexShrink: 0,
-                    transform: isSelected ? 'scale(1.05)' : 'none'
-                  }}
-                >
-                  <span>{isPlaying ? '🔴' : '⏳'}</span>
-                  <span>#{r.roomCode}</span>
-                  {isPlaying && (
-                    <span style={{ fontSize: '0.7rem', background: '#000', color: '#FFF', padding: '0 4px', borderRadius: 4 }}>
-                      {r.scoreA || 0}-{r.scoreB || 0}
-                    </span>
-                  )}
-                </button>
-              );
-            })
+
+          <span style={{
+            background: '#FFFFFF',
+            color: '#1A1AFF',
+            border: '2px solid var(--comic-black)',
+            boxShadow: '0 2px 0 var(--comic-black)',
+            padding: '4px 10px',
+            borderRadius: 999,
+            fontWeight: 900,
+            fontSize: '0.82rem'
+          }}>
+            {roomState?.mode || `${maxPerTeam}vs${maxPerTeam}`} ({maxPerTeam} người/đội)
+          </span>
+
+          {rooms.length > 1 && (
+            <select
+              value={selectedRoomCode}
+              onChange={(e) => {
+                setSelectedRoomCode(e.target.value);
+                setAutoFollow(false);
+              }}
+              style={{
+                background: '#FFFFFF',
+                color: '#0F172A',
+                border: '2px solid var(--comic-black)',
+                borderRadius: 8,
+                padding: '4px 8px',
+                fontWeight: 900,
+                fontSize: '0.8rem',
+                cursor: 'pointer'
+              }}
+            >
+              {rooms.map(r => (
+                <option key={r.roomCode} value={r.roomCode}>
+                  Phòng #{r.roomCode} ({r.state === 'ROUND_BUZZ' || r.state === 'ROUND_ANSWER' ? '🔴 Đang đấu' : '⏳ Sảnh'})
+                </option>
+              ))}
+            </select>
           )}
         </div>
 
-        {/* Right: TV Controls (Audio, Fullscreen, QR, Auto-follow) */}
+        {/* Right: TV Controls (Audio, Fullscreen, Auto-follow) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {/* Auto-follow switch */}
           <button
             onClick={() => setAutoFollow(!autoFollow)}
-            title="Tự động chuyển sang phòng đang thi đấu sôi nổi nhất"
+            title="Tự động bám theo phòng đang thi đấu sôi nổi nhất"
             style={{
               background: autoFollow ? '#22C55E' : '#64748B',
               color: '#FFFFFF',
               border: '2px solid var(--comic-black)',
               boxShadow: '0 2px 0 var(--comic-black)',
               borderRadius: 8,
-              padding: '5px 9px',
-              fontSize: '0.75rem',
+              padding: '5px 10px',
+              fontSize: '0.78rem',
               fontWeight: 800,
               cursor: 'pointer'
             }}
           >
-            {autoFollow ? '⚡ Tự bắt trận: BẬT' : '⏸️ Tự bắt trận: TẮT'}
+            {autoFollow ? '⚡ Tự bắt trận: BẬT' : '⏸️ Tự bắt: TẮT'}
           </button>
 
-          {/* Audio toggle */}
+          {/* Audio toggle for TV speakers */}
           <button
             onClick={() => {
               unlockAudio();
@@ -482,7 +450,7 @@ export default function LiveMatchPage({
             }}
             style={{
               background: audioMuted ? '#EF4444' : '#FACC15',
-              color: '#000',
+              color: '#000000',
               border: '2px solid var(--comic-black)',
               boxShadow: '0 2px 0 var(--comic-black)',
               borderRadius: 8,
@@ -492,47 +460,8 @@ export default function LiveMatchPage({
               cursor: 'pointer'
             }}
           >
-            {audioMuted ? '🔇 BẬT ÂM TV' : '🔊 LOA TV: BẬT'}
+            {audioMuted ? '🔇 BẬT ÂM LOA TV' : '🔊 LOA TV: BẬT'}
           </button>
-
-          {/* QR Popup toggle */}
-          <button
-            onClick={() => setShowQrModal(!showQrModal)}
-            style={{
-              background: '#38BDF8',
-              color: '#000',
-              border: '2px solid var(--comic-black)',
-              boxShadow: '0 2px 0 var(--comic-black)',
-              borderRadius: 8,
-              padding: '5px 10px',
-              fontSize: '0.78rem',
-              fontWeight: 900,
-              cursor: 'pointer'
-            }}
-          >
-            📱 MÃ QR PHÒNG
-          </button>
-
-          {/* Open Independent Tab */}
-          {!isIndependentTab && (
-            <button
-              onClick={() => handleOpenIndependentTab()}
-              title="Mở tab riêng để kéo sang màn hình TV"
-              style={{
-                background: 'linear-gradient(135deg, #7C3AED, #9333EA)',
-                color: '#FFF',
-                border: '2px solid var(--comic-black)',
-                boxShadow: '0 2px 0 var(--comic-black)',
-                borderRadius: 8,
-                padding: '5px 10px',
-                fontSize: '0.78rem',
-                fontWeight: 900,
-                cursor: 'pointer'
-              }}
-            >
-              ↗ TAB TV RIÊNG
-            </button>
-          )}
 
           {/* Fullscreen Button */}
           <button
@@ -543,7 +472,7 @@ export default function LiveMatchPage({
               border: '2px solid var(--comic-black)',
               boxShadow: '0 2px 0 var(--comic-black)',
               borderRadius: 8,
-              padding: '5px 9px',
+              padding: '5px 10px',
               fontSize: '0.78rem',
               fontWeight: 900,
               cursor: 'pointer'
@@ -555,7 +484,7 @@ export default function LiveMatchPage({
       </header>
 
       {/* ======================================================== */}
-      {/* MAIN VIEWPORT: TUG OF WAR ARENA + QUESTION & CHOICES     */}
+      {/* MAIN VIEWPORT: TUG OF WAR ARENA + DYNAMIC ROSTER/QUIZ    */}
       {/* ======================================================== */}
       <main
         style={{
@@ -563,14 +492,16 @@ export default function LiveMatchPage({
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          padding: '10px 18px',
+          padding: '12px 20px',
           boxSizing: 'border-box',
           position: 'relative',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          backgroundColor: '#1A1AFF',
+          background: '#1A1AFF' // 100% Solid Flat VHU Harmony
         }}
       >
-        {/* TOP HALF: TUG OF WAR ARENA (10 CHIBI + REFEREE + SCORES) */}
-        <section style={{ flex: '0 0 auto', width: '100%', marginBottom: 8 }}>
+        {/* TIER 1: TUG OF WAR ARENA (10 CHIBI + REFEREE + SCORES) */}
+        <section style={{ flex: '0 0 auto', width: '100%', marginBottom: 10 }}>
           <TugOfWarArena
             scoreA={scoreA}
             scoreB={scoreB}
@@ -584,7 +515,7 @@ export default function LiveMatchPage({
           />
         </section>
 
-        {/* BOTTOM HALF: LIVE STADIUM ACTION & QUESTIONS OR LOBBY SCREEN */}
+        {/* TIER 2: E-SPORTS LOBBY ROSTER (NO QR) OR LIVE QUESTION */}
         <section
           style={{
             flex: 1,
@@ -594,171 +525,280 @@ export default function LiveMatchPage({
             minHeight: 0
           }}
         >
-          {/* SCENARIO 1: LOBBY VIEW (WAITING FOR PLAYERS) */}
+          {/* ==================================================== */}
+          {/* SCENARIO 1: E-SPORTS LOBBY (DYNAMIC SLOTS 1vs1 -> 5vs5) */}
+          {/* ==================================================== */}
           {uiState === 'LOBBY' && (
             <div
               style={{
                 background: '#FFFFFF',
                 border: '3px solid var(--comic-black)',
                 borderRadius: 20,
-                boxShadow: '0 6px 0 var(--comic-black)',
-                padding: '20px 24px',
+                boxShadow: '0 8px 0 var(--comic-black)',
+                padding: '16px 22px',
                 color: '#0F172A',
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: 'stretch',
                 justifyContent: 'space-between',
-                gap: 20,
+                gap: 16,
                 height: '100%',
                 boxSizing: 'border-box'
               }}
             >
-              {/* Team A Roster */}
+              {/* Left Column: Team A Dynamic Slots */}
               <div
                 style={{
                   flex: 1,
                   background: '#F0F9FF',
                   border: '2.5px solid var(--comic-black)',
-                  borderRadius: 14,
-                  padding: 14,
-                  height: '100%',
+                  borderRadius: 16,
+                  padding: '12px 14px',
                   display: 'flex',
-                  flexDirection: 'column'
+                  flexDirection: 'column',
+                  boxShadow: '0 3px 0 var(--comic-black)'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                  <span style={{ fontFamily: 'var(--font-title)', fontSize: '1.2rem', fontWeight: 900, color: '#0284C7' }}>
+                  <span style={{ fontFamily: 'var(--font-title)', fontSize: '1.25rem', fontWeight: 900, color: '#0284C7' }}>
                     ⚡ ĐỘI A - TIA CHỚP
                   </span>
-                  <span style={{ background: '#0284C7', color: '#FFF', padding: '2px 8px', borderRadius: 999, fontSize: '0.8rem', fontWeight: 900 }}>
-                    {roomState?.teamA?.length || 0}/{roomState?.maxPerTeam || 5}
+                  <span style={{ background: '#0284C7', color: '#FFF', padding: '3px 10px', borderRadius: 999, fontSize: '0.85rem', fontWeight: 900 }}>
+                    {teamAPlayers.length}/{maxPerTeam} thành viên
                   </span>
                 </div>
-                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {(!roomState?.teamA || roomState.teamA.length === 0) ? (
-                    <div style={{ color: '#94A3B8', fontStyle: 'italic', fontSize: '0.9rem', textAlign: 'center', margin: 'auto' }}>
-                      Đang đợi thí sinh quét mã vào Đội A...
-                    </div>
-                  ) : (
-                    roomState.teamA.map((p, i) => (
-                      <div
-                        key={p.socketId || i}
-                        style={{
-                          background: '#FFF',
-                          border: '2px solid var(--comic-black)',
-                          borderRadius: 8,
-                          padding: '6px 10px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between'
-                        }}
-                      >
-                        <span style={{ fontWeight: 800, fontSize: '0.9rem' }}>👤 {p.name || `Thí sinh ${i + 1}`}</span>
-                        <span style={{ fontSize: '0.78rem', fontWeight: 900, color: p.isReady ? '#16A34A' : '#D97706' }}>
-                          {p.isReady ? '✅ SẴN SÀNG' : '⏳ CHỜ'}
-                        </span>
-                      </div>
-                    ))
-                  )}
+
+                {/* Dynamic Slots for Team A */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center' }}>
+                  {teamASlots.map((p, idx) => {
+                    if (p) {
+                      return (
+                        <div
+                          key={p.socketId || idx}
+                          style={{
+                            background: '#FFFFFF',
+                            border: '2px solid var(--comic-black)',
+                            borderRadius: 10,
+                            padding: '8px 12px',
+                            boxShadow: '0 2px 0 var(--comic-black)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontSize: '1.1rem' }}>👤</span>
+                            <div>
+                              <div style={{ fontWeight: 900, fontSize: '0.96rem', color: '#0F172A' }}>
+                                {p.name || `Thí sinh A${idx + 1}`}
+                              </div>
+                              <small style={{ color: '#64748B', fontWeight: 700, fontSize: '0.76rem' }}>
+                                {p.studentId ? `${p.studentId}${p.faculty ? ' • ' + p.faculty : ''}` : 'Đại học Văn Hiến'}
+                              </small>
+                            </div>
+                          </div>
+                          <span style={{
+                            background: p.isReady ? '#DCFCE7' : '#FEF3C7',
+                            color: p.isReady ? '#15803D' : '#B45309',
+                            border: '1.5px solid var(--comic-black)',
+                            padding: '3px 8px',
+                            borderRadius: 999,
+                            fontSize: '0.78rem',
+                            fontWeight: 900
+                          }}>
+                            {p.isReady ? '✅ SẴN SÀNG' : '⏳ CHỜ SẴN SÀNG'}
+                          </span>
+                        </div>
+                      );
+                    } else {
+                      // Empty Slot (Waiting for player)
+                      return (
+                        <div
+                          key={`empty-a-${idx}`}
+                          style={{
+                            border: '2px dashed #94A3B8',
+                            borderRadius: 10,
+                            padding: '10px 12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#64748B',
+                            fontWeight: 800,
+                            fontSize: '0.88rem',
+                            background: 'rgba(255, 255, 255, 0.6)'
+                          }}
+                        >
+                          👤 Vị trí {idx + 1}: Chờ thí sinh vào phòng...
+                        </div>
+                      );
+                    }
+                  })}
                 </div>
               </div>
 
-              {/* Center: Giant QR Scanner & Match Ready Banner */}
+              {/* Center Column: e-Sports Versus Emblem (NO QR CODE) */}
               <div
                 style={{
-                  width: 280,
+                  width: 240,
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   textAlign: 'center',
                   padding: '10px'
                 }}
               >
-                <div style={{ fontFamily: 'var(--font-title)', fontSize: '1.25rem', fontWeight: 900, color: '#1A1AFF', marginBottom: 6 }}>
-                  QUÉT ĐỂ THI ĐẤU
+                <div style={{
+                  fontFamily: 'var(--font-title)',
+                  fontSize: '2.4rem',
+                  fontWeight: 900,
+                  color: '#DC2626',
+                  textShadow: '0 3px 0 var(--comic-black)',
+                  letterSpacing: 2,
+                  marginBottom: 6
+                }}>
+                  ⚔️ VS ⚔️
                 </div>
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(roomJoinUrl)}`}
-                  alt="QR Join Room"
-                  style={{
-                    width: 150,
-                    height: 150,
-                    borderRadius: 14,
-                    border: '3px solid var(--comic-black)',
-                    padding: 6,
-                    background: '#FFF',
-                    boxShadow: '0 4px 0 var(--comic-black)',
-                    marginBottom: 8
-                  }}
-                />
-                <div style={{ background: '#FEF08A', border: '2px solid var(--comic-black)', padding: '4px 12px', borderRadius: 999, fontWeight: 900, fontSize: '0.9rem', color: '#713F12' }}>
-                  🔑 MÃ PHÒNG: #{selectedRoomCode}
+
+                <div style={{
+                  background: '#FEF08A',
+                  border: '2px solid var(--comic-black)',
+                  boxShadow: '0 3px 0 var(--comic-black)',
+                  padding: '6px 14px',
+                  borderRadius: 12,
+                  fontWeight: 900,
+                  fontSize: '0.95rem',
+                  color: '#713F12',
+                  marginBottom: 8
+                }}>
+                  PHÒNG #{selectedRoomCode}
                 </div>
-                <small style={{ color: '#64748B', fontWeight: 700, marginTop: 4 }}>
-                  Chế độ {roomState?.mode || '5vs5'} • Tối đa {roomState?.maxPerTeam || 5} người/đội
-                </small>
+
+                <div style={{
+                  background: '#1A1AFF',
+                  color: '#FFFFFF',
+                  border: '2px solid var(--comic-black)',
+                  padding: '4px 12px',
+                  borderRadius: 999,
+                  fontWeight: 900,
+                  fontSize: '0.82rem',
+                  marginBottom: 10
+                }}>
+                  CHẾ ĐỘ {maxPerTeam} VS {maxPerTeam}
+                </div>
+
+                <div style={{
+                  fontSize: '0.82rem',
+                  fontWeight: 800,
+                  color: '#475569',
+                  lineHeight: 1.4
+                }}>
+                  Đang tập hợp đủ {maxPerTeam * 2} thí sinh để bắt đầu kéo co!
+                </div>
               </div>
 
-              {/* Team B Roster */}
+              {/* Right Column: Team B Dynamic Slots */}
               <div
                 style={{
                   flex: 1,
                   background: '#FFF7ED',
                   border: '2.5px solid var(--comic-black)',
-                  borderRadius: 14,
-                  padding: 14,
-                  height: '100%',
+                  borderRadius: 16,
+                  padding: '12px 14px',
                   display: 'flex',
-                  flexDirection: 'column'
+                  flexDirection: 'column',
+                  boxShadow: '0 3px 0 var(--comic-black)'
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                  <span style={{ fontFamily: 'var(--font-title)', fontSize: '1.2rem', fontWeight: 900, color: '#EA580C' }}>
+                  <span style={{ fontFamily: 'var(--font-title)', fontSize: '1.25rem', fontWeight: 900, color: '#EA580C' }}>
                     🔥 ĐỘI B - NGỌN LỬA
                   </span>
-                  <span style={{ background: '#EA580C', color: '#FFF', padding: '2px 8px', borderRadius: 999, fontSize: '0.8rem', fontWeight: 900 }}>
-                    {roomState?.teamB?.length || 0}/{roomState?.maxPerTeam || 5}
+                  <span style={{ background: '#EA580C', color: '#FFF', padding: '3px 10px', borderRadius: 999, fontSize: '0.85rem', fontWeight: 900 }}>
+                    {teamBPlayers.length}/{maxPerTeam} thành viên
                   </span>
                 </div>
-                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {(!roomState?.teamB || roomState.teamB.length === 0) ? (
-                    <div style={{ color: '#94A3B8', fontStyle: 'italic', fontSize: '0.9rem', textAlign: 'center', margin: 'auto' }}>
-                      Đang đợi thí sinh quét mã vào Đội B...
-                    </div>
-                  ) : (
-                    roomState.teamB.map((p, i) => (
-                      <div
-                        key={p.socketId || i}
-                        style={{
-                          background: '#FFF',
-                          border: '2px solid var(--comic-black)',
-                          borderRadius: 8,
-                          padding: '6px 10px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between'
-                        }}
-                      >
-                        <span style={{ fontWeight: 800, fontSize: '0.9rem' }}>👤 {p.name || `Thí sinh ${i + 1}`}</span>
-                        <span style={{ fontSize: '0.78rem', fontWeight: 900, color: p.isReady ? '#16A34A' : '#D97706' }}>
-                          {p.isReady ? '✅ SẴN SÀNG' : '⏳ CHỜ'}
-                        </span>
-                      </div>
-                    ))
-                  )}
+
+                {/* Dynamic Slots for Team B */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8, justifyContent: 'center' }}>
+                  {teamBSlots.map((p, idx) => {
+                    if (p) {
+                      return (
+                        <div
+                          key={p.socketId || idx}
+                          style={{
+                            background: '#FFFFFF',
+                            border: '2px solid var(--comic-black)',
+                            borderRadius: 10,
+                            padding: '8px 12px',
+                            boxShadow: '0 2px 0 var(--comic-black)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontSize: '1.1rem' }}>👤</span>
+                            <div>
+                              <div style={{ fontWeight: 900, fontSize: '0.96rem', color: '#0F172A' }}>
+                                {p.name || `Thí sinh B${idx + 1}`}
+                              </div>
+                              <small style={{ color: '#64748B', fontWeight: 700, fontSize: '0.76rem' }}>
+                                {p.studentId ? `${p.studentId}${p.faculty ? ' • ' + p.faculty : ''}` : 'Đại học Văn Hiến'}
+                              </small>
+                            </div>
+                          </div>
+                          <span style={{
+                            background: p.isReady ? '#DCFCE7' : '#FEF3C7',
+                            color: p.isReady ? '#15803D' : '#B45309',
+                            border: '1.5px solid var(--comic-black)',
+                            padding: '3px 8px',
+                            borderRadius: 999,
+                            fontSize: '0.78rem',
+                            fontWeight: 900
+                          }}>
+                            {p.isReady ? '✅ SẴN SÀNG' : '⏳ CHỜ SẴN SÀNG'}
+                          </span>
+                        </div>
+                      );
+                    } else {
+                      // Empty Slot (Waiting for player)
+                      return (
+                        <div
+                          key={`empty-b-${idx}`}
+                          style={{
+                            border: '2px dashed #94A3B8',
+                            borderRadius: 10,
+                            padding: '10px 12px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#64748B',
+                            fontWeight: 800,
+                            fontSize: '0.88rem',
+                            background: 'rgba(255, 255, 255, 0.6)'
+                          }}
+                        >
+                          👤 Vị trí {idx + 1}: Chờ thí sinh vào phòng...
+                        </div>
+                      );
+                    }
+                  })}
                 </div>
               </div>
             </div>
           )}
 
-          {/* SCENARIO 2: ACTIVE MATCH (QUESTION + 4 CHOICES ON TV) */}
+          {/* ==================================================== */}
+          {/* SCENARIO 2: LIVE MATCH (QUESTION & 4 CHOICES 2X2)     */}
+          {/* ==================================================== */}
           {uiState !== 'LOBBY' && currentQuestion && (
             <div
               style={{
                 background: '#FFFFFF',
                 border: '3px solid var(--comic-black)',
                 borderRadius: 20,
-                boxShadow: '0 6px 0 var(--comic-black)',
-                padding: '14px 20px',
+                boxShadow: '0 8px 0 var(--comic-black)',
+                padding: '16px 22px',
                 color: '#0F172A',
                 display: 'flex',
                 flexDirection: 'column',
@@ -767,7 +807,7 @@ export default function LiveMatchPage({
                 boxSizing: 'border-box'
               }}
             >
-              {/* Question Header & Live Status */}
+              {/* Question Metadata & Timer */}
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -778,7 +818,7 @@ export default function LiveMatchPage({
                         padding: '4px 12px',
                         borderRadius: 8,
                         fontWeight: 900,
-                        fontSize: '0.85rem',
+                        fontSize: '0.88rem',
                         border: '2px solid var(--comic-black)',
                         boxShadow: '0 2px 0 var(--comic-black)'
                       }}
@@ -792,7 +832,7 @@ export default function LiveMatchPage({
                         padding: '4px 10px',
                         borderRadius: 8,
                         fontWeight: 900,
-                        fontSize: '0.85rem',
+                        fontSize: '0.88rem',
                         border: '2px solid var(--comic-black)',
                         boxShadow: '0 2px 0 var(--comic-black)'
                       }}
@@ -806,20 +846,20 @@ export default function LiveMatchPage({
                     <RingTimer
                       seconds={secondsLeft}
                       totalSeconds={uiState === 'BUZZER_AWARDED' ? 10 : uiState === 'REBOUND' ? 8 : 15}
-                      size={44}
+                      size={46}
                       strokeWidth={5}
                     />
-                    <span style={{ fontFamily: 'var(--font-title)', fontSize: '1.25rem', fontWeight: 900, color: secondsLeft <= 3 ? '#DC2626' : '#1A1AFF' }}>
+                    <span style={{ fontFamily: 'var(--font-title)', fontSize: '1.35rem', fontWeight: 900, color: secondsLeft <= 3 ? '#DC2626' : '#1A1AFF' }}>
                       {secondsLeft}s
                     </span>
                   </div>
                 </div>
 
-                {/* Question Text */}
+                {/* Big Question Text */}
                 <div
                   style={{
                     fontFamily: 'var(--font-title)',
-                    fontSize: '1.22rem',
+                    fontSize: '1.28rem',
                     fontWeight: 800,
                     color: '#0F172A',
                     lineHeight: 1.35,
@@ -830,7 +870,7 @@ export default function LiveMatchPage({
                 </div>
               </div>
 
-              {/* Status Banner (Ai giành quyền chuông / Rebound) */}
+              {/* Status Banner */}
               <div
                 style={{
                   background:
@@ -844,9 +884,9 @@ export default function LiveMatchPage({
                   color: uiState === 'ROUND_BUZZ' ? '#713F12' : '#FFFFFF',
                   border: '2px solid var(--comic-black)',
                   borderRadius: 10,
-                  padding: '6px 14px',
+                  padding: '7px 14px',
                   fontWeight: 900,
-                  fontSize: '0.96rem',
+                  fontSize: '1rem',
                   textAlign: 'center',
                   marginBottom: 10,
                   boxShadow: '0 3px 0 var(--comic-black)',
@@ -878,7 +918,7 @@ export default function LiveMatchPage({
                 )}
               </div>
 
-              {/* 4 Choices Grid (2x2 Layout for TV) */}
+              {/* 4 Choices Grid (2x2 Layout for TV Projector) */}
               <div
                 style={{
                   display: 'grid',
@@ -918,7 +958,7 @@ export default function LiveMatchPage({
                         alignItems: 'center',
                         gap: 12,
                         position: 'relative',
-                        opacity: isEliminated ? 0.45 : 1,
+                        opacity: isEliminated ? 0.4 : 1,
                         transition: 'all 0.2s ease'
                       }}
                     >
@@ -926,21 +966,21 @@ export default function LiveMatchPage({
                         style={{
                           background: isCorrectAnswer ? '#FFF' : '#0F172A',
                           color: isCorrectAnswer ? '#16A34A' : '#FFF',
-                          width: 28,
-                          height: 28,
+                          width: 30,
+                          height: 30,
                           borderRadius: 8,
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           fontWeight: 900,
-                          fontSize: '0.9rem',
+                          fontSize: '0.95rem',
                           flexShrink: 0
                         }}
                       >
                         {OPTION_PREFIXES[idx]}
                       </span>
 
-                      <span style={{ fontWeight: 800, fontSize: '0.98rem', color: textColor, flex: 1, wordBreak: 'break-word' }}>
+                      <span style={{ fontWeight: 800, fontSize: '1.02rem', color: textColor, flex: 1, wordBreak: 'break-word' }}>
                         {opt}
                       </span>
 
@@ -954,7 +994,7 @@ export default function LiveMatchPage({
                             padding: '2px 8px',
                             borderRadius: 6,
                             fontWeight: 900,
-                            fontSize: '0.72rem',
+                            fontSize: '0.74rem',
                             transform: 'rotate(-4deg)'
                           }}
                         >
@@ -963,7 +1003,7 @@ export default function LiveMatchPage({
                       )}
 
                       {isCorrectAnswer && (
-                        <span style={{ fontSize: '1.2rem' }}>✅</span>
+                        <span style={{ fontSize: '1.3rem' }}>✅</span>
                       )}
                     </div>
                   );
@@ -992,76 +1032,6 @@ export default function LiveMatchPage({
           winner={gameOverData.winner}
           onFinish={() => setShowCutscene(false)}
         />
-      )}
-
-      {/* ======================================================== */}
-      {/* OVERLAY 3: QR CODE MODAL FOR BOOTH AUDIENCE               */}
-      {/* ======================================================== */}
-      {showQrModal && (
-        <div
-          onClick={() => setShowQrModal(false)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.85)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 100
-          }}
-        >
-          <div
-            onClick={e => e.stopPropagation()}
-            style={{
-              background: '#FFFFFF',
-              border: '4px solid var(--comic-black)',
-              borderRadius: 24,
-              padding: 30,
-              textAlign: 'center',
-              boxShadow: '0 10px 0 var(--comic-black)',
-              maxWidth: 420
-            }}
-          >
-            <div style={{ fontFamily: 'var(--font-title)', fontSize: '1.6rem', fontWeight: 900, color: '#1A1AFF', marginBottom: 6 }}>
-              QUÉT MÃ THAM GIA ĐẤU
-            </div>
-            <div style={{ color: '#64748B', fontWeight: 700, fontSize: '0.9rem', marginBottom: 14 }}>
-              Mở camera hoặc Zalo trên điện thoại quét để vào phòng ngay
-            </div>
-            <img
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(roomJoinUrl)}`}
-              alt="QR Code"
-              style={{
-                width: 220,
-                height: 220,
-                borderRadius: 16,
-                border: '3px solid var(--comic-black)',
-                padding: 10,
-                background: '#FFF',
-                marginBottom: 16
-              }}
-            />
-            <div style={{ background: '#FEF08A', border: '2px solid var(--comic-black)', padding: '6px 16px', borderRadius: 999, fontWeight: 900, fontSize: '1.2rem', color: '#713F12', marginBottom: 16 }}>
-              MÃ PHÒNG: #{selectedRoomCode}
-            </div>
-            <button
-              onClick={() => setShowQrModal(false)}
-              style={{
-                background: '#1A1AFF',
-                color: '#FFF',
-                border: '2px solid var(--comic-black)',
-                boxShadow: '0 3px 0 var(--comic-black)',
-                borderRadius: 10,
-                padding: '8px 24px',
-                fontWeight: 900,
-                fontSize: '0.95rem',
-                cursor: 'pointer'
-              }}
-            >
-              ĐÓNG CỬA SỔ
-            </button>
-          </div>
-        </div>
       )}
     </div>
   );

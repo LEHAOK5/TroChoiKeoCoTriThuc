@@ -608,8 +608,8 @@ export default function App() {
 
   return (
     <div className="app-wrapper">
-      {/* Top Header (ẩn khi đang ở màn hình kết thúc ExitPage) */}
-      {currentPage !== 'EXIT' && (
+      {/* Top Header (ẩn khi đang ở màn hình kết thúc ExitPage hoặc màn chiếu TV Spectate) */}
+      {currentPage !== 'EXIT' && currentPage !== 'SPECTATE' && (
       <header className="app-header">
         <div className="brand-box">
           <span style={{ fontSize: '1.4rem' }}>⚔️</span>
@@ -828,13 +828,12 @@ export default function App() {
 
       {currentPage === 'SPECTATE' && (
         <LiveMatchPage
-          isIndependentTab={true}
-          onBack={() => setCurrentPage('ADMIN')}
+          initialRoomCode={new URLSearchParams(window.location.search).get('tv') || new URLSearchParams(window.location.search).get('spectate') || ''}
         />
       )}
 
-      {/* Global Face-Off 3-2-1 Countdown Overlay */}
-      {(countdown !== null || (typeof window !== 'undefined' && window.location.hash === '#countdown')) && (
+      {/* Global Face-Off 3-2-1 Countdown Overlay (chỉ hiện cho thí sinh, không đè lên màn chiếu TV) */}
+      {currentPage !== 'SPECTATE' && (countdown !== null || (typeof window !== 'undefined' && window.location.hash === '#countdown')) && (
         <CountdownOverlay
           seconds={countdown !== null ? countdown : 3}
           roomState={roomState}
