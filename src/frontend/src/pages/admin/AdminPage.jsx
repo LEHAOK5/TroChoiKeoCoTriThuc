@@ -1614,38 +1614,101 @@ export default function AdminPage({ onBackToGame }) {
           {/* ======================================================== */}
           {/* TAB 3: LỊCH SỬ CÁC TRẬN ĐẤU (MATCH HISTORY)               */}
           {/* ======================================================== */}
-          {activeTab === 'MATCHES' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {/* Summary Win/Loss Ratio */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 12 }}>
-                <div style={{ background: '#F3F3FF', border: '2.5px solid var(--comic-black)', borderRadius: 16, padding: '16px 20px', boxShadow: '0 4px 0 var(--comic-black)' }}>
-                  <div style={{ fontSize: '0.85rem', color: '#1010CC', fontWeight: 900 }}>⚡ ĐỘI A THẮNG (TIA CHỚP)</div>
-                  <div style={{ fontFamily: 'var(--font-title)', fontSize: '2.4rem', fontWeight: 900, color: '#1A1AFF' }}>
-                    {stats?.winsA || 0} trận
-                  </div>
-                  <small style={{ color: '#1010CC', fontWeight: 700 }}>
-                    Chiếm {stats?.totalMatches ? Math.round(((stats.winsA || 0) / stats.totalMatches) * 100) : 0}% tổng trận
-                  </small>
-                </div>
+          {activeTab === 'MATCHES' && (() => {
+            const totalMatchCount = Number(stats?.totalMatches) || matches.length || 0;
+            const winsACount = Number(stats?.winsA) || 0;
+            const winsBCount = Number(stats?.winsB) || 0;
+            const percentWinsA = totalMatchCount > 0 ? Math.round((winsACount / totalMatchCount) * 100) : 0;
+            const percentWinsB = totalMatchCount > 0 ? Math.round((winsBCount / totalMatchCount) * 100) : 0;
 
-                <div style={{ background: '#FFF7ED', border: '2.5px solid var(--comic-black)', borderRadius: 16, padding: '16px 20px', boxShadow: '0 4px 0 var(--comic-black)' }}>
-                  <div style={{ fontSize: '0.85rem', color: '#C2410C', fontWeight: 900 }}>🔥 ĐỘI B THẮNG (NGỌN LỬA)</div>
-                  <div style={{ fontFamily: 'var(--font-title)', fontSize: '2.4rem', fontWeight: 900, color: '#EA580C' }}>
-                    {stats?.winsB || 0} trận
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {/* Summary Win/Loss Ratio */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 14 }}>
+                  {/* Card 1: Đội A */}
+                  <div style={{
+                    background: '#F3F3FF',
+                    border: '2.5px solid var(--comic-black)',
+                    borderRadius: 18,
+                    padding: '16px 20px',
+                    boxShadow: '0 4px 0 var(--comic-black)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between'
+                  }}>
+                    <div style={{ fontSize: '0.86rem', color: '#1010CC', fontWeight: 900, display: 'flex', alignItems: 'center', gap: 6, letterSpacing: '0.3px' }}>
+                      <span>⚡</span>
+                      <span>ĐỘI A THẮNG (TIA CHỚP)</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, margin: '8px 0 6px 0' }}>
+                      <span style={{ fontFamily: 'var(--font-title)', fontSize: '2.6rem', fontWeight: 900, color: '#1A1AFF', lineHeight: 1 }}>
+                        {winsACount}
+                      </span>
+                      <span style={{ fontFamily: 'var(--font-title)', fontSize: '1.15rem', fontWeight: 900, color: '#1010CC' }}>
+                        trận
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.84rem', color: '#1010CC', fontWeight: 800, fontFamily: 'var(--font-body)', background: '#E6E6FF', padding: '4px 10px', borderRadius: 8, display: 'inline-block', width: 'fit-content', border: '1px solid #1A1AFF' }}>
+                      📊 Tỉ lệ thắng: <strong>{percentWinsA}%</strong> tổng số trận
+                    </div>
                   </div>
-                  <small style={{ color: '#C2410C', fontWeight: 700 }}>
-                    Chiếm {stats?.totalMatches ? Math.round(((stats.winsB || 0) / stats.totalMatches) * 100) : 0}% tổng trận
-                  </small>
-                </div>
 
-                <div style={{ background: '#FFFFFF', border: '2.5px solid var(--comic-black)', borderRadius: 16, padding: '16px 20px', boxShadow: '0 4px 0 var(--comic-black)' }}>
-                  <div style={{ fontSize: '0.85rem', color: '#475569', fontWeight: 900 }}>🏆 TỔNG SỐ TRẬN HOÀN THÀNH</div>
-                  <div style={{ fontFamily: 'var(--font-title)', fontSize: '2.4rem', fontWeight: 900, color: '#16A34A' }}>
-                    {stats?.totalMatches || matches.length}
+                  {/* Card 2: Đội B */}
+                  <div style={{
+                    background: '#FFF7ED',
+                    border: '2.5px solid var(--comic-black)',
+                    borderRadius: 18,
+                    padding: '16px 20px',
+                    boxShadow: '0 4px 0 var(--comic-black)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between'
+                  }}>
+                    <div style={{ fontSize: '0.86rem', color: '#C2410C', fontWeight: 900, display: 'flex', alignItems: 'center', gap: 6, letterSpacing: '0.3px' }}>
+                      <span>🔥</span>
+                      <span>ĐỘI B THẮNG (NGỌN LỬA)</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, margin: '8px 0 6px 0' }}>
+                      <span style={{ fontFamily: 'var(--font-title)', fontSize: '2.6rem', fontWeight: 900, color: '#EA580C', lineHeight: 1 }}>
+                        {winsBCount}
+                      </span>
+                      <span style={{ fontFamily: 'var(--font-title)', fontSize: '1.15rem', fontWeight: 900, color: '#C2410C' }}>
+                        trận
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.84rem', color: '#C2410C', fontWeight: 800, fontFamily: 'var(--font-body)', background: '#FFEDD5', padding: '4px 10px', borderRadius: 8, display: 'inline-block', width: 'fit-content', border: '1px solid #EA580C' }}>
+                      📊 Tỉ lệ thắng: <strong>{percentWinsB}%</strong> tổng số trận
+                    </div>
                   </div>
-                  <small style={{ color: '#64748B', fontWeight: 700 }}>Ghi nhận tự động từ Supabase</small>
+
+                  {/* Card 3: Tổng số trận */}
+                  <div style={{
+                    background: '#FFFFFF',
+                    border: '2.5px solid var(--comic-black)',
+                    borderRadius: 18,
+                    padding: '16px 20px',
+                    boxShadow: '0 4px 0 var(--comic-black)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between'
+                  }}>
+                    <div style={{ fontSize: '0.86rem', color: '#334155', fontWeight: 900, display: 'flex', alignItems: 'center', gap: 6, letterSpacing: '0.3px' }}>
+                      <span>🏆</span>
+                      <span>TỔNG SỐ TRẬN HOÀN THÀNH</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, margin: '8px 0 6px 0' }}>
+                      <span style={{ fontFamily: 'var(--font-title)', fontSize: '2.6rem', fontWeight: 900, color: '#16A34A', lineHeight: 1 }}>
+                        {totalMatchCount}
+                      </span>
+                      <span style={{ fontFamily: 'var(--font-title)', fontSize: '1.15rem', fontWeight: 900, color: '#15803D' }}>
+                        trận
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.84rem', color: '#475569', fontWeight: 800, fontFamily: 'var(--font-body)', background: '#F1F5F9', padding: '4px 10px', borderRadius: 8, display: 'inline-block', width: 'fit-content', border: '1px solid #CBD5E1' }}>
+                      ⚡ Cập nhật trực tiếp thời gian thực
+                    </div>
+                  </div>
                 </div>
-              </div>
 
               {/* Refresh Match list */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1755,7 +1818,8 @@ export default function AdminPage({ onBackToGame }) {
                 </div>
               </div>
             </div>
-          )}
+            );
+          })()}
         </div>
       )}
 

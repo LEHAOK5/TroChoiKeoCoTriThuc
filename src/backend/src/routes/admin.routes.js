@@ -176,13 +176,13 @@ function createAdminRouter(roomManager) {
       res.json({
         success: true,
         stats: {
-          totalRegistrations: regCount,
-          totalQuestions: qCounts.total,
-          questionsIT: qCounts.total_it,
-          questionsLAW: qCounts.total_law,
-          totalMatches: mStats.total_matches,
-          winsA: mStats.wins_a,
-          winsB: mStats.wins_b,
+          totalRegistrations: parseInt(regCount, 10) || 0,
+          totalQuestions: parseInt(qCounts.total, 10) || 0,
+          questionsIT: parseInt(qCounts.total_it, 10) || 0,
+          questionsLAW: parseInt(qCounts.total_law, 10) || 0,
+          totalMatches: parseInt(mStats.total_matches, 10) || 0,
+          winsA: parseInt(mStats.wins_a, 10) || 0,
+          winsB: parseInt(mStats.wins_b, 10) || 0,
           activeRoomsCount: roomManager ? roomManager.rooms.size : 0
         }
       });
