@@ -34,6 +34,56 @@ function registerRoomHandlers(socket, roomManager, io) {
     });
   });
 
+  // Join as Spectator (Live TV / Audience screen)
+  socket.on('joinSpectator', ({ roomCode }) => {
+    if (!roomCode) return;
+    const room = roomManager.getRoom(roomCode);
+    if (!room) {
+      socket.emit('spectatorError', { message: 'Phòng không tồn tại hoặc đã đóng!' });
+      return;
+    }
+    socket.join(room.roomCode);
+
+    // Snapshot full state to spectator
+    const playersList = Array.from(room.players.values());
+    const teamA = playersList.filter(p => p.team === 'A');
+    const teamB = playersList.filter(p => p.team === 'B');
+
+    socket.emit('spectatorJoinedSuccess', {
+      roomCode: room.roomCode,
+      mode: room.mode,
+      maxPerTeam: room.maxPerTeam,
+      state: room.state,
+      scoreA: room.scoreA,
+      scoreB: room.scoreB,
+      ropeOffset: room.ropeOffset,
+      roundNumber: room.roundCount,
+      teamA,
+      teamB,
+      tacticalCards: room.tacticalCards,
+      currentQuestion: room.currentQuestion ? {
+        roundNumber: room.roundCount,
+        category: room.currentQuestion.category,
+        question: room.currentQuestion.question,
+        options: room.currentQuestion.options,
+        totalQuestions: room.questions.length
+      } : null,
+      buzzerWinner: room.buzzerWinner,
+      reboundData: room.reboundData,
+      deadline: room.currentDeadline,
+      activeCardEffects: room.activeCardEffects,
+      frozenSecondsLeft: room.frozenSecondsLeft || 0
+    });
+    logger.info('Spectator', `Spectator ${socket.id} joined room [${roomCode}]`);
+  });
+
+  socket.on('leaveSpectator', ({ roomCode }) => {
+    if (roomCode) {
+      socket.leave(roomCode);
+      logger.info('Spectator', `Spectator ${socket.id} left room [${roomCode}]`);
+    }
+  });
+
   // Switch Team in Lobby
   socket.on(SOCKET_EVENTS.SWITCH_TEAM, ({ team }) => {
     for (const room of roomManager.rooms.values()) {

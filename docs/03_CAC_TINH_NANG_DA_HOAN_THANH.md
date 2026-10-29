@@ -127,3 +127,30 @@ Tài liệu này liệt kê chi tiết từng tính năng đã hoàn thiện tro
   4. **🔍 LUẬT SƯ TƯ VẤN (FIFTY_FIFTY):** Loại trừ 2 đáp án sai ngẫu nhiên, đóng dấu mộc đỏ `❌ BÁC BỎ`.
 - **Luật cân bằng trận đấu:** Mỗi thẻ chỉ dùng 1 lần/trận; mỗi round chỉ kích hoạt tối đa 1 thẻ/đội; hồi phục 4 thẻ khi bắt đầu trận mới.
 - **Quy chuẩn hiển thị:** Nằm trọn vẹn trong chiều cao `100dvh`, không gây cuộn trang trên mọi thiết bị di động.
+
+---
+
+## 9. Màn Chiếu TV Trực Tiếp & Chế Độ Khán Giả Độc Lập (Live Arena Spectator Mode)
+- **Tập tin Frontend:**
+  - [`src/frontend/src/pages/admin/LiveMatchPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/admin/LiveMatchPage.jsx): Trang chuyên dụng phục vụ trình chiếu TV / Máy chiếu lớn tỷ lệ 16:9 Full HD & 4K không có thanh cuộn.
+  - [`src/frontend/src/pages/admin/AdminPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/admin/AdminPage.jsx):
+    - Bổ sung nút điều hướng thứ 4: **`🔴 📺 XEM TRẬN ĐẤU TRỰC TIẾP`** kế bên `🏆 LỊCH SỬ TRẬN ĐẤU`.
+    - Bổ sung nút **`[ 📺 Chiếu TV ↗ ]`** trên mỗi thẻ phòng đấu tại Tab 1 (ROOMS) để mở nhanh cửa sổ/tab mới.
+  - [`src/frontend/src/App.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/App.jsx): Tự động nhận diện URL tham số `?spectate=:roomCode` hoặc `?tv=:roomCode` hoặc hash `#live` để nạp ngay trang trực tiếp mà không cần đăng nhập.
+- **Tập tin Backend:**
+  - [`src/backend/src/sockets/roomHandlers.js`](file:///d:/KEOCOTRITHUC/src/backend/src/sockets/roomHandlers.js):
+    - Hỗ trợ sự kiện Socket `joinSpectator` và `leaveSpectator`.
+    - Gửi snapshot toàn bộ trạng thái phòng đấu tức thì (`spectatorJoinedSuccess`) cho màn hình TV ngay khi vừa kết nối mà **không chiếm slot thí sinh 5vs5 của phòng**.
+- **Tính năng nổi bật cho màn hình TV gian hàng sự kiện:**
+  1. **Giao diện Đấu Trường Khổng Lồ:** Đấu trường 10 Chibi VHU (áo Xanh & Cam), dây thừng kéo lực chuyển động mượt mà, Thẩm phán tri thức gõ búa công lý, tỉ số cực đại `⚡ ĐỘI A  [ 7 - 5 ]  ĐỘI B 🔥`.
+  2. **Hộp Câu Hỏi & 4 Đáp Án Cỡ Đại (2x2 Grid):** Tối ưu font chữ to rõ (1.25rem - 1.5rem), tương phản cao, dễ đọc từ khoảng cách 5 - 10 mét. Hiển thị trực quan:
+     - Ai bấm chuông giành quyền trả lời (vàng rực).
+     - Đáp án đúng sáng xanh lá kèm tiếng reo hò; đáp án sai sáng đỏ.
+     - Pha cướp điểm Rebound 8 giây.
+     - Hiệu ứng thẻ bài (Tường lửa, Đóng băng DDoS, X2 Lực kéo, 50/50 bác bỏ).
+  3. **Chế độ Sảnh chờ & Quét mã QR khổng lồ:** Khi phòng ở trạng thái LOBBY, màn hình TV tự động chiếu danh sách thành viên 2 đội cùng mã QR to ở chính giữa để sinh viên đến gian hàng có thể quét điện thoại tham gia lượt tiếp theo.
+  4. **Công cụ Trình Chiếu Chuyên Nghiệp:**
+     - Nút `⛶ Toàn màn hình (F11)`: Trình chiếu tràn viền 100%.
+     - Nút `🔊 / 🔇 Âm thanh TV`: Bật/tắt âm thanh ra loa TV độc lập với máy tính Admin.
+     - Nút `⚡ Tự bắt trận (Auto-follow)`: Tự động chuyển màn hình TV sang phòng đang thi đấu sôi nổi nhất.
+     - Nút `↗ TAB TV RIÊNG`: Cho phép mở một tab trình duyệt riêng biệt kéo sang màn hình TV qua cáp HDMI, giúp laptop của BTC vẫn ở trang Admin để quản trị bình thường.

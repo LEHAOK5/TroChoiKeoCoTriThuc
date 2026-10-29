@@ -15,6 +15,7 @@ import {
 } from '../../services/api';
 import { socket } from '../../services/socket';
 import { API_URL } from '../../config/env';
+import LiveMatchPage from './LiveMatchPage';
 
 const MODES = [
   { id: '1vs1', label: '🥊 1 vs 1', desc: '1 người vs 1 người (Đủ 2 người)', max: 1 },
@@ -690,6 +691,41 @@ export default function AdminPage({ onBackToGame }) {
                 {stats?.totalMatches || matches.length}
               </span>
             </button>
+
+            {/* TAB 4: XEM TRẬN ĐẤU TRỰC TIẾP */}
+            <button
+              onClick={() => setActiveTab('LIVE')}
+              style={{
+                flexShrink: 0,
+                padding: isMobile ? '8px 12px' : '10px 18px',
+                borderRadius: 14,
+                border: '2px solid var(--comic-black)',
+                background: activeTab === 'LIVE' ? 'linear-gradient(135deg, #7C3AED, #9333EA)' : '#FFFFFF',
+                color: activeTab === 'LIVE' ? '#FFFFFF' : '#7C3AED',
+                fontWeight: 900,
+                fontSize: isMobile ? '0.82rem' : '0.92rem',
+                cursor: 'pointer',
+                boxShadow: activeTab === 'LIVE' ? '0 4px 0 var(--comic-black)' : '0 2px 0 var(--comic-black)',
+                transform: activeTab === 'LIVE' ? 'translateY(-2px)' : 'none',
+                transition: 'all 0.15s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6
+              }}
+            >
+              <span style={{ display: 'inline-block', width: 9, height: 9, borderRadius: '50%', background: '#EF4444', boxShadow: '0 0 6px #EF4444' }} />
+              <span>📺 XEM TRẬN ĐẤU TRỰC TIẾP</span>
+              <span style={{
+                background: activeTab === 'LIVE' ? '#FFFFFF' : '#F3E8FF',
+                color: activeTab === 'LIVE' ? '#7C3AED' : '#6B21A8',
+                padding: '1px 7px',
+                borderRadius: 999,
+                fontSize: '0.72rem',
+                fontWeight: 900
+              }}>
+                {rooms.filter(r => r.state === 'ROUND_BUZZ' || r.state === 'ROUND_ANSWER' || r.state === 'ROUND_REBOUND').length || rooms.length}
+              </span>
+            </button>
           </div>
 
           {/* ======================================================== */}
@@ -974,6 +1010,28 @@ export default function AdminPage({ onBackToGame }) {
                                 }}
                               >
                                 📱 {viewingQr === r.roomCode ? 'Đóng QR' : 'Mã QR quét'}
+                              </button>
+
+                              {/* Open Live TV Spectate in New Tab */}
+                              <button
+                                onClick={() => window.open(`/?spectate=${r.roomCode}`, '_blank')}
+                                title="Mở màn chiếu TV độc lập trong tab mới"
+                                style={{
+                                  background: 'linear-gradient(135deg, #7C3AED, #9333EA)',
+                                  border: '2px solid var(--comic-black)',
+                                  boxShadow: '0 2px 0 var(--comic-black)',
+                                  color: '#FFFFFF',
+                                  padding: '8px 12px',
+                                  borderRadius: 10,
+                                  cursor: 'pointer',
+                                  fontSize: '0.8rem',
+                                  fontWeight: 800,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 4
+                                }}
+                              >
+                                📺 Chiếu TV ↗
                               </button>
 
                               {/* Start Match button */}
@@ -1754,6 +1812,29 @@ export default function AdminPage({ onBackToGame }) {
                   </table>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* ======================================================== */}
+          {/* TAB 4: XEM TRẬN ĐẤU TRỰC TIẾP (LIVE ARENA SPECTATOR)     */}
+          {/* ======================================================== */}
+          {activeTab === 'LIVE' && (
+            <div
+              style={{
+                background: '#1A1AFF',
+                border: '3px solid var(--comic-black)',
+                borderRadius: 20,
+                boxShadow: '0 8px 0 var(--comic-black)',
+                overflow: 'hidden',
+                minHeight: '75vh',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+            >
+              <LiveMatchPage
+                onBack={() => setActiveTab('ROOMS')}
+                initialRoomCode={rooms.find(r => r.state === 'ROUND_BUZZ' || r.state === 'ROUND_ANSWER' || r.state === 'ROUND_REBOUND')?.roomCode || rooms[0]?.roomCode || ''}
+              />
             </div>
           )}
         </div>

@@ -7,6 +7,7 @@ import LobbyPage from './pages/LobbyPage';
 import GamePage from './pages/GamePage';
 import ExitPage from './pages/ExitPage';
 import AdminPage from './pages/admin/AdminPage';
+import LiveMatchPage from './pages/admin/LiveMatchPage';
 import CountdownOverlay from './components/CountdownOverlay';
 import {
   playBuzzer,
@@ -47,7 +48,13 @@ export default function App() {
   const isCutscenePreview = typeof window !== 'undefined' && window.location.hash.startsWith('#cutscene');
   const isGamePreview = typeof window !== 'undefined' && (window.location.hash === '#game' || window.location.hash === '#preview' || isCutscenePreview);
   const [currentPage, setCurrentPage] = useState(() => {
-    if (window.location.hash === '#admin' || window.location.search.includes('admin')) return 'ADMIN';
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('spectate') || urlParams.has('tv') || window.location.hash === '#live' || window.location.hash.startsWith('#spectate')) {
+        return 'SPECTATE';
+      }
+      if (window.location.hash === '#admin' || urlParams.has('admin')) return 'ADMIN';
+    }
     if (isGamePreview) return 'GAME';
     return 'REGISTER';
   });
@@ -817,6 +824,13 @@ export default function App() {
 
       {currentPage === 'ADMIN' && (
         <AdminPage onBackToGame={() => setCurrentPage(player ? 'LOBBY' : 'REGISTER')} />
+      )}
+
+      {currentPage === 'SPECTATE' && (
+        <LiveMatchPage
+          isIndependentTab={true}
+          onBack={() => setCurrentPage('ADMIN')}
+        />
       )}
 
       {/* Global Face-Off 3-2-1 Countdown Overlay */}
