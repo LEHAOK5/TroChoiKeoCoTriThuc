@@ -106,12 +106,14 @@ class RoomManager {
         teamAPlayers: room.getTeamPlayers('A').map(p => ({
           name: p.name,
           studentId: p.studentId,
+          faculty: p.faculty || '',
           isReady: p.isReady,
           isBot: Boolean(p.isBot)
         })),
         teamBPlayers: room.getTeamPlayers('B').map(p => ({
           name: p.name,
           studentId: p.studentId,
+          faculty: p.faculty || '',
           isReady: p.isReady,
           isBot: Boolean(p.isBot)
         })),

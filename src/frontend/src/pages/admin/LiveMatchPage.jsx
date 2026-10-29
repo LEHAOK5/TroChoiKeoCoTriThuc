@@ -81,22 +81,57 @@ export default function LiveMatchPage({
     return () => unsub();
   }, []);
 
+  // Helper so sánh mảng danh sách người chơi để tránh re-render nếu không đổi
+  const arePlayersEqual = (arr1 = [], arr2 = []) => {
+    if (arr1.length !== arr2.length) return false;
+    for (let i = 0; i < arr1.length; i++) {
+      const p1 = arr1[i] || {};
+      const p2 = arr2[i] || {};
+      if (
+        p1.studentId !== p2.studentId ||
+        p1.name !== p2.name ||
+        (p1.faculty || '') !== (p2.faculty || '') ||
+        Boolean(p1.isReady) !== Boolean(p2.isReady)
+      ) {
+        return false;
+      }
+    }
+    return true;
+  };
+
   // Universal state sync helper: luôn cập nhật danh sách người chơi và tiến độ ván đấu
   const syncRoomData = (targetRoomData) => {
     if (!targetRoomData) return;
     const parsedMax = targetRoomData.maxPerTeam || parseInt((targetRoomData.mode || '1')[0], 10) || 1;
-    const newTeamA = targetRoomData.teamAPlayers || targetRoomData.teamA || [];
-    const newTeamB = targetRoomData.teamBPlayers || targetRoomData.teamB || [];
+    const incomingTeamA = targetRoomData.teamAPlayers || targetRoomData.teamA || [];
+    const incomingTeamB = targetRoomData.teamBPlayers || targetRoomData.teamB || [];
 
-    setRoomState(prev => ({
-      ...(prev || {}),
-      roomCode: targetRoomData.roomCode || prev?.roomCode || selectedRoomCode,
-      mode: targetRoomData.mode || prev?.mode || '1vs1',
-      maxPerTeam: targetRoomData.maxPerTeam || parsedMax,
-      state: targetRoomData.state || prev?.state || 'LOBBY',
-      teamA: newTeamA.length ? newTeamA : (prev?.teamA || []),
-      teamB: newTeamB.length ? newTeamB : (prev?.teamB || [])
-    }));
+    setRoomState(prev => {
+      const isTeamAEqual = arePlayersEqual(incomingTeamA, prev?.teamA);
+      const isTeamBEqual = arePlayersEqual(incomingTeamB, prev?.teamB);
+
+      if (
+        prev &&
+        prev.roomCode === (targetRoomData.roomCode || selectedRoomCode) &&
+        prev.mode === (targetRoomData.mode || '1vs1') &&
+        prev.maxPerTeam === (targetRoomData.maxPerTeam || parsedMax) &&
+        prev.state === (targetRoomData.state || 'LOBBY') &&
+        isTeamAEqual &&
+        isTeamBEqual
+      ) {
+        return prev; // Giữ nguyên tham chiếu cũ, chống chớp tắt
+      }
+
+      return {
+        ...(prev || {}),
+        roomCode: targetRoomData.roomCode || prev?.roomCode || selectedRoomCode,
+        mode: targetRoomData.mode || prev?.mode || '1vs1',
+        maxPerTeam: targetRoomData.maxPerTeam || parsedMax,
+        state: targetRoomData.state || prev?.state || 'LOBBY',
+        teamA: isTeamAEqual ? (prev?.teamA || []) : (incomingTeamA.length ? incomingTeamA : (prev?.teamA || [])),
+        teamB: isTeamBEqual ? (prev?.teamB || []) : (incomingTeamB.length ? incomingTeamB : (prev?.teamB || []))
+      };
+    });
 
     if (typeof targetRoomData.scoreA === 'number') setScoreA(targetRoomData.scoreA);
     if (typeof targetRoomData.scoreB === 'number') setScoreB(targetRoomData.scoreB);
@@ -161,13 +196,16 @@ export default function LiveMatchPage({
           }
         }
 
-        const targetRoomData = roomsList.find(r => r.roomCode === (targetCode || selectedRoomCode));
-        if (targetRoomData) {
-          syncRoomData(targetRoomData);
+        // Chỉ đồng bộ từ roomsList nếu CHƯA chọn phòng cụ thể (tránh ghi đè trùng lặp)
+        if (!selectedRoomCode && targetCode) {
+          const targetRoomData = roomsList.find(r => r.roomCode === targetCode);
+          if (targetRoomData) {
+            syncRoomData(targetRoomData);
+          }
         }
       }
 
-      // Trực tiếp đồng bộ thông tin phòng qua public endpoint
+      // Trực tiếp đồng bộ thông tin phòng qua public endpoint (chi tiết và đầy đủ nhất)
       if (selectedRoomCode) {
         const directRoom = await getRoom(selectedRoomCode);
         if (directRoom && (directRoom.roomCode || directRoom.state)) {
@@ -181,7 +219,7 @@ export default function LiveMatchPage({
 
   useEffect(() => {
     fetchRooms();
-    const interval = setInterval(fetchRooms, 1000);
+    const interval = setInterval(fetchRooms, 2500);
     return () => clearInterval(interval);
   }, [token, autoFollow, selectedRoomCode]);
 
@@ -468,13 +506,49 @@ export default function LiveMatchPage({
           boxShadow: '0 4px 0 var(--comic-black)'
         }}
       >
-        {/* Left: Branding & Event Identity */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div>
-            <div style={{ fontFamily: 'var(--font-title)', fontSize: '1.25rem', fontWeight: 900, color: '#FEF08A', textShadow: '0 2px 0 var(--comic-black)', letterSpacing: 0.5 }}>
-              ⚔️ KÉO CO TRI THỨC
+        {/* Left: Branding & Event Identity (Đồng bộ chuẩn 100% theo Hình 2) */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            background: '#FFFFFF',
+            padding: '4px 14px',
+            borderRadius: 14,
+            border: '2px solid var(--comic-black)',
+            boxShadow: '0 3px 0 var(--comic-black)'
+          }}
+        >
+          <span style={{ fontSize: '1.4rem' }}>⚔️</span>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div
+              style={{
+                fontFamily: 'var(--font-title)',
+                fontSize: '1.18rem',
+                fontWeight: 900,
+                color: '#1A1AFF',
+                letterSpacing: '0.02em',
+                textShadow: '1px 1px 0 #B3B4FF',
+                textTransform: 'uppercase',
+                lineHeight: 1.15
+              }}
+            >
+              KÉO CO TRI THỨC
             </div>
-            <div style={{ fontSize: '0.78rem', color: '#FFFFFF', fontWeight: 800, textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}>
+            <div
+              style={{
+                fontSize: '0.72rem',
+                fontWeight: 800,
+                color: '#1010CC',
+                background: '#EEF2FF',
+                border: '1.5px solid #1A1AFF',
+                padding: '1px 8px',
+                borderRadius: 999,
+                width: 'fit-content',
+                marginTop: 2,
+                whiteSpace: 'nowrap'
+              }}
+            >
               Trạm 1: Thử Thách Trí Tuệ
             </div>
           </div>
@@ -724,7 +798,7 @@ export default function LiveMatchPage({
                     if (p) {
                       return (
                         <div
-                          key={p.socketId || idx}
+                          key={p.studentId || p.socketId || `slot-a-${idx}`}
                           style={{
                             background: '#FFFFFF',
                             border: '2px solid var(--comic-black)',
@@ -733,18 +807,20 @@ export default function LiveMatchPage({
                             boxShadow: '0 2px 0 var(--comic-black)',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'space-between'
+                            justifyContent: 'space-between',
+                            minHeight: 52,
+                            boxSizing: 'border-box'
                           }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{ fontSize: '1.1rem' }}>👤</span>
-                            <div>
-                              <div style={{ fontWeight: 900, fontSize: '0.96rem', color: '#0F172A' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+                            <span style={{ fontSize: '1.2rem', flexShrink: 0 }}>👤</span>
+                            <div style={{ minWidth: 0, overflow: 'hidden' }}>
+                              <div style={{ fontWeight: 900, fontSize: '0.96rem', color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                 {p.name || `Thí sinh A${idx + 1}`}
                               </div>
-                              <small style={{ color: '#64748B', fontWeight: 700, fontSize: '0.76rem' }}>
+                              <div style={{ color: '#64748B', fontWeight: 700, fontSize: '0.76rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', height: 16, lineHeight: '16px' }}>
                                 {p.studentId ? `${p.studentId}${p.faculty ? ' • ' + p.faculty : ''}` : 'Đại học Văn Hiến'}
-                              </small>
+                              </div>
                             </div>
                           </div>
                           <span style={{
@@ -754,7 +830,8 @@ export default function LiveMatchPage({
                             padding: '3px 8px',
                             borderRadius: 999,
                             fontSize: '0.78rem',
-                            fontWeight: 900
+                            fontWeight: 900,
+                            flexShrink: 0
                           }}>
                             {p.isReady ? '✅ SẴN SÀNG' : '⏳ CHỜ SẴN SÀNG'}
                           </span>
@@ -875,7 +952,7 @@ export default function LiveMatchPage({
                     if (p) {
                       return (
                         <div
-                          key={p.socketId || idx}
+                          key={p.studentId || p.socketId || `slot-b-${idx}`}
                           style={{
                             background: '#FFFFFF',
                             border: '2px solid var(--comic-black)',
@@ -884,18 +961,20 @@ export default function LiveMatchPage({
                             boxShadow: '0 2px 0 var(--comic-black)',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'space-between'
+                            justifyContent: 'space-between',
+                            minHeight: 52,
+                            boxSizing: 'border-box'
                           }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <span style={{ fontSize: '1.1rem' }}>👤</span>
-                            <div>
-                              <div style={{ fontWeight: 900, fontSize: '0.96rem', color: '#0F172A' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, flex: 1 }}>
+                            <span style={{ fontSize: '1.2rem', flexShrink: 0 }}>👤</span>
+                            <div style={{ minWidth: 0, overflow: 'hidden' }}>
+                              <div style={{ fontWeight: 900, fontSize: '0.96rem', color: '#0F172A', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                 {p.name || `Thí sinh B${idx + 1}`}
                               </div>
-                              <small style={{ color: '#64748B', fontWeight: 700, fontSize: '0.76rem' }}>
+                              <div style={{ color: '#64748B', fontWeight: 700, fontSize: '0.76rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', height: 16, lineHeight: '16px' }}>
                                 {p.studentId ? `${p.studentId}${p.faculty ? ' • ' + p.faculty : ''}` : 'Đại học Văn Hiến'}
-                              </small>
+                              </div>
                             </div>
                           </div>
                           <span style={{
@@ -905,7 +984,8 @@ export default function LiveMatchPage({
                             padding: '3px 8px',
                             borderRadius: 999,
                             fontSize: '0.78rem',
-                            fontWeight: 900
+                            fontWeight: 900,
+                            flexShrink: 0
                           }}>
                             {p.isReady ? '✅ SẴN SÀNG' : '⏳ CHỜ SẴN SÀNG'}
                           </span>

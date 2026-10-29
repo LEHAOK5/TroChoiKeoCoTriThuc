@@ -624,3 +624,37 @@ Sau khi push commit lên GitHub:
    - Nút `👁️ CHIẾU PHÒNG NÀY` tại từng thẻ phòng: Bấm một chạm là Màn Chiếu TV lập tức chuyển sang chiếu phòng đó ngay mà không cần reload trang.
 4. **Backend Public Endpoint ([`rooms.routes.js`](file:///d:/KEOCOTRITHUC/src/backend/src/routes/rooms.routes.js) & [`api.js`](file:///d:/KEOCOTRITHUC/src/frontend/src/services/api.js)):**
    - Thêm `GET /api/rooms` công khai trả về danh sách các phòng đang chạy để màn chiếu TV luôn tải được danh sách phòng ngay cả khi không có token Admin.
+
+
+---
+
+## 16. Sửa Lỗi Chớp Tắt Họ Tên/MSSV Sảnh Chờ & Đồng Bộ Khối Thương Hiệu ⚔️ KÉO CO TRI THỨC Theo Hình 2
+
+### 1. Hiện Tượng & Yêu Cầu
+1. **Lỗi chớp tắt tại Sảnh chờ:** Thí sinh vào phòng chờ thi đấu thì thông tin Họ tên và MSSV bị giật/chớp tắt liên tục mỗi giây 1 lần trên Màn chiếu TV.
+2. **Đồng bộ thương hiệu:** Thay đổi cụm tiêu đề chữ vàng cũ trên Header TV sang khối thẻ thương hiệu chuẩn theo thiết kế Hình 2 (nền thẻ trắng bo cong, biểu tượng `⚔️`, chữ xanh `#1A1AFF` và huy hiệu viên thuốc capsule `Trạm 1: Thử Thách Trí Tuệ`).
+
+### 2. Nguyên Nhân Kỹ Thuật (Root Cause Analysis)
+1. **Lệch cấu trúc dữ liệu `faculty` và gọi kép `syncRoomData()`:**
+   - Trong vòng lặp 1.000ms của `fetchRooms()`, hàm gọi đồng bộ 2 lần liên tiếp:
+     - Lần 1: Lấy `targetRoomData` từ `RoomManager.listRooms()` (thiếu trường `faculty`). Thẻ render chuỗi ngắn: `231A010357`.
+     - Lần 2 (ngay sau đó 30ms): Lấy từ API chi tiết `getRoom(selectedRoomCode)` (có trường `faculty: 'CNTT'`). Thẻ render chuỗi dài: `231A010357 • CNTT`.
+     - Sự co giãn liên tục này xảy ra mỗi giây làm chữ và khung bị chớp tắt, giật lag.
+2. **Re-render DOM vô điều kiện:**
+   - Mỗi lần polling tạo ra một mảng đối tượng `teamA` / `teamB` mới dù dữ liệu người chơi không đổi, khiến React unmount và mount lại các phần tử slot.
+
+### 3. Giải Pháp Triển Khai
+1. **Chuẩn hóa trường `faculty` ở Backend ([`RoomManager.js`](file:///d:/KEOCOTRITHUC/src/backend/src/game/RoomManager.js)):**
+   - Thêm `faculty: p.faculty || ''` vào cả `teamAPlayers` và `teamBPlayers` trong `RoomManager.listRooms()`.
+2. **Loại bỏ gọi kép & Thêm bộ so sánh sâu `arePlayersEqual()` ([`LiveMatchPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/admin/LiveMatchPage.jsx)):**
+   - Khi đã có `selectedRoomCode`, chỉ gọi `syncRoomData` một lần duy nhất từ `getRoom(selectedRoomCode)`.
+   - Hàm `arePlayersEqual()` kiểm tra kỹ `studentId`, `name`, `faculty`, `isReady`. Nếu không đổi, giữ nguyên 100% tham chiếu state cũ, triệt tiêu hoàn toàn hiện tượng chớp giật.
+   - Giãn chu kỳ polling an toàn thành 2.5 giây (`setInterval(fetchRooms, 2500)`).
+3. **Cố định layout slot thí sinh ([`LiveMatchPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/admin/LiveMatchPage.jsx)):**
+   - Đặt `key={p.studentId || p.socketId || idx}` ổn định.
+   - Khóa `minHeight: 52px`, `height: 16px, lineHeight: '16px'` cho dòng MSSV & Khoa, đảm bảo khung thẻ đứng yên tuyệt đối.
+4. **Đồng bộ khối thương hiệu White Card Badge chuẩn theo Hình 2 ([`LiveMatchPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/admin/LiveMatchPage.jsx)):**
+   - Khối thẻ nền trắng Neo-brutalism (`#FFFFFF`, viền đen `2px solid var(--comic-black)`, bóng `0 3px 0 var(--comic-black)`).
+   - Biểu tượng thanh kiếm `⚔️`.
+   - Chữ hoa `KÉO CO TRI THỨC` màu xanh dương hoàng gia `#1A1AFF` với bóng tím nhạt `#B3B4FF`.
+   - Viên thuốc capsule bo tròn `Trạm 1: Thử Thách Trí Tuệ` (nền `#EEF2FF`, viền `#1A1AFF`, chữ xanh `#1010CC`), đồng bộ 100% từ a - z của toàn bộ dự án.
