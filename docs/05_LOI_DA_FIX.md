@@ -526,3 +526,72 @@ Sau khi push commit lên GitHub:
    - Nâng cấp `GET /api/rooms/:code` trả về đầy đủ snapshot phòng đấu thời gian thực (tỉ số, người chơi, câu hỏi đang hỏi, hạn giờ) mà không yêu cầu token, giúp màn chiếu TV đồng bộ song song 2 kênh (REST API dự phòng 1.5s + WebSocket thời gian thực).
 4. **Lắng nghe sự kiện `socket.on('connect')` tự động re-join:**
    - Đảm bảo khi socket kết nối thành công hoặc reconnect, sự kiện `joinSpectator` luôn được bắn lên server để nhận đầy đủ các thông báo `startCountdown`, `newQuestion`, `buzzerAwarded`,...
+
+
+---
+
+## 13. Sửa Lỗi Màn Chiếu TV Không Cập Nhật Tỉ Số & Bị Lệch Nhịp So Với Điện Thoại Thí Sinh Đang Đấu
+
+### 1. Hiện Tượng & Nguyên Nhân Cốt Lõi (Root Cause Analysis)
+1. **Cơ chế `autoFollow` tự ý nhảy phòng:**
+   - Trong [`LiveMatchPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/admin/LiveMatchPage.jsx), biến `autoFollow` mặc định luôn bật `true`.
+   - Khi có nhiều phòng trên máy chủ (ví dụ phòng mặc định `KCO1`, phòng cũ `1234`, và phòng mới tạo `1235`), hàm `fetchRooms()` quét danh sách phòng và tự động chọn phòng đầu tiên có trạng thái `ROUND_BUZZ`.
+   - Nếu phòng cũ hoặc phòng khác đang có câu hỏi, `autoFollow` lập tức ghi đè `selectedRoomCode` sang phòng đó, khiến Màn Chiếu TV bị "bắt cóc" rời khỏi phòng thi đấu thực tế của 2 thí sinh. Kết quả: Thí sinh trên điện thoại đấu phòng `1235` (tỉ số 2 - 1), trong khi TV chiếu phòng khác (tỉ số 0 - 0, câu hỏi cũ bị đơ ở `0s`).
+2. **Thiếu lắng nghe sự kiện `bothTeamsWrong` trên Màn Chiếu TV:**
+   - Khi hết 15 giây mà không có đội nào bấm chuông (hoặc cả 2 đội đều trả lời sai), máy chủ bắn sự kiện `bothTeamsWrong`.
+   - `LiveMatchPage.jsx` trước đó không đăng ký listener cho sự kiện này, dẫn đến đồng hồ đếm ngược của TV bị dừng ở `0s` mà không cập nhật kết quả và chuyển nhịp sang câu tiếp theo.
+3. **Lệch tên trường dữ liệu hiển thị đáp án đúng:**
+   - Màn chiếu TV kiểm tra `lastResult.correctAnswer` và `lastResult.correctAnswerIndex`, trong khi Backend trả về `correctOption` và `correctIndex`.
+4. **Giao diện thí sinh thiếu huy hiệu mã phòng:**
+   - Thí sinh trên điện thoại hoặc máy tính trước đây không thấy mã phòng trên thanh Header, dễ xảy ra trường hợp đăng ký nhầm vào 2 phòng khác nhau (`KCO1` vs `1235`).
+
+### 2. Giải Pháp Triển Khai
+1. **Khóa chặt mã phòng được chỉ định (Strict Room Locking):**
+   - Khi URL có tham số `?tv=1235` hoặc `?spectate=1235`, biến `autoFollow` tự động tắt `false`.
+   - `fetchRooms()` tuyệt đối không tự ý hoán đổi `selectedRoomCode` sang phòng khác.
+   - Thêm dropdown chọn phòng thủ công trên thanh Header TV để Ban tổ chức có thể chủ động chuyển phòng khi cần.
+2. **Bổ sung trọn vẹn sự kiện `bothTeamsWrong`:**
+   - Cập nhật điểm số, độ lệch dây thừng và phát âm thanh thông báo khi cả 2 đội cùng sai hoặc hết giờ bấm chuông.
+3. **Chuẩn hóa đối chiếu đáp án đúng:**
+   - Hỗ trợ đầy đủ cả `correctOption`, `correctAnswer`, `correctIndex` và `correctAnswerIndex`.
+4. **Bổ sung Huy hiệu Mã phòng trên Header Thí sinh ([`App.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/App.jsx)):**
+   - Thẻ `#1235` màu vàng nổi bật cạnh tên đội `⚡ ĐỘI A` / `🔥 ĐỘI B`, giúp Ban tổ chức và thí sinh đối soát phòng đấu 100% chính xác.
+
+---
+
+## 14. Sửa Lỗi Màn Chiếu TV Bị Biến Thành Màn Hình Thí Sinh (Đơ Tỉ Số 0 - 0 Và Đứng Yên Ở Câu Số 1 Hết Giờ 0s)
+
+### 1. Hiện Tượng Thực Tế
+- Thí sinh trên điện thoại thi đấu bình thường, đã sang câu hỏi số 3 ("Ứng dụng học tiếng Anh như Duolingo...") với tỉ số 2 - 1 và dây kéo đã lệch về một bên.
+- Tuy nhiên trên máy tính / màn chiếu TV:
+  - Header TV (`🔑 PHÒNG: #1234`, `LOA TV: BẬT`, `TỰ BẮT TRẬN: BẬT`) đột ngột biến mất, thay vào đó là Header thí sinh với các nút `🔊 BẬT NHẠC`, `🎙️ MC BẬT`, `Tốt`.
+  - Xuất hiện thanh thẻ bài thi đấu: `THẺ: DDoS | X2 Kéo | 50/50 | Tường Lửa` và nhãn `MỤC TIÊU 10đ` (vốn chỉ có trên màn hình thí sinh).
+  - Tỉ số bị đơ cứng ở mức 0 - 0, câu hỏi kẹt ở câu số 1 ("Video trên YouTube bị gắn bản quyền..."), đồng hồ dừng ở 0s và 4 đáp án bị khóa 🔒.
+
+### 2. Nguyên Nhân Kỹ Thuật Cốt Lõi (Root Cause Analysis)
+1. **Lệnh chuyển trang cưỡng bức trong `App.jsx`:**
+   - Trong [`App.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/App.jsx), sự kiện `socket.on('newQuestion')` có chứa dòng lệnh:
+     ```javascript
+     setCurrentPage('GAME');
+     ```
+   - Khi trận đấu vừa bắt đầu (sau khi đếm ngược 3-2-1 kết thúc), máy chủ bắn sự kiện `newQuestion` về phòng. Socket singleton trên tab TV nhận sự kiện này và ngay lập tức gọi `setCurrentPage('GAME')`.
+   - Kết quả: Component màn chiếu TV [`LiveMatchPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/admin/LiveMatchPage.jsx) bị **unmount hoàn toàn khỏi DOM**, thay vào đó `App.jsx` render component thi đấu của người chơi [`GamePage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/GamePage.jsx).
+2. **Tab TV không phải là người chơi hợp lệ:**
+   - Vì tab TV mở ra với mục đích trình chiếu cho khán giả nên không có `sessionToken` thí sinh đăng ký, không thuộc Đội A hay Đội B.
+   - Khi bị ép vào `GamePage.jsx`, component này không thể xử lý bấm chuông, không nhận được luồng sự kiện riêng của thí sinh, dẫn đến việc bị đông cứng vĩnh viễn ở Câu 1 với thời gian `0s` và tỉ số `0 - 0`.
+3. **Xung đột Socket Listeners và Âm thanh kép:**
+   - Khi tab TV mở, cả `App.jsx` và `LiveMatchPage.jsx` đều cùng đăng ký lắng nghe các sự kiện socket (`newQuestion`, `buzzerAwarded`, `answerResult`, `bothTeamsWrong`,...). `App.jsx` xử lý theo góc nhìn của thí sinh dẫn đến xung đột âm thanh, lặp giọng đọc MC và làm mất giao diện màn chiếu khán giả.
+
+### 3. Giải Pháp Khắc Phục Triệt Để
+1. **Khóa cứng chế độ Màn chiếu Khán giả `isSpectatorMode` ([`App.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/App.jsx)):**
+   - Nhận diện tab màn chiếu TV thông qua URL query (`?tv=`, `?spectate=`) hoặc hash (`#live`, `#spectate`).
+   - Bọc hàm `setCurrentPage`: Nếu `isSpectatorMode === true`, từ chối 100% mọi yêu cầu chuyển trang sang `GAME`, `LOBBY` hay `REGISTER`. Tab màn chiếu TV sẽ được bảo vệ vĩnh viễn ở trạng thái `SPECTATE` (`LiveMatchPage`).
+2. **Cô lập toàn bộ Socket Listeners thí sinh trong `App.jsx` ([`App.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/App.jsx)):**
+   - Bổ sung rào chắn bảo vệ `if (isSpectatorMode || currentPageRef.current === 'SPECTATE' || currentPageRef.current === 'ADMIN') return;` ở tất cả các sự kiện thi đấu của người chơi:
+     - `roomStateUpdate`, `startCountdown`, `newQuestion`, `buzzerAwarded`, `answerResult`
+     - `tacticalCardActivated`, `cardEffectApplied`, `fiftyFiftyResult`, `reboundOpen`, `bothTeamsWrong`, `gameOver`, `errorMessage`, `roomResetByAdmin`.
+   - Ngăn tab TV tự động gửi sự kiện `resumeSession` người chơi lên máy chủ khi socket kết nối lại.
+3. **Độc lập hóa âm thanh TV chuyên dụng:**
+   - Toàn bộ âm thanh chuông bấm, còi trọng tài, pháo hoa ăn mừng và giọng MC bình luận trận đấu trên TV do duy nhất [`LiveMatchPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/admin/LiveMatchPage.jsx) kiểm soát thông qua nút bật/tắt `🔊 LOA TV`, loại bỏ hoàn toàn hiện tượng vọng âm/phát đè từ `App.jsx`.
+4. **Bảo toàn hiển thị kết quả đáp án đúng/sai (`ANSWER_RESULT`) trong [`LiveMatchPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/admin/LiveMatchPage.jsx):**
+   - Trong hàm đồng bộ phòng `syncRoomData()`, khi màn hình TV đang ở trạng thái `ANSWER_RESULT` (chiếu banner chúc mừng đội trả lời đúng và hoạt cảnh kéo dây), cơ chế polling không được ghi đè lùi lại trạng thái trước đó, giúp khán giả xem trọn vẹn 3.5 giây ăn mừng trước khi sang câu hỏi kế tiếp.

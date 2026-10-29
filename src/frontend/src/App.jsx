@@ -47,7 +47,14 @@ import { BOOTH_LABEL } from './config/env';
 export default function App() {
   const isCutscenePreview = typeof window !== 'undefined' && window.location.hash.startsWith('#cutscene');
   const isGamePreview = typeof window !== 'undefined' && (window.location.hash === '#game' || window.location.hash === '#preview' || isCutscenePreview);
-  const [currentPage, setCurrentPage] = useState(() => {
+  const isSpectatorMode = typeof window !== 'undefined' && (
+    new URLSearchParams(window.location.search).has('tv') ||
+    new URLSearchParams(window.location.search).has('spectate') ||
+    window.location.hash === '#live' ||
+    window.location.hash.startsWith('#spectate')
+  );
+
+  const [currentPage, _setCurrentPage] = useState(() => {
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.has('spectate') || urlParams.has('tv') || window.location.hash === '#live' || window.location.hash.startsWith('#spectate')) {
@@ -58,6 +65,14 @@ export default function App() {
     if (isGamePreview) return 'GAME';
     return 'REGISTER';
   });
+
+  const setCurrentPage = (page) => {
+    if (isSpectatorMode && page !== 'SPECTATE') {
+      console.warn(`[App] Bỏ qua chuyển trang sang ${page} vì tab đang khóa ở màn chiếu TV Khán giả (SPECTATE)`);
+      return;
+    }
+    _setCurrentPage(page);
+  };
   const [isConnected, setIsConnected] = useState(false);
   const [pingMs, setPingMs] = useState(25);
   const [isReconnecting, setIsReconnecting] = useState(false);
@@ -201,6 +216,8 @@ export default function App() {
       setIsConnected(true);
       setIsReconnecting(false);
 
+      if (isSpectatorMode || currentPageRef.current === 'SPECTATE') return;
+
       // Re-synchronize session and room membership
       const token = sessionTokenRef.current;
       const rCode = sessionStorage.getItem('keoco_roomCode') || roomStateRef.current?.roomCode || 'KCO1';
@@ -215,6 +232,7 @@ export default function App() {
     });
 
     socket.on('joinedSuccess', ({ player: p, roomCode: rCode }) => {
+      if (isSpectatorMode || currentPageRef.current === 'SPECTATE') return;
       setPlayer(p);
       sessionStorage.setItem('keoco_player', JSON.stringify(p));
       if (rCode) sessionStorage.setItem('keoco_roomCode', rCode);
@@ -224,6 +242,7 @@ export default function App() {
     });
 
     socket.on('roomStateUpdate', (state) => {
+      if (isSpectatorMode || currentPageRef.current === 'SPECTATE' || currentPageRef.current === 'ADMIN') return;
       setRoomState(state);
       setScoreA(state.scoreA);
       setScoreB(state.scoreB);
@@ -248,6 +267,7 @@ export default function App() {
     });
 
     socket.on('startCountdown', ({ seconds }) => {
+      if (isSpectatorMode || currentPageRef.current === 'SPECTATE' || currentPageRef.current === 'ADMIN') return;
       setCountdown(seconds);
       if (seconds > 0) {
         setBGMMode('COUNTDOWN');
@@ -255,6 +275,7 @@ export default function App() {
     });
 
     socket.on('newQuestion', (data) => {
+      if (isSpectatorMode || currentPageRef.current === 'SPECTATE' || currentPageRef.current === 'ADMIN') return;
       const { question, scoreA: sA, scoreB: sB, ropeOffset: rO, deadline: dl, tacticalCards: tc } = data;
       setCountdown(null);
       setCurrentPage('GAME');
@@ -283,6 +304,7 @@ export default function App() {
     });
 
     socket.on('buzzerAwarded', (data) => {
+      if (isSpectatorMode || currentPageRef.current === 'SPECTATE' || currentPageRef.current === 'ADMIN') return;
       playBuzzer();
       playCrowdMurmur();
       announceBuzzer(data.team);
@@ -295,6 +317,7 @@ export default function App() {
     });
 
     socket.on('answerResult', (result) => {
+      if (isSpectatorMode || currentPageRef.current === 'SPECTATE' || currentPageRef.current === 'ADMIN') return;
       setLastResult(result);
       setScoreA(result.scoreA);
       setScoreB(result.scoreB);
@@ -324,6 +347,7 @@ export default function App() {
     });
 
     socket.on('tacticalCardActivated', ({ team, cardType, playerName, tacticalCards: tc }) => {
+      if (isSpectatorMode || currentPageRef.current === 'SPECTATE' || currentPageRef.current === 'ADMIN') return;
       if (tc) setTacticalCards(tc);
       const curPlayer = playerRef.current;
       if (curPlayer && curPlayer.team === team) {
@@ -343,6 +367,7 @@ export default function App() {
     });
 
     socket.on('cardEffectApplied', ({ type, targetTeam, durationMs }) => {
+      if (isSpectatorMode || currentPageRef.current === 'SPECTATE' || currentPageRef.current === 'ADMIN') return;
       if (type === 'FREEZE_BUZZER') {
         const curPlayer = playerRef.current;
         playFreezeSfx();
@@ -378,6 +403,7 @@ export default function App() {
     });
 
     socket.on('fiftyFiftyResult', ({ team, eliminatedIndexes }) => {
+      if (isSpectatorMode || currentPageRef.current === 'SPECTATE' || currentPageRef.current === 'ADMIN') return;
       const curPlayer = playerRef.current;
       if (curPlayer && curPlayer.team === team) {
         setFiftyFiftyEliminated(eliminatedIndexes);
@@ -386,6 +412,7 @@ export default function App() {
     });
 
     socket.on('reboundOpen', (data) => {
+      if (isSpectatorMode || currentPageRef.current === 'SPECTATE' || currentPageRef.current === 'ADMIN') return;
       playWrong();
       playCrowdGasp();
       announceRebound(data.reboundTeam);
@@ -398,6 +425,7 @@ export default function App() {
     });
 
     socket.on('bothTeamsWrong', (data) => {
+      if (isSpectatorMode || currentPageRef.current === 'SPECTATE' || currentPageRef.current === 'ADMIN') return;
       playWrong();
       playCrowdGasp();
       announceBothWrong();
@@ -406,6 +434,7 @@ export default function App() {
     });
 
     socket.on('gameOver', (data) => {
+      if (isSpectatorMode || currentPageRef.current === 'SPECTATE' || currentPageRef.current === 'ADMIN') return;
       stopBGM();
       playVictory();
       announceVictory(data.winner);
@@ -416,10 +445,12 @@ export default function App() {
     });
 
     socket.on('errorMessage', ({ message }) => {
+      if (isSpectatorMode || currentPageRef.current === 'SPECTATE') return;
       alert(message || 'Đã xảy ra lỗi.');
     });
 
     socket.on('roomResetByAdmin', ({ message }) => {
+      if (isSpectatorMode || currentPageRef.current === 'SPECTATE') return;
       alert(message || 'Ban Tổ Chức đã làm mới phòng.');
       handleLogout();
     });
@@ -625,6 +656,24 @@ export default function App() {
         <div className="header-actions">
           {player && (
             <>
+              <span
+                style={{
+                  fontSize: isMobile ? '0.72rem' : '0.78rem',
+                  fontWeight: 900,
+                  fontFamily: 'var(--font-title)',
+                  padding: isMobile ? '2px 6px' : '3px 8px',
+                  borderRadius: 999,
+                  background: '#FEF08A',
+                  color: '#713F12',
+                  border: '1.5px solid var(--comic-black)',
+                  boxShadow: '0 2px 0 var(--comic-black)',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0
+                }}
+                title="Mã phòng đấu của bạn"
+              >
+                #{sessionStorage.getItem('keoco_roomCode') || roomState?.roomCode || '---'}
+              </span>
               <span
                 style={{
                   fontSize: isMobile ? '0.72rem' : '0.78rem',

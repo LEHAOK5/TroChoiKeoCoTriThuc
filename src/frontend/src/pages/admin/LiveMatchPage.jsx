@@ -25,6 +25,7 @@ import {
   announceBuzzer,
   announceCorrect,
   announceWrong,
+  announceBothWrong,
   announceRebound,
   announceVictory
 } from '../../utils/announcer';
@@ -45,7 +46,10 @@ export default function LiveMatchPage({
     return urlParams.get('tv') || urlParams.get('spectate') || urlParams.get('room') || '';
   });
 
-  const [autoFollow, setAutoFollow] = useState(true);
+  const [autoFollow, setAutoFollow] = useState(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return !(urlParams.get('tv') || urlParams.get('spectate') || urlParams.get('room') || initialRoomCode);
+  });
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [audioMuted, setAudioMuted] = useState(() => isMuted());
 
@@ -105,9 +109,13 @@ export default function LiveMatchPage({
       if (targetRoomData.deadline) setDeadline(targetRoomData.deadline);
       if (targetRoomData.buzzerWinner) setBuzzerWinner(targetRoomData.buzzerWinner);
       if (targetRoomData.reboundData) setReboundData(targetRoomData.reboundData);
-      if (targetRoomData.state === 'ROUND_BUZZ') setUiState('ROUND_BUZZ');
-      else if (targetRoomData.state === 'ROUND_ANSWER') setUiState('BUZZER_AWARDED');
-      else if (targetRoomData.state === 'ROUND_REBOUND') setUiState('REBOUND');
+      setUiState(prev => {
+        if (prev === 'ANSWER_RESULT') return prev; // Đang chiếu hiệu ứng kết quả thì giữ nguyên
+        if (targetRoomData.state === 'ROUND_BUZZ') return 'ROUND_BUZZ';
+        if (targetRoomData.state === 'ROUND_ANSWER') return 'BUZZER_AWARDED';
+        if (targetRoomData.state === 'ROUND_REBOUND') return 'REBOUND';
+        return prev;
+      });
     } else if (targetRoomData.state === 'COUNTDOWN') {
       setUiState('COUNTDOWN');
     } else if (targetRoomData.state === 'LOBBY') {
@@ -132,7 +140,7 @@ export default function LiveMatchPage({
             const playingRoom = res.rooms.find(r => r.state === 'ROUND_BUZZ' || r.state === 'ROUND_ANSWER' || r.state === 'ROUND_REBOUND') || res.rooms[0];
             targetCode = playingRoom.roomCode;
             setSelectedRoomCode(targetCode);
-          } else if (autoFollow && res.rooms.length > 0) {
+          } else if (autoFollow && !selectedRoomCode && res.rooms.length > 0) {
             const activePlaying = res.rooms.find(r => r.state === 'ROUND_BUZZ' || r.state === 'ROUND_ANSWER' || r.state === 'ROUND_REBOUND');
             if (activePlaying && activePlaying.roomCode !== selectedRoomCode) {
               targetCode = activePlaying.roomCode;
@@ -140,7 +148,7 @@ export default function LiveMatchPage({
             }
           }
 
-          const targetRoomData = res.rooms.find(r => r.roomCode === targetCode);
+          const targetRoomData = res.rooms.find(r => r.roomCode === (targetCode || selectedRoomCode));
           if (targetRoomData) {
             syncRoomData(targetRoomData);
           }
@@ -161,7 +169,7 @@ export default function LiveMatchPage({
 
   useEffect(() => {
     fetchRooms();
-    const interval = setInterval(fetchRooms, 1500);
+    const interval = setInterval(fetchRooms, 1000);
     return () => clearInterval(interval);
   }, [token, autoFollow, selectedRoomCode]);
 
@@ -273,6 +281,17 @@ export default function LiveMatchPage({
       }
     };
 
+    const handleBothTeamsWrong = (data) => {
+      console.log('💥 [Both Teams Wrong Live]:', data);
+      setLastResult(data);
+      setUiState('ANSWER_RESULT');
+      if (typeof data.scoreA === 'number') setScoreA(data.scoreA);
+      if (typeof data.scoreB === 'number') setScoreB(data.scoreB);
+      if (typeof data.ropeOffset === 'number') setRopeOffset(data.ropeOffset);
+      playWrong();
+      announceBothWrong();
+    };
+
     const handleGameOver = (data) => {
       console.log('🏆 [Game Over Live]:', data);
       setGameOverData(data);
@@ -289,6 +308,7 @@ export default function LiveMatchPage({
     socket.on('buzzerAwarded', handleBuzzerAwarded);
     socket.on('answerResult', handleAnswerResult);
     socket.on('reboundOpen', handleReboundOpen);
+    socket.on('bothTeamsWrong', handleBothTeamsWrong);
     socket.on('tacticalCardActivated', handleTacticalCardActivated);
     socket.on('fiftyFiftyResult', handleFiftyFiftyResult);
     socket.on('gameOver', handleGameOver);
@@ -303,6 +323,7 @@ export default function LiveMatchPage({
       socket.off('buzzerAwarded', handleBuzzerAwarded);
       socket.off('answerResult', handleAnswerResult);
       socket.off('reboundOpen', handleReboundOpen);
+      socket.off('bothTeamsWrong', handleBothTeamsWrong);
       socket.off('tacticalCardActivated', handleTacticalCardActivated);
       socket.off('fiftyFiftyResult', handleFiftyFiftyResult);
       socket.off('gameOver', handleGameOver);
@@ -957,7 +978,12 @@ export default function LiveMatchPage({
                   const isFiftyEliminated = fiftyFiftyEliminated.includes(idx);
                   const isReboundEliminated = reboundData?.eliminatedAnswer === opt || reboundData?.eliminatedIndex === idx;
                   const isEliminated = isFiftyEliminated || isReboundEliminated;
-                  const isCorrectAnswer = lastResult && (lastResult.correctAnswer === opt || Number(lastResult.correctAnswerIndex) === idx);
+                  const isCorrectAnswer = lastResult && (
+                    lastResult.correctOption === opt ||
+                    lastResult.correctAnswer === opt ||
+                    Number(lastResult.correctIndex) === idx ||
+                    Number(lastResult.correctAnswerIndex) === idx
+                  );
 
                   let bg = '#F8FAFC';
                   let border = '2px solid var(--comic-black)';
