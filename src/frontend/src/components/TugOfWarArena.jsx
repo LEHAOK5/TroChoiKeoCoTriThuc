@@ -59,9 +59,9 @@ export default function TugOfWarArena({
     }
   }, [lastResult]);
 
-  // Cố định hiển thị 5 vs 5 (10 nhân vật Chibi kéo dây cùng lúc)
-  const countA = teamACount || 5;
-  const countB = teamBCount || 5;
+  // Số lượng nhân vật kéo co co giãn linh hoạt theo chế độ phòng đấu (1vs1 đến 5vs5)
+  const countA = typeof teamACount === 'number' ? Math.min(5, Math.max(1, teamACount)) : 5;
+  const countB = typeof teamBCount === 'number' ? Math.min(5, Math.max(1, teamBCount)) : 5;
 
   // Đội chủ động kéo: khi vừa ghi điểm (activePullTeam) HOẶC khi đang dẫn điểm
   const isAPulling = activePullTeam === 'A' || (ropeOffset < 0 && !activePullTeam);
@@ -74,10 +74,13 @@ export default function TugOfWarArena({
   const isADismayed = isAWrong || isBPulling;
   const isBDismayed = isBWrong || isAPulling;
 
-  // Đội hình Team A: Thứ tự từ đuôi (Khóa đuôi #5) đến đầu (Tiên phong #1)
-  const teamAIndices = [4, 3, 2, 1, 0];
-  // Đội hình Team B: Thứ tự từ đầu (Tiên phong #1) đến đuôi (Khóa đuôi #5)
-  const teamBIndices = [0, 1, 2, 3, 4];
+  // Đội hình Team A: Lấy đúng số lượng theo countA (từ đuôi đến Tiên phong #1)
+  const fullTeamA = [4, 3, 2, 1, 0];
+  const teamAIndices = fullTeamA.slice(5 - countA);
+
+  // Đội hình Team B: Lấy đúng số lượng theo countB (từ Tiên phong #1 đến đuôi)
+  const fullTeamB = [0, 1, 2, 3, 4];
+  const teamBIndices = fullTeamB.slice(0, countB);
 
   // Mobile detection for dynamic compact responsive scaling
   const [isMobile, setIsMobile] = React.useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
@@ -419,7 +422,7 @@ export default function TugOfWarArena({
               <div
                 key={`a-pos-${origIdx}`}
                 style={{
-                  marginRight: renderIdx === 4 ? 0 : pullerOverlap,
+                  marginRight: renderIdx === (teamAIndices.length - 1) ? 0 : pullerOverlap,
                   zIndex: renderIdx + 1
                 }}
               >

@@ -5,7 +5,6 @@ import TugOfWarArena from '../../components/TugOfWarArena';
 import RingTimer from '../../components/RingTimer';
 import VictoryCutscene from '../../components/VictoryCutscene';
 import CountdownOverlay from '../../components/CountdownOverlay';
-import vhuLogo from '../../img/Logo VHU.png';
 import {
   playBuzzer,
   playCorrect,
@@ -81,14 +80,41 @@ export default function LiveMatchPage({
       if (res?.success && Array.isArray(res.rooms)) {
         setRooms(res.rooms);
         // Auto-select room if none selected, or auto-follow active match
-        if (!selectedRoomCode && res.rooms.length > 0) {
+        let targetCode = selectedRoomCode;
+        if (!targetCode && res.rooms.length > 0) {
           const playingRoom = res.rooms.find(r => r.state === 'ROUND_BUZZ' || r.state === 'ROUND_ANSWER' || r.state === 'ROUND_REBOUND') || res.rooms[0];
-          setSelectedRoomCode(playingRoom.roomCode);
+          targetCode = playingRoom.roomCode;
+          setSelectedRoomCode(targetCode);
         } else if (autoFollow && res.rooms.length > 0) {
           const activePlaying = res.rooms.find(r => r.state === 'ROUND_BUZZ' || r.state === 'ROUND_ANSWER' || r.state === 'ROUND_REBOUND');
           if (activePlaying && activePlaying.roomCode !== selectedRoomCode) {
-            setSelectedRoomCode(activePlaying.roomCode);
+            targetCode = activePlaying.roomCode;
+            setSelectedRoomCode(targetCode);
           }
+        }
+
+        // Sync room mode and maxPerTeam directly from API into roomState
+        const targetRoomData = res.rooms.find(r => r.roomCode === targetCode);
+        if (targetRoomData) {
+          const parsedMax = targetRoomData.maxPerTeam || parseInt((targetRoomData.mode || '1')[0], 10) || 1;
+          setRoomState(prev => {
+            if (!prev) {
+              return {
+                mode: targetRoomData.mode || '1vs1',
+                maxPerTeam: parsedMax,
+                state: targetRoomData.state || 'LOBBY',
+                teamA: targetRoomData.teamAPlayers || [],
+                teamB: targetRoomData.teamBPlayers || []
+              };
+            }
+            return {
+              ...prev,
+              mode: targetRoomData.mode || prev.mode,
+              maxPerTeam: targetRoomData.maxPerTeam || parsedMax,
+              teamA: prev.teamA?.length ? prev.teamA : (targetRoomData.teamAPlayers || []),
+              teamB: prev.teamB?.length ? prev.teamB : (targetRoomData.teamBPlayers || [])
+            };
+          });
         }
       }
     } catch (err) {
@@ -310,14 +336,16 @@ export default function LiveMatchPage({
   };
 
   // Dynamic slots calculation based on room maxPerTeam (1vs1 to 5vs5)
-  const maxPerTeam = roomState?.maxPerTeam || 5;
-  const teamAPlayers = roomState?.teamA || [];
-  const teamBPlayers = roomState?.teamB || [];
+  const currentRoomInfo = rooms.find(r => r.roomCode === selectedRoomCode);
+  const effectiveMode = roomState?.mode || currentRoomInfo?.mode || '1vs1';
+  const maxPerTeam = roomState?.maxPerTeam || currentRoomInfo?.maxPerTeam || (parseInt(effectiveMode[0], 10) || 1);
+  const teamAPlayers = roomState?.teamA || currentRoomInfo?.teamAPlayers || [];
+  const teamBPlayers = roomState?.teamB || currentRoomInfo?.teamBPlayers || [];
   const teamASlots = Array.from({ length: maxPerTeam }, (_, i) => teamAPlayers[i] || null);
   const teamBSlots = Array.from({ length: maxPerTeam }, (_, i) => teamBPlayers[i] || null);
 
-  const teamACount = teamAPlayers.length || maxPerTeam;
-  const teamBCount = teamBPlayers.length || maxPerTeam;
+  const teamACount = maxPerTeam;
+  const teamBCount = maxPerTeam;
   const isIT = currentQuestion?.category === 'IT';
 
   return (
@@ -355,13 +383,12 @@ export default function LiveMatchPage({
       >
         {/* Left: Branding & Event Identity */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <img src={vhuLogo} alt="VHU Logo" style={{ height: 36, objectFit: 'contain' }} />
           <div>
-            <div style={{ fontFamily: 'var(--font-title)', fontSize: '1.15rem', fontWeight: 900, color: '#FEF08A', textShadow: '0 2px 0 var(--comic-black)', letterSpacing: 0.5 }}>
-              KÉO CO TRI THỨC ⚡ MÀN CHIẾU KHÁN GIẢ
+            <div style={{ fontFamily: 'var(--font-title)', fontSize: '1.25rem', fontWeight: 900, color: '#FEF08A', textShadow: '0 2px 0 var(--comic-black)', letterSpacing: 0.5 }}>
+              ⚔️ KÉO CO TRI THỨC
             </div>
-            <div style={{ fontSize: '0.74rem', color: '#FFFFFF', fontWeight: 800, textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}>
-              Trạm 1: Thử Thách Trí Tuệ • Trường Đại học Văn Hiến (VHU)
+            <div style={{ fontSize: '0.78rem', color: '#FFFFFF', fontWeight: 800, textShadow: '0 1px 2px rgba(0,0,0,0.6)' }}>
+              Trạm 1: Thử Thách Trí Tuệ
             </div>
           </div>
         </div>
@@ -391,7 +418,7 @@ export default function LiveMatchPage({
             fontWeight: 900,
             fontSize: '0.82rem'
           }}>
-            {roomState?.mode || `${maxPerTeam}vs${maxPerTeam}`} ({maxPerTeam} người/đội)
+            {effectiveMode} ({maxPerTeam} người/đội)
           </span>
 
           {rooms.length > 1 && (

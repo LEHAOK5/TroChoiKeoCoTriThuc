@@ -452,3 +452,41 @@ Sau khi push commit lên GitHub:
 - Thêm hàm `announceCountdownNumber(num)` đọc dõng dạc "Ba!", "Hai!", "Một!" và khớp với clip âm thanh `start.mp3` ("Sẵn sàng... Bắt đầu!").
 4. **Đồng bộ màn hình đếm ([`CountdownOverlay.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/components/CountdownOverlay.jsx) & [`App.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/App.jsx)):**
 - Kích hoạt âm thanh và giọng đọc trực tiếp theo từng số, giữ màn hình "BẮT ĐẦU KÉO!" hiển thị trọn vẹn cho tới khi câu hỏi số 1 nạp xong.
+
+
+---
+
+## 11. Sửa Lỗi Hiển Thị Phòng Đấu Mặc Định 5vs5 Trên Màn Chiếu TV Khi Tạo Phòng 1vs1 Và Chuẩn Hóa Nhận Diện Thương Hiệu Header
+
+### 1. Hiện Tượng & Nguyên Nhân
+1. **Phòng đấu luôn hiển thị 5vs5 trên màn chiếu TV:**
+   - Khi Ban tổ chức tạo phòng đấu 1vs1 (hoặc 2vs2, 3vs3) từ trang Admin và mở Màn chiếu TV độc lập (`/?tv=ROOM_CODE`), giao diện sảnh chờ LOBBY vẫn hiển thị 5 slot mỗi bên ("Vị trí 1: Chờ thí sinh vào phòng...", ..., "Vị trí 5..."), sân kéo co hiển thị đủ 10 nhân vật Chibi và huy hiệu ghi nhận "CHẾ ĐỘ 5 VS 5".
+   - **Nguyên nhân:** Trong [`LiveMatchPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/admin/LiveMatchPage.jsx), biến `roomState` ban đầu là `null` trước khi kết nối Socket nhận snapshot. Biểu thức tính số lượng lấy fallback `maxPerTeam = roomState?.maxPerTeam || 5`, dẫn tới luôn rơi vào giá trị mặc định 5 người/đội. Đồng thời hàm `fetchRooms()` chỉ lưu dữ liệu vào `rooms` mà chưa cập nhật `roomState`.
+   - Trong [`TugOfWarArena.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/components/TugOfWarArena.jsx), mảng chỉ số nhân vật Chibi trước đây bị gán tĩnh 5 phần tử (`[4, 3, 2, 1, 0]` và `[0, 1, 2, 3, 4]`), không cắt lát theo số lượng thành viên thực tế.
+2. **Chưa đồng bộ nhận diện thương hiệu trên Header:**
+   - Màn chiếu TV trước đó chứa logo VHU và tiêu đề dài *"KÉO CO TRI THỨC ⚡ MÀN CHIẾU KHÁN GIẢ"*, dòng phụ *"Trạm 1: Thử Thách Trí Tuệ • Trường Đại học Văn Hiến (VHU)"*, khác biệt với phong cách chuẩn hóa ở trang chủ Admin và Phiếu đăng ký sinh viên.
+
+### 2. Giải Pháp Triển Khai
+1. **Đồng bộ dữ liệu động 1vs1 -> 5vs5 trên [`LiveMatchPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/admin/LiveMatchPage.jsx):**
+   - Kết hợp nguồn dữ liệu từ danh sách phòng REST API `rooms` và Socket `roomState`:
+     ```javascript
+     const currentRoomInfo = rooms.find(r => r.roomCode === selectedRoomCode);
+     const effectiveMode = roomState?.mode || currentRoomInfo?.mode || '1vs1';
+     const maxPerTeam = roomState?.maxPerTeam || currentRoomInfo?.maxPerTeam || (parseInt(effectiveMode[0], 10) || 1);
+     const teamAPlayers = roomState?.teamA || currentRoomInfo?.teamAPlayers || [];
+     const teamBPlayers = roomState?.teamB || currentRoomInfo?.teamBPlayers || [];
+     const teamASlots = Array.from({ length: maxPerTeam }, (_, i) => teamAPlayers[i] || null);
+     const teamBSlots = Array.from({ length: maxPerTeam }, (_, i) => teamBPlayers[i] || null);
+     const teamACount = maxPerTeam;
+     const teamBCount = maxPerTeam;
+     ```
+   - Nâng cấp `fetchRooms()` để cập nhật trực tiếp `mode` và `maxPerTeam` vào `roomState` ngay khi nhận dữ liệu từ server mà không phải chờ đợi Socket.
+   - Sảnh chờ tự động co giãn: Phòng 1vs1 chỉ render 1 slot mỗi bên; phòng 2vs2 render 2 slots; huy hiệu trung tâm tự đổi thành `CHẾ ĐỘ 1 VS 1` và `Đang tập hợp đủ 2 thí sinh để bắt đầu kéo co!`.
+2. **Cắt lát linh hoạt nhân vật Chibi trên [`TugOfWarArena.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/components/TugOfWarArena.jsx):**
+   - Đội A: `fullTeamA.slice(5 - countA)` (luôn giữ nhân vật tiên phong sát trọng tài).
+   - Đội B: `fullTeamB.slice(0, countB)` (luôn giữ nhân vật tiên phong sát trọng tài).
+3. **Chuẩn hóa Header thương hiệu đồng bộ:**
+   - Xóa bỏ logo hình ảnh VHU trên thanh header màn chiếu TV theo đúng yêu cầu.
+   - Cập nhật tiêu đề thành: `⚔️ KÉO CO TRI THỨC`.
+   - Cập nhật dòng phụ thành: `Trạm 1: Thử Thách Trí Tuệ`.
+   - Giữ trọn vẹn màu nền phẳng thuần `#1A1AFF` đặc trưng của Trường Đại học Văn Hiến.
