@@ -493,6 +493,7 @@ export default function LiveMatchPage({
       {/* ======================================================== */}
       <header
         style={{
+          position: 'relative',
           backgroundColor: '#1A1AFF',
           background: '#1A1AFF', // 100% Solid Flat VHU Harmony
           borderBottom: '3px solid var(--comic-black)',
@@ -502,7 +503,7 @@ export default function LiveMatchPage({
           justifyContent: 'space-between',
           flexWrap: 'wrap',
           gap: 10,
-          zIndex: 30,
+          zIndex: 10001,
           boxShadow: '0 4px 0 var(--comic-black)'
         }}
       >
@@ -1450,7 +1451,10 @@ export default function LiveMatchPage({
       {gameOverData && showCutscene && (
         <VictoryCutscene
           winner={gameOverData.winner}
+          onDone={() => setShowCutscene(false)}
           onFinish={() => setShowCutscene(false)}
+          otherRooms={otherRooms}
+          onSwitchRoom={handleSwitchRoom}
         />
       )}
     </div>

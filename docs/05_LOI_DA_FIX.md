@@ -658,3 +658,32 @@ Sau khi push commit lên GitHub:
    - Biểu tượng thanh kiếm `⚔️`.
    - Chữ hoa `KÉO CO TRI THỨC` màu xanh dương hoàng gia `#1A1AFF` với bóng tím nhạt `#B3B4FF`.
    - Viên thuốc capsule bo tròn `Trạm 1: Thử Thách Trí Tuệ` (nền `#EEF2FF`, viền `#1A1AFF`, chữ xanh `#1010CC`), đồng bộ 100% từ a - z của toàn bộ dự án.
+
+
+## 17. Sửa Lỗi Cutscene Che Khuất Thanh Chuyển Phòng & Tối Ưu Màn Chiếu TV Trực Tiếp
+
+### 1. Hiện Tượng & Yêu Cầu
+- **Hiện tượng:** Khi một trận đấu kết thúc, hiệu ứng Cutscene vinh danh chiến thắng (`VictoryCutscene`) hiển thị toàn màn hình, che khuất hoàn toàn thanh Header, dropdown danh sách phòng và các nút chuyển kênh theo dõi phòng khác.
+- Người xem và ban tổ chức không thể chuyển sang xem các phòng thi đấu khác đang diễn ra cho đến khi Cutscene kết thúc hoặc phải tìm nút bỏ qua.
+- **Yêu cầu:** Thiết kế lại màn chiếu TV trực tiếp sao cho thanh điều hướng chuyển phòng luôn luôn hiển thị trên cùng, không bị bất kỳ hiệu ứng nào che mất; đồng thời tích hợp trực tiếp nút chuyển nhanh sang phòng thi đấu khác ngay trên Cutscene.
+
+### 2. Nguyên Nhân Kỹ Thuật (Root Cause Analysis)
+1. **Lệch tầng hiển thị CSS (`zIndex`):**
+   - `VictoryCutscene.jsx` sử dụng `position: 'fixed'`, `inset: 0`, `zIndex: 9999` che trùm toàn bộ viewport trình duyệt.
+   - Trong khi đó, `header` của `LiveMatchPage.jsx` chỉ có `zIndex: 30`, dẫn đến toàn bộ thanh điều hướng, dropdown chọn phòng thi đấu và nút tắt bị đè lấp hoàn toàn phía dưới.
+2. **Không khớp tên sự kiện callback (`onDone` vs `onFinish`):**
+   - `LiveMatchPage.jsx` truyền prop `onFinish={() => setShowCutscene(false)}` trong khi `VictoryCutscene.jsx` lại chỉ khai báo và gọi `onDone()`. Nếu người dùng nhấn bỏ qua hoặc hết giờ, callback không được thực thi đồng nhất.
+3. **Thiếu liên kết danh sách phòng trên Cutscene:**
+   - Cutscene không nhận dữ liệu về các phòng khác (`otherRooms`), do đó không thể gợi ý cho ban tổ chức biết đang có phòng nào khác đang thi đấu hay ở sảnh chờ.
+
+### 3. Giải Pháp Triển Khai
+1. **Đưa Header TV lên tầng hiển thị cao nhất ([`LiveMatchPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/admin/LiveMatchPage.jsx)):**
+   - Nâng cấp `header` thành `position: 'relative'`, `zIndex: 10001` (vượt trội hơn mọi layer hiệu ứng), giữ thanh thương hiệu `⚔️ KÉO CO TRI THỨC`, dropdown phòng thi đấu và nút `⏭️ XEM PHÒNG #...` luôn luôn tương tác được 100% thời gian.
+2. **Đồng bộ callback & bổ sung dữ liệu phòng vào Cutscene ([`LiveMatchPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/admin/LiveMatchPage.jsx)):**
+   - Truyền đầy đủ cả `onDone`, `onFinish`, `otherRooms` và `onSwitchRoom={handleSwitchRoom}` vào component `<VictoryCutscene>`.
+3. **Tối ưu hóa Cutscene & Tích hợp Quick Room Switcher Dock ([`VictoryCutscene.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/components/VictoryCutscene.jsx)):**
+   - Giảm `zIndex` xuống `1000` và chừa khoảng trống `paddingTop: 76px` để không đè lấp Header.
+   - Thêm cơ chế an toàn gọi callback `handleDone()` kích hoạt đồng thời cả `onDone` và `onFinish`.
+   - Bổ sung thanh điều hướng chuyển phòng tức thì bên dưới sân đấu Cutscene:
+     - Nút `[Bỏ qua Cutscene ⏩]`.
+     - Nút `[⚡ CHIẾU PHÒNG #... (Đang thi đấu / Sảnh chờ) ⏭️]` với màu xanh lá `#00E676` nổi bật, click 1 chạm là tự động đóng Cutscene và chuyển ngay sang phòng mới.

@@ -4,11 +4,22 @@ import RefereeCharacter from './RefereeCharacter';
 import { playRopePull, playWhistle } from '../utils/audio';
 import { triggerHaptic } from '../utils/haptics';
 
-export default function VictoryCutscene({ winner = 'A', onDone }) {
+export default function VictoryCutscene({
+  winner = 'A',
+  onDone,
+  onFinish,
+  otherRooms = [],
+  onSwitchRoom
+}) {
   // 2-Phases: 'PULL' (0-1.8s: Giằng co nghẹt thở) -> 'FALL' (1.8-4.2s: Kéo phăng ngã đối thủ) -> onDone()
   const [phase, setPhase] = useState('PULL');
   const [canSkip, setCanSkip] = useState(false);
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
+
+  const handleDone = () => {
+    if (typeof onDone === 'function') onDone();
+    if (typeof onFinish === 'function') onFinish();
+  };
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 640);
@@ -35,7 +46,7 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
 
     // Timer: Finish cutscene after 4.2s and transition to personalized team result
     const doneTimer = setTimeout(() => {
-      onDone();
+      handleDone();
     }, 4200);
 
     return () => {
@@ -43,26 +54,30 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
       clearTimeout(fallTimer);
       clearTimeout(doneTimer);
     };
-  }, [onDone]);
+  }, [onDone, onFinish]);
 
   // Rope offset shifts dynamically per phase
   let ropeOffset = 0;
   if (phase === 'PULL') ropeOffset = isWinnerA ? -4 : 4;
   if (phase === 'FALL') ropeOffset = isWinnerA ? -10 : 10;
 
+  const nextPlayingRoom = otherRooms?.find(r => r.state === 'ROUND_BUZZ' || r.state === 'ROUND_ANSWER' || r.state === 'ROUND_REBOUND') ||
+    otherRooms?.find(r => r.state === 'LOBBY') ||
+    (otherRooms && otherRooms[0]);
+
   return (
     <div
       style={{
         position: 'fixed',
         inset: 0,
-        zIndex: 9999,
+        zIndex: 1000,
         backgroundColor: '#1A1AFF',
         background: '#1A1AFF',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: isMobile ? '8px' : '16px',
+        padding: isMobile ? '70px 8px 16px' : '76px 16px 20px',
         overflow: 'hidden',
         userSelect: 'none'
       }}
@@ -405,34 +420,75 @@ export default function VictoryCutscene({ winner = 'A', onDone }) {
         </div>
       </div>
 
-      {/* NÚT BỎ QUA CUTSCENE */}
-      <button
-        onClick={onDone}
-        id="btn-skip-victory-cutscene"
+      {/* THANH ĐIỀU HƯỚNG & NÚT BỎ QUA CUTSCENE */}
+      <div
         style={{
-          marginTop: isMobile ? '12px' : '20px',
-          background: '#FFFFFF',
-          border: '2.5px solid var(--comic-black)',
-          boxShadow: isMobile ? '0 3px 0 var(--comic-black)' : '0 5px 0 var(--comic-black)',
-          borderRadius: 999,
-          padding: isMobile ? '8px 18px' : '10px 24px',
-          color: '#0F172A',
-          fontFamily: 'var(--font-title)',
-          fontSize: isMobile ? '0.85rem' : '0.95rem',
-          fontWeight: 900,
-          cursor: 'pointer',
+          marginTop: isMobile ? '12px' : '18px',
           display: 'flex',
           alignItems: 'center',
-          gap: 8,
-          zIndex: 20,
-          opacity: canSkip ? 1 : 0.6,
-          pointerEvents: canSkip ? 'auto' : 'none',
-          transition: 'all 0.15s ease'
+          justifyContent: 'center',
+          flexWrap: 'wrap',
+          gap: 10,
+          zIndex: 20
         }}
       >
-        <span>Bỏ qua Cutscene</span>
-        <span>⏩</span>
-      </button>
+        <button
+          onClick={handleDone}
+          id="btn-skip-victory-cutscene"
+          style={{
+            background: '#FFFFFF',
+            border: '2.5px solid var(--comic-black)',
+            boxShadow: isMobile ? '0 3px 0 var(--comic-black)' : '0 4px 0 var(--comic-black)',
+            borderRadius: 999,
+            padding: isMobile ? '8px 18px' : '10px 22px',
+            color: '#0F172A',
+            fontFamily: 'var(--font-title)',
+            fontSize: isMobile ? '0.85rem' : '0.95rem',
+            fontWeight: 900,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            opacity: canSkip ? 1 : 0.6,
+            pointerEvents: canSkip ? 'auto' : 'none',
+            transition: 'all 0.15s ease'
+          }}
+        >
+          <span>Bỏ qua Cutscene</span>
+          <span>⏩</span>
+        </button>
+
+        {nextPlayingRoom && onSwitchRoom && (
+          <button
+            onClick={() => {
+              handleDone();
+              onSwitchRoom(nextPlayingRoom.roomCode);
+            }}
+            style={{
+              background: '#00E676',
+              border: '2.5px solid var(--comic-black)',
+              boxShadow: isMobile ? '0 3px 0 var(--comic-black)' : '0 4px 0 var(--comic-black)',
+              borderRadius: 999,
+              padding: isMobile ? '8px 18px' : '10px 22px',
+              color: '#0F172A',
+              fontFamily: 'var(--font-title)',
+              fontSize: isMobile ? '0.85rem' : '0.95rem',
+              fontWeight: 900,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 8,
+              transition: 'all 0.15s ease'
+            }}
+          >
+            <span>⚡ CHIẾU PHÒNG #{nextPlayingRoom.roomCode}</span>
+            <span style={{ fontSize: '0.8rem', opacity: 0.9 }}>
+              ({nextPlayingRoom.state === 'LOBBY' ? 'Sảnh chờ' : 'Đang thi đấu'})
+            </span>
+            <span>⏭️</span>
+          </button>
+        )}
+      </div>
     </div>
   );
 }
