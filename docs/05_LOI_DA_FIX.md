@@ -490,3 +490,39 @@ Sau khi push commit lên GitHub:
    - Cập nhật tiêu đề thành: `⚔️ KÉO CO TRI THỨC`.
    - Cập nhật dòng phụ thành: `Trạm 1: Thử Thách Trí Tuệ`.
    - Giữ trọn vẹn màu nền phẳng thuần `#1A1AFF` đặc trưng của Trường Đại học Văn Hiến.
+
+
+---
+
+## 12. Sửa Lỗi Màn Chiếu TV Bị Kẹt Ở Sảnh Chờ (Không Vào Trận 3-2-1 Dù 2 Thí Sinh Đã Bấm Sẵn Sàng)
+
+### 1. Hiện Tượng & Nguyên Nhân (Root Cause Analysis)
+1. **Lỗi logic giữ nguyên dữ liệu cũ trong `fetchRooms()` ([`LiveMatchPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/admin/LiveMatchPage.jsx)):**
+   - Đoạn mã cũ: `teamA: prev.teamA?.length ? prev.teamA : (targetRoomData.teamAPlayers || [])`.
+   - Khi thí sinh vừa vào phòng (trạng thái `isReady: false`), `prev.teamA` đã có độ dài $> 0$. Khi thí sinh bấm "SẴN SÀNG THI ĐẤU" trên điện thoại, backend đã cập nhật `isReady: true`, nhưng biểu thức ternary trên từ chối ghi đè và giữ nguyên mảng cũ `prev.teamA` với `isReady: false`.
+   - Kết quả: Huy hiệu thí sinh trên TV bị kẹt vĩnh viễn ở trạng thái `⏳ CHỜ SẴN SÀNG`.
+2. **Mất Token xác thực khi mở tab mới (`_blank`):**
+   - `AdminPage.jsx` trước đây chỉ lưu `adminToken` vào `sessionStorage`. Do cơ chế bảo mật trình duyệt, `sessionStorage` không được chia sẻ sang tab mới mở qua `window.open()`.
+   - Do đó, trang `LiveMatchPage.jsx` trong tab mới bị thiếu token quản trị, nhận lỗi `401 Unauthorized` khi gọi `/api/admin/rooms`.
+3. **Thiếu cơ chế chuyển pha thi đấu (`uiState`) trong vòng lặp đồng bộ:**
+   - Khi phòng đấu bước vào `COUNTDOWN`, `ROUND_BUZZ` hoặc `ROUND_ANSWER`, hàm `fetchRooms()` cũ chỉ đồng bộ `maxPerTeam` mà không cập nhật `uiState`, khiến màn hình TV vẫn hiển thị giao diện `LOBBY`.
+4. **Socket không tự động tham gia phòng khi kết nối lại:**
+   - Trong `LiveMatchPage.jsx`, lệnh `socket.emit('joinSpectator')` chỉ gọi 1 lần duy nhất khi component mount. Nếu kết nối socket trễ vài mili-giây hoặc bị ngắt kết nối tạm thời, socket không bao giờ kích hoạt lại sự kiện gia nhập phòng khán giả.
+
+### 2. Giải Pháp Triển Khai Hoàn Thiện
+1. **Khắc phục triệt để logic đồng bộ `syncRoomData()` ([`LiveMatchPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/admin/LiveMatchPage.jsx)):**
+   - Luôn cập nhật danh sách thành viên mới nhất kèm cờ `isReady: true/false` từ server:
+     ```javascript
+     const newTeamA = targetRoomData.teamAPlayers || targetRoomData.teamA || [];
+     const newTeamB = targetRoomData.teamBPlayers || targetRoomData.teamB || [];
+     ```
+   - Tự động đồng bộ `uiState`: Nếu phòng đang thi đấu (`ROUND_BUZZ`, `ROUND_ANSWER`, `ROUND_REBOUND`), màn hình TV lập tức chuyển sang chế độ câu hỏi 2x2, nạp `currentQuestion`, `deadline`, tỉ số và nơ dây kéo co.
+   - Khi phòng bắt đầu đếm số, kích hoạt ngay `CountdownOverlay` (3-2-1 xuất trận).
+2. **Bảo toàn Token qua `localStorage` và URL Query Parameter ([`AdminPage.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/pages/admin/AdminPage.jsx)):**
+   - Khi Admin đăng nhập, lưu đồng thời token vào `sessionStorage` và `localStorage`.
+   - Khi mở Màn chiếu TV qua nút "Chiếu TV" hoặc "Xem trực tiếp", truyền kèm `&token=${token}` trên URL.
+   - `LiveMatchPage.jsx` ưu tiên đọc token từ URL query -> `sessionStorage` -> `localStorage`.
+3. **Cung cấp Endpoint Công Khai Cho Màn Chiếu TV ([`rooms.routes.js`](file:///d:/KEOCOTRITHUC/src/backend/src/routes/rooms.routes.js)):**
+   - Nâng cấp `GET /api/rooms/:code` trả về đầy đủ snapshot phòng đấu thời gian thực (tỉ số, người chơi, câu hỏi đang hỏi, hạn giờ) mà không yêu cầu token, giúp màn chiếu TV đồng bộ song song 2 kênh (REST API dự phòng 1.5s + WebSocket thời gian thực).
+4. **Lắng nghe sự kiện `socket.on('connect')` tự động re-join:**
+   - Đảm bảo khi socket kết nối thành công hoặc reconnect, sự kiện `joinSpectator` luôn được bắn lên server để nhận đầy đủ các thông báo `startCountdown`, `newQuestion`, `buzzerAwarded`,...

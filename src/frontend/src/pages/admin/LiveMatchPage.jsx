@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { socket } from '../../services/socket';
-import { getAdminRooms } from '../../services/api';
+import { getAdminRooms, getRoom } from '../../services/api';
 import TugOfWarArena from '../../components/TugOfWarArena';
 import RingTimer from '../../components/RingTimer';
 import VictoryCutscene from '../../components/VictoryCutscene';
@@ -34,7 +34,10 @@ const OPTION_PREFIXES = ['A', 'B', 'C', 'D'];
 export default function LiveMatchPage({
   initialRoomCode = ''
 }) {
-  const [token] = useState(() => sessionStorage.getItem('adminToken') || '');
+  const [token] = useState(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('token') || sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken') || '';
+  });
   const [rooms, setRooms] = useState([]);
   const [selectedRoomCode, setSelectedRoomCode] = useState(() => {
     if (initialRoomCode) return initialRoomCode;
@@ -73,58 +76,92 @@ export default function LiveMatchPage({
     return () => unsub();
   }, []);
 
-  // Fetch rooms list periodically
+  // Universal state sync helper: luôn cập nhật danh sách người chơi và tiến độ ván đấu
+  const syncRoomData = (targetRoomData) => {
+    if (!targetRoomData) return;
+    const parsedMax = targetRoomData.maxPerTeam || parseInt((targetRoomData.mode || '1')[0], 10) || 1;
+    const newTeamA = targetRoomData.teamAPlayers || targetRoomData.teamA || [];
+    const newTeamB = targetRoomData.teamBPlayers || targetRoomData.teamB || [];
+
+    setRoomState(prev => ({
+      ...(prev || {}),
+      roomCode: targetRoomData.roomCode || prev?.roomCode || selectedRoomCode,
+      mode: targetRoomData.mode || prev?.mode || '1vs1',
+      maxPerTeam: targetRoomData.maxPerTeam || parsedMax,
+      state: targetRoomData.state || prev?.state || 'LOBBY',
+      teamA: newTeamA.length ? newTeamA : (prev?.teamA || []),
+      teamB: newTeamB.length ? newTeamB : (prev?.teamB || [])
+    }));
+
+    if (typeof targetRoomData.scoreA === 'number') setScoreA(targetRoomData.scoreA);
+    if (typeof targetRoomData.scoreB === 'number') setScoreB(targetRoomData.scoreB);
+    if (typeof targetRoomData.ropeOffset === 'number') setRopeOffset(targetRoomData.ropeOffset);
+    if (targetRoomData.tacticalCards) setTacticalCards(targetRoomData.tacticalCards);
+    if (targetRoomData.activeCardEffects) setActiveCardEffects(targetRoomData.activeCardEffects);
+
+    // Sync match stage if room is currently playing
+    if (targetRoomData.state === 'ROUND_BUZZ' || targetRoomData.state === 'ROUND_ANSWER' || targetRoomData.state === 'ROUND_REBOUND') {
+      if (targetRoomData.currentQuestion) setCurrentQuestion(targetRoomData.currentQuestion);
+      if (targetRoomData.deadline) setDeadline(targetRoomData.deadline);
+      if (targetRoomData.buzzerWinner) setBuzzerWinner(targetRoomData.buzzerWinner);
+      if (targetRoomData.reboundData) setReboundData(targetRoomData.reboundData);
+      if (targetRoomData.state === 'ROUND_BUZZ') setUiState('ROUND_BUZZ');
+      else if (targetRoomData.state === 'ROUND_ANSWER') setUiState('BUZZER_AWARDED');
+      else if (targetRoomData.state === 'ROUND_REBOUND') setUiState('REBOUND');
+    } else if (targetRoomData.state === 'COUNTDOWN') {
+      setUiState('COUNTDOWN');
+    } else if (targetRoomData.state === 'LOBBY') {
+      setUiState('LOBBY');
+      setCurrentQuestion(null);
+      setGameOverData(null);
+      setShowCutscene(false);
+    } else if (targetRoomData.state === 'FINISHED') {
+      setUiState('FINISHED');
+    }
+  };
+
+  // Fetch rooms list periodically (kết hợp cả admin rooms và public room endpoint)
   const fetchRooms = async () => {
     try {
-      const res = await getAdminRooms(token);
-      if (res?.success && Array.isArray(res.rooms)) {
-        setRooms(res.rooms);
-        // Auto-select room if none selected, or auto-follow active match
-        let targetCode = selectedRoomCode;
-        if (!targetCode && res.rooms.length > 0) {
-          const playingRoom = res.rooms.find(r => r.state === 'ROUND_BUZZ' || r.state === 'ROUND_ANSWER' || r.state === 'ROUND_REBOUND') || res.rooms[0];
-          targetCode = playingRoom.roomCode;
-          setSelectedRoomCode(targetCode);
-        } else if (autoFollow && res.rooms.length > 0) {
-          const activePlaying = res.rooms.find(r => r.state === 'ROUND_BUZZ' || r.state === 'ROUND_ANSWER' || r.state === 'ROUND_REBOUND');
-          if (activePlaying && activePlaying.roomCode !== selectedRoomCode) {
-            targetCode = activePlaying.roomCode;
+      if (token) {
+        const res = await getAdminRooms(token);
+        if (res?.success && Array.isArray(res.rooms)) {
+          setRooms(res.rooms);
+          let targetCode = selectedRoomCode;
+          if (!targetCode && res.rooms.length > 0) {
+            const playingRoom = res.rooms.find(r => r.state === 'ROUND_BUZZ' || r.state === 'ROUND_ANSWER' || r.state === 'ROUND_REBOUND') || res.rooms[0];
+            targetCode = playingRoom.roomCode;
             setSelectedRoomCode(targetCode);
+          } else if (autoFollow && res.rooms.length > 0) {
+            const activePlaying = res.rooms.find(r => r.state === 'ROUND_BUZZ' || r.state === 'ROUND_ANSWER' || r.state === 'ROUND_REBOUND');
+            if (activePlaying && activePlaying.roomCode !== selectedRoomCode) {
+              targetCode = activePlaying.roomCode;
+              setSelectedRoomCode(targetCode);
+            }
+          }
+
+          const targetRoomData = res.rooms.find(r => r.roomCode === targetCode);
+          if (targetRoomData) {
+            syncRoomData(targetRoomData);
           }
         }
+      }
 
-        // Sync room mode and maxPerTeam directly from API into roomState
-        const targetRoomData = res.rooms.find(r => r.roomCode === targetCode);
-        if (targetRoomData) {
-          const parsedMax = targetRoomData.maxPerTeam || parseInt((targetRoomData.mode || '1')[0], 10) || 1;
-          setRoomState(prev => {
-            if (!prev) {
-              return {
-                mode: targetRoomData.mode || '1vs1',
-                maxPerTeam: parsedMax,
-                state: targetRoomData.state || 'LOBBY',
-                teamA: targetRoomData.teamAPlayers || [],
-                teamB: targetRoomData.teamBPlayers || []
-              };
-            }
-            return {
-              ...prev,
-              mode: targetRoomData.mode || prev.mode,
-              maxPerTeam: targetRoomData.maxPerTeam || parsedMax,
-              teamA: prev.teamA?.length ? prev.teamA : (targetRoomData.teamAPlayers || []),
-              teamB: prev.teamB?.length ? prev.teamB : (targetRoomData.teamBPlayers || [])
-            };
-          });
+      // Trực tiếp đồng bộ thông tin phòng qua public endpoint
+      if (selectedRoomCode) {
+        const directRoom = await getRoom(selectedRoomCode);
+        if (directRoom && (directRoom.roomCode || directRoom.state)) {
+          syncRoomData(directRoom);
         }
       }
     } catch (err) {
-      console.warn('Lỗi tải danh sách phòng:', err);
+      console.warn('Lỗi đồng bộ phòng trực tiếp:', err);
     }
   };
 
   useEffect(() => {
     fetchRooms();
-    const interval = setInterval(fetchRooms, 3000);
+    const interval = setInterval(fetchRooms, 1500);
     return () => clearInterval(interval);
   }, [token, autoFollow, selectedRoomCode]);
 
@@ -132,65 +169,26 @@ export default function LiveMatchPage({
   useEffect(() => {
     if (!selectedRoomCode) return;
 
+    const joinSpectatorRoom = () => {
+      console.log('📺 [Spectator Joining Room]:', selectedRoomCode);
+      socket.emit('joinSpectator', { roomCode: selectedRoomCode });
+    };
+
+    socket.on('connect', joinSpectatorRoom);
     if (!socket.connected) {
       socket.connect();
+    } else {
+      joinSpectatorRoom();
     }
-
-    // Join spectator
-    socket.emit('joinSpectator', { roomCode: selectedRoomCode });
 
     const handleSpectatorSnapshot = (data) => {
       console.log('📺 [Spectator Snapshot Received]:', data);
-      setRoomState({
-        mode: data.mode,
-        maxPerTeam: data.maxPerTeam,
-        state: data.state,
-        teamA: data.teamA || [],
-        teamB: data.teamB || []
-      });
-      setScoreA(data.scoreA || 0);
-      setScoreB(data.scoreB || 0);
-      setRopeOffset(data.ropeOffset || 0);
-      setTacticalCards(data.tacticalCards || { A: {}, B: {} });
-      setActiveCardEffects(data.activeCardEffects || {});
-      setBuzzerWinner(data.buzzerWinner || null);
-      setReboundData(data.reboundData || null);
-
-      if (data.currentQuestion && (data.state === 'ROUND_BUZZ' || data.state === 'ROUND_ANSWER' || data.state === 'ROUND_REBOUND')) {
-        setCurrentQuestion(data.currentQuestion);
-        setDeadline(data.deadline || null);
-        if (data.state === 'ROUND_BUZZ') setUiState('ROUND_BUZZ');
-        else if (data.state === 'ROUND_ANSWER') setUiState('BUZZER_AWARDED');
-        else if (data.state === 'ROUND_REBOUND') setUiState('REBOUND');
-      } else if (data.state === 'LOBBY') {
-        setUiState('LOBBY');
-        setCurrentQuestion(null);
-        setGameOverData(null);
-        setShowCutscene(false);
-      } else if (data.state === 'FINISHED') {
-        setUiState('FINISHED');
-      }
+      syncRoomData(data);
     };
 
     const handleRoomStateUpdate = (data) => {
-      if (data.roomCode && data.roomCode !== selectedRoomCode) return;
-      setRoomState(data);
-      if (typeof data.scoreA === 'number') setScoreA(data.scoreA);
-      if (typeof data.scoreB === 'number') setScoreB(data.scoreB);
-      if (typeof data.ropeOffset === 'number') setRopeOffset(data.ropeOffset);
-      if (data.tacticalCards) setTacticalCards(data.tacticalCards);
-
-      // Auto-reset when room returns to LOBBY
-      if (data.state === 'LOBBY') {
-        setUiState('LOBBY');
-        setCurrentQuestion(null);
-        setBuzzerWinner(null);
-        setReboundData(null);
-        setLastResult(null);
-        setFiftyFiftyEliminated([]);
-        setGameOverData(null);
-        setShowCutscene(false);
-      }
+      if (data.roomCode && String(data.roomCode).toUpperCase().trim() !== String(selectedRoomCode).toUpperCase().trim()) return;
+      syncRoomData(data);
     };
 
     const handleStartCountdown = (data) => {
@@ -296,6 +294,7 @@ export default function LiveMatchPage({
     socket.on('gameOver', handleGameOver);
 
     return () => {
+      socket.off('connect', joinSpectatorRoom);
       socket.emit('leaveSpectator', { roomCode: selectedRoomCode });
       socket.off('spectatorJoinedSuccess', handleSpectatorSnapshot);
       socket.off('roomStateUpdate', handleRoomStateUpdate);

@@ -26,10 +26,10 @@ const MODES = [
 ];
 
 export default function AdminPage({ onBackToGame }) {
-  const [token, setToken] = useState(sessionStorage.getItem('adminToken') || '');
+  const [token, setToken] = useState(() => sessionStorage.getItem('adminToken') || localStorage.getItem('adminToken') || '');
   const [adminUser, setAdminUser] = useState(() => {
     try {
-      return JSON.parse(sessionStorage.getItem('adminUser')) || null;
+      return JSON.parse(sessionStorage.getItem('adminUser') || localStorage.getItem('adminUser')) || null;
     } catch {
       return null;
     }
@@ -196,7 +196,9 @@ export default function AdminPage({ onBackToGame }) {
     try {
       const res = await adminLogin(username.trim(), password);
       sessionStorage.setItem('adminToken', res.token);
+      localStorage.setItem('adminToken', res.token);
       sessionStorage.setItem('adminUser', JSON.stringify(res.admin));
+      localStorage.setItem('adminUser', JSON.stringify(res.admin));
       setToken(res.token);
       setAdminUser(res.admin);
       setSuccessMsg('Đăng nhập thành công!');
@@ -210,7 +212,9 @@ export default function AdminPage({ onBackToGame }) {
 
   const handleLogout = () => {
     sessionStorage.removeItem('adminToken');
+    localStorage.removeItem('adminToken');
     sessionStorage.removeItem('adminUser');
+    localStorage.removeItem('adminUser');
     setToken('');
     setAdminUser(null);
     setUsername('');
@@ -696,7 +700,7 @@ export default function AdminPage({ onBackToGame }) {
             <button
               onClick={() => {
                 const targetRoom = rooms.find(r => r.state === 'ROUND_BUZZ' || r.state === 'ROUND_ANSWER' || r.state === 'ROUND_REBOUND')?.roomCode || rooms[0]?.roomCode || '';
-                window.open(`/?tv=${targetRoom}`, '_blank');
+                window.open(`/?tv=${encodeURIComponent(targetRoom)}&token=${encodeURIComponent(token)}`, '_blank');
               }}
               title="Mở màn chiếu TV độc lập trong Tab Google Chrome mới"
               style={{
@@ -1018,7 +1022,7 @@ export default function AdminPage({ onBackToGame }) {
 
                               {/* Open Live TV Spectate in New Tab */}
                               <button
-                                onClick={() => window.open(`/?spectate=${r.roomCode}`, '_blank')}
+                                onClick={() => window.open(`/?tv=${encodeURIComponent(r.roomCode)}&token=${encodeURIComponent(token)}`, '_blank')}
                                 title="Mở màn chiếu TV độc lập trong tab mới"
                                 style={{
                                   background: 'linear-gradient(135deg, #7C3AED, #9333EA)',

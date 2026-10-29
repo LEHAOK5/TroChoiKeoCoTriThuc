@@ -57,7 +57,7 @@ function createRoomsRouter(roomManager) {
     });
   });
 
-  // Get room info
+  // Get full room info for spectator and client sync
   router.get('/:code', (req, res) => {
     const room = roomManager.getRoom(req.params.code);
     if (!room) {
@@ -66,16 +66,48 @@ function createRoomsRouter(roomManager) {
       });
     }
 
+    const teamAPlayers = room.getTeamPlayers('A').map(p => ({
+      name: p.name,
+      studentId: p.studentId,
+      faculty: p.faculty,
+      isReady: p.isReady,
+      isBot: Boolean(p.isBot)
+    }));
+    const teamBPlayers = room.getTeamPlayers('B').map(p => ({
+      name: p.name,
+      studentId: p.studentId,
+      faculty: p.faculty,
+      isReady: p.isReady,
+      isBot: Boolean(p.isBot)
+    }));
+
     res.json({
+      success: true,
       roomCode: room.roomCode,
       mode: room.mode,
       maxPerTeam: room.maxPerTeam,
       state: room.state,
       playersCount: room.players.size,
-      teamACount: room.getTeamPlayers('A').length,
-      teamBCount: room.getTeamPlayers('B').length,
+      teamACount: teamAPlayers.length,
+      teamBCount: teamBPlayers.length,
+      teamAPlayers,
+      teamBPlayers,
       scoreA: room.scoreA,
-      scoreB: room.scoreB
+      scoreB: room.scoreB,
+      ropeOffset: room.ropeOffset,
+      roundNumber: room.roundCount,
+      buzzerWinner: room.buzzerWinner,
+      reboundData: room.reboundData,
+      deadline: room.currentDeadline,
+      currentQuestion: room.currentQuestion ? {
+        roundNumber: room.roundCount,
+        category: room.currentQuestion.category,
+        question: room.currentQuestion.question,
+        options: room.currentQuestion.options,
+        totalQuestions: room.questions.length
+      } : null,
+      tacticalCards: room.tacticalCards,
+      activeCardEffects: room.activeCardEffects
     });
   });
 

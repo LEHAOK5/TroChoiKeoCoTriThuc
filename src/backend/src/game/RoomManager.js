@@ -117,7 +117,18 @@ class RoomManager {
         })),
         scoreA: room.scoreA,
         scoreB: room.scoreB,
+        ropeOffset: room.ropeOffset,
         roundCount: room.roundCount,
+        buzzerWinner: room.buzzerWinner,
+        reboundData: room.reboundData,
+        deadline: room.currentDeadline,
+        currentQuestion: room.currentQuestion ? {
+          roundNumber: room.roundCount,
+          category: room.currentQuestion.category,
+          question: room.currentQuestion.question,
+          options: room.currentQuestion.options,
+          totalQuestions: room.questions.length
+        } : null,
         startedAt: room.startedAt
       });
     }
