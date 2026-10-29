@@ -482,9 +482,9 @@ Sau khi push commit lên GitHub:
      ```
    - Nâng cấp `fetchRooms()` để cập nhật trực tiếp `mode` và `maxPerTeam` vào `roomState` ngay khi nhận dữ liệu từ server mà không phải chờ đợi Socket.
    - Sảnh chờ tự động co giãn: Phòng 1vs1 chỉ render 1 slot mỗi bên; phòng 2vs2 render 2 slots; huy hiệu trung tâm tự đổi thành `CHẾ ĐỘ 1 VS 1` và `Đang tập hợp đủ 2 thí sinh để bắt đầu kéo co!`.
-2. **Cắt lát linh hoạt nhân vật Chibi trên [`TugOfWarArena.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/components/TugOfWarArena.jsx):**
-   - Đội A: `fullTeamA.slice(5 - countA)` (luôn giữ nhân vật tiên phong sát trọng tài).
-   - Đội B: `fullTeamB.slice(0, countB)` (luôn giữ nhân vật tiên phong sát trọng tài).
+2. **Đấu Trường Kéo Co Giữ Trọn Vẹn 5 Nhân Vật Mỗi Bên (10 Chibi y cũ) trên [`TugOfWarArena.jsx`](file:///d:/KEOCOTRITHUC/src/frontend/src/components/TugOfWarArena.jsx):**
+   - Theo yêu cầu thẩm mỹ và không khí sự kiện: Sàn đấu kéo co trên màn hình TV luôn duy trì đủ 10 nhân vật Chibi biểu diễn (5 bạn Đội A `[4, 3, 2, 1, 0]` đối đầu 5 bạn Đội B `[0, 1, 2, 3, 4]`) bất kể phòng thi đấu ở chế độ 1vs1, 2vs2 hay 5vs5, giúp khung cảnh kéo co trên máy chiếu luôn sôi động, hoành tráng và đẹp mắt nhất.
+   - Việc co giãn số lượng thành viên thực tế được thể hiện chuẩn xác tại bảng danh sách slot thành viên của Sảnh chờ LOBBY (1vs1 hiển thị 1 slot/đội, 2vs2 hiển thị 2 slots/đội,...).
 3. **Chuẩn hóa Header thương hiệu đồng bộ:**
    - Xóa bỏ logo hình ảnh VHU trên thanh header màn chiếu TV theo đúng yêu cầu.
    - Cập nhật tiêu đề thành: `⚔️ KÉO CO TRI THỨC`.
